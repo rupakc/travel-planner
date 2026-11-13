@@ -86,7 +86,7 @@ export default function AirportSearch({ label, value, onChange, placeholder, req
         </label>
       )}
       <div className="relative">
-        <input
+        <input data-tid="search.airport-input"
           ref={inputRef}
           type="text"
           value={displayText}

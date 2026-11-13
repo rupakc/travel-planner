@@ -22,7 +22,7 @@ export default function RecapMap({ points, label }) {
       data-tid="recap.map">
       <MapContainer center={points[0]} zoom={12} style={{ height: '100%', width: '100%' }} scrollWheelZoom={false}>
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          attribution='&copy; <a data-tid="recap.map-attribution" href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <Fit points={points} />

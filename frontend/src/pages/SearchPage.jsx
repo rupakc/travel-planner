@@ -627,7 +627,7 @@ export default function SearchPage() {
                   </div>
                   <div className="w-24">
                     <label className="block text-xs font-medium text-gray-500 mb-1">{t('stops.nights')} <span className="text-gray-300">{t('stops.optional')}</span></label>
-                    <input type="number" min="1" max="30" value={stop.nights}
+                    <input data-tid="search.stop-nights" type="number" min="1" max="30" value={stop.nights}
                       onChange={e => setExtraStops(stops => stops.map((s, j) => (j === i ? { ...s, nights: e.target.value } : s)))}
                       placeholder={t('stops.auto')}
                       className="w-full px-2.5 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400 text-sm" />
@@ -664,12 +664,12 @@ export default function SearchPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className={labelClass}><span className="inline-flex items-center gap-1.5"><Calendar size={13} /> {t('form.departure')}</span></label>
-                <input type="date" required value={form.departure_date} min={today}
+                <input data-tid="search.departure-date" type="date" required value={form.departure_date} min={today}
                   onChange={e => setForm(f => ({ ...f, departure_date: e.target.value }))} className={inputClass} />
               </div>
               <div>
                 <label className={labelClass}><span className="inline-flex items-center gap-1.5"><Calendar size={13} /> {t('form.return')}</span></label>
-                <input type="date" value={form.return_date} min={form.departure_date}
+                <input data-tid="search.return-date" type="date" value={form.return_date} min={form.departure_date}
                   onChange={e => setForm(f => ({ ...f, return_date: e.target.value }))} className={inputClass} />
               </div>
             </div>
@@ -685,7 +685,7 @@ export default function SearchPage() {
               />
               <div>
                 <label className={labelClass}><span className="inline-flex items-center gap-1.5"><DollarSign size={13} /> {t('form.budget')}</span></label>
-                <input type="number" value={form.budget_usd} min="0" step="100"
+                <input data-tid="search.budget" type="number" value={form.budget_usd} min="0" step="100"
                   onChange={e => setForm(f => ({ ...f, budget_usd: e.target.value }))}
                   placeholder={t('form.optional')} className={inputClass} />
               </div>
@@ -724,7 +724,7 @@ export default function SearchPage() {
                   {form.serendipity < 0.33 ? t('dial.classics') : form.serendipity > 0.66 ? t('dial.gems') : t('dial.balanced')}
                 </span>
               </div>
-              <input
+              <input data-tid="search.serendipity"
                 type="range" min="0" max="1" step="0.05"
                 value={form.serendipity}
                 onChange={e => setForm(f => ({ ...f, serendipity: parseFloat(e.target.value) }))}
@@ -756,12 +756,12 @@ export default function SearchPage() {
                 />
                 <div>
                   <label className={labelClass}><span className="inline-flex items-center gap-1.5"><Calendar size={13} /> {t('form.departure')}</span></label>
-                  <input type="date" required value={discoverForm.departure_date} min={today}
+                  <input data-tid="search.discover-departure" type="date" required value={discoverForm.departure_date} min={today}
                     onChange={e => setDiscoverForm(f => ({ ...f, departure_date: e.target.value }))} className={inputClass} />
                 </div>
                 <div>
                   <label className={labelClass}><span className="inline-flex items-center gap-1.5"><Calendar size={13} /> {t('form.return')}</span></label>
-                  <input type="date" value={discoverForm.return_date} min={discoverForm.departure_date}
+                  <input data-tid="search.discover-return" type="date" value={discoverForm.return_date} min={discoverForm.departure_date}
                     onChange={e => setDiscoverForm(f => ({ ...f, return_date: e.target.value }))} className={inputClass} />
                 </div>
               </div>
@@ -777,7 +777,7 @@ export default function SearchPage() {
                 />
                 <div>
                   <label className={labelClass}><span className="inline-flex items-center gap-1.5"><DollarSign size={13} /> {t('form.budgetOptional')}</span></label>
-                  <input type="number" value={discoverForm.budget_usd} min="0" step="100"
+                  <input data-tid="search.discover-budget" type="number" value={discoverForm.budget_usd} min="0" step="100"
                     onChange={e => setDiscoverForm(f => ({ ...f, budget_usd: e.target.value }))}
                     placeholder={t('form.totalBudget')} className={inputClass} />
                 </div>
@@ -887,12 +887,12 @@ export default function SearchPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className={labelClass}><span className="inline-flex items-center gap-1.5"><Calendar size={13} /> {t('form.departure')}</span></label>
-                    <input type="date" required value={compareForm.departure_date} min={today}
+                    <input data-tid="search.compare-departure" type="date" required value={compareForm.departure_date} min={today}
                       onChange={e => setCompareForm(c => ({ ...c, departure_date: e.target.value }))} className={inputClass} />
                   </div>
                   <div>
                     <label className={labelClass}><span className="inline-flex items-center gap-1.5"><Calendar size={13} /> {t('form.return')}</span></label>
-                    <input type="date" value={compareForm.return_date} min={compareForm.departure_date}
+                    <input data-tid="search.compare-return" type="date" value={compareForm.return_date} min={compareForm.departure_date}
                       onChange={e => setCompareForm(c => ({ ...c, return_date: e.target.value }))} className={inputClass} />
                   </div>
                 </div>
@@ -907,7 +907,7 @@ export default function SearchPage() {
                   />
                   <div>
                     <label className={labelClass}><span className="inline-flex items-center gap-1.5"><DollarSign size={13} /> {t('form.budget')}</span></label>
-                    <input type="number" value={compareForm.budget_usd} min="0" step="100"
+                    <input data-tid="search.compare-budget" type="number" value={compareForm.budget_usd} min="0" step="100"
                       onChange={e => setCompareForm(c => ({ ...c, budget_usd: e.target.value }))}
                       placeholder={t('form.optional')} className={inputClass} />
                   </div>

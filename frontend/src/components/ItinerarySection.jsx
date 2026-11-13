@@ -472,7 +472,7 @@ export default function ItinerarySection({
                           <div className="space-y-2">
                             <div>
                               <label className="text-xs text-teal-600 font-medium">{t('edit.activity')}</label>
-                              <input
+                              <input data-tid="itinerary.slot-activity"
                                 autoFocus
                                 type="text"
                                 value={edit.activity ?? slot.activity}
@@ -483,7 +483,7 @@ export default function ItinerarySection({
                             <div className="grid grid-cols-2 gap-2">
                               <div>
                                 <label className="text-xs text-teal-600 font-medium">{t('edit.location')}</label>
-                                <input
+                                <input data-tid="itinerary.slot-location"
                                   type="text"
                                   value={edit.location ?? slot.location ?? ''}
                                   onChange={e => onSlotEdit(key, 'location', e.target.value)}
@@ -492,7 +492,7 @@ export default function ItinerarySection({
                               </div>
                               <div>
                                 <label className="text-xs text-teal-600 font-medium">{t('edit.cost')}</label>
-                                <input
+                                <input data-tid="itinerary.slot-cost"
                                   type="number"
                                   value={edit.cost ?? slot.estimated_cost_usd ?? ''}
                                   onChange={e => onSlotEdit(key, 'cost', e.target.value === '' ? null : Number(e.target.value))}
@@ -502,7 +502,7 @@ export default function ItinerarySection({
                             </div>
                             <div>
                               <label className="text-xs text-teal-600 font-medium">{t('edit.note')}</label>
-                              <textarea
+                              <textarea data-tid="itinerary.slot-note"
                                 value={note}
                                 onChange={e => onNoteChange(key, e.target.value)}
                                 placeholder={t('edit.notePlaceholder')}
@@ -577,7 +577,7 @@ export default function ItinerarySection({
                     {/* Inline note textarea when not in full edit mode */}
                     {isNoteOpen && !isEditing && (
                       <div className="mt-2 ml-23 pl-20">
-                        <textarea
+                        <textarea data-tid="itinerary.inline-note"
                           autoFocus
                           value={note}
                           onChange={e => onNoteChange(key, e.target.value)}

@@ -134,7 +134,7 @@ export default function FeedbackWidget() {
                 {/* Category */}
                 <div>
                   <label className="text-xs font-medium text-gray-600 block mb-1">{t('feedback.category')}</label>
-                  <select
+                  <select data-tid="feedback.category"
                     value={category}
                     onChange={e => setCategory(e.target.value)}
                     className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400"
@@ -150,7 +150,7 @@ export default function FeedbackWidget() {
                   <label className="text-xs font-medium text-gray-600 block mb-1">
                     {t('feedback.message')} <span className="text-gray-400">{t('feedback.optional')}</span>
                   </label>
-                  <textarea
+                  <textarea data-tid="feedback.message"
                     value={message}
                     onChange={e => setMessage(e.target.value.slice(0, 500))}
                     rows={3}

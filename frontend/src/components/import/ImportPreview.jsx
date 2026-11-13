@@ -44,7 +44,7 @@ function SourceCard({ source, placeCount }) {
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold text-gray-900">
           {href
-            ? <a href={href} target="_blank" rel="noopener noreferrer" className="hover:underline decoration-amber-400 decoration-2 underline-offset-2">{heading}</a>
+            ? <a data-tid="search.import-place-link" href={href} target="_blank" rel="noopener noreferrer" className="hover:underline decoration-amber-400 decoration-2 underline-offset-2">{heading}</a>
             : heading}
         </p>
         <p className="truncate text-xs text-gray-500">
@@ -346,7 +346,7 @@ export default function ImportPreview({ preview, form, today, token, onPlan, onS
             value={trip.origin} onChange={(v) => setTrip((t) => ({ ...t, origin: v }))} placeholder={t('form.cityOrAirport')} required />
           <div>
             <label className={labelClass} htmlFor="import-departure"><span className="inline-flex items-center gap-1.5"><Calendar size={13} /> {t('preview.leavingOn')}</span></label>
-            <input id="import-departure" type="date" required value={trip.departure_date} min={today}
+            <input data-tid="search.import-departure" id="import-departure" type="date" required value={trip.departure_date} min={today}
               onChange={(e) => setTrip((t) => ({ ...t, departure_date: e.target.value }))} className={inputClass} />
             {trip.departure_date && <p className="mt-1 text-xs text-gray-500">{t('preview.back', { date: fmtDate(addDays(trip.departure_date, nights)) })}</p>}
           </div>
@@ -356,7 +356,7 @@ export default function ImportPreview({ preview, form, today, token, onPlan, onS
             value={trip.nationality} onChange={(v) => setTrip((t) => ({ ...t, nationality: v }))} placeholder={t('form.nationalityPlaceholder')} />
           <div>
             <label className={labelClass} htmlFor="import-budget"><span className="inline-flex items-center gap-1.5"><DollarSign size={13} /> {t('form.budget')}</span></label>
-            <input id="import-budget" type="number" min="0" step="100" value={trip.budget_usd ?? ''} placeholder={t('form.totalBudget')}
+            <input data-tid="search.import-budget" id="import-budget" type="number" min="0" step="100" value={trip.budget_usd ?? ''} placeholder={t('form.totalBudget')}
               onChange={(e) => setTrip((t) => ({ ...t, budget_usd: e.target.value }))} className={inputClass} />
           </div>
           <TravelerPanel form={trip} setForm={setTrip} />

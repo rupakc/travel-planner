@@ -1927,7 +1927,7 @@ function TripPlanView({ tripMap, itinerary, generating }) {
           >
             <TileLayer
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution='© <a href="https://osm.org/copyright">OpenStreetMap</a>'
+              attribution='© <a data-tid="chat.map-attribution" href="https://osm.org/copyright">OpenStreetMap</a>'
             />
             <FitBoundsUpdatable positions={destPoints.length >= 2 ? destPoints : destCityPoints} />
 
@@ -2375,7 +2375,7 @@ function InlineMarkdown({ text }) {
     const part = parts[i]
     if (!part) continue
     const linkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/)
-    if (linkMatch) { elements.push(<a key={i} href={linkMatch[2]} target="_blank" rel="noopener noreferrer" className="text-teal-600 hover:text-teal-800 underline underline-offset-2">{linkMatch[1]}</a>); i += 2; continue }
+    if (linkMatch) { elements.push(<a data-tid="chat.message-link" key={i} href={linkMatch[2]} target="_blank" rel="noopener noreferrer" className="text-teal-600 hover:text-teal-800 underline underline-offset-2">{linkMatch[1]}</a>); i += 2; continue }
     if (part.startsWith('**') && part.endsWith('**')) elements.push(<strong key={i} className="font-semibold">{part.slice(2, -2)}</strong>)
     else if (part.startsWith('`') && part.endsWith('`')) elements.push(<code key={i} className="bg-gray-100 text-teal-700 px-1 py-0.5 rounded text-xs">{part.slice(1, -1)}</code>)
     else if (part.startsWith('*') && part.endsWith('*') && !part.startsWith('**')) elements.push(<em key={i}>{part.slice(1, -1)}</em>)

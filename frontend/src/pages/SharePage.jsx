@@ -651,7 +651,7 @@ export default function SharePage({ download = downloadCard }) {
                   <li key={tour.url || i} className="text-sm">
                     <p className="text-gray-800 font-medium">
                       {href ? (
-                        <a href={href} target="_blank" rel="noopener noreferrer" className="hover:underline">{tour.name}</a>
+                        <a data-tid="share.item-link" href={href} target="_blank" rel="noopener noreferrer" className="hover:underline">{tour.name}</a>
                       ) : tour.name}
                       {tour.city && <span className="ml-1.5 text-xs text-indigo-600 font-semibold">{city(tour.city)}</span>}
                     </p>
