@@ -75,6 +75,8 @@ Native clients do not need this route: it exists for crawlers (see Crawlers and 
 
 Public, `share_public`. A PNG: `size=link` is 1200x630 (the default, used by `og:image`), `size=story` is 1080x1920. Headers: `Content-Type: image/png`, `X-Robots-Tag: noindex, nofollow`, `Cache-Control: public, max-age=300`. `404 share_not_found` for an unknown or revoked token; `422` for another `size`. `503 card_busy` when too many cards are rendering at once (retry). One renderer serves every client, so web, iOS and Android show identical cards. Clients show or save the image as is and add their own caption and link.
 
+**Languages (additive).** `?lang=en|es|de|fr|hi|zh|bn` renders the card in that language (headline, month, chips, "by"/"from"). Omitted, the share's own `locale` option is used, else English. A regional code (`es-MX`) is reduced to its language; an unknown value falls back to English (never a 4xx). Fonts are bundled OFL Noto subsets (`backend/app/assets/fonts`, rebuilt by `backend/scripts/build_card_fonts.py`). Devanagari and Bengali need libraqm (Pillow's wheel bundles it; the image installs `libfribidi0`); where raqm is missing, `hi`/`bn` cards are drawn as the English card. User text with a glyph the fonts lack (for example a Greek place name) is left out of the card rather than drawn as a box. The cache is keyed per language.
+
 ## Card and snapshot fields
 
 The page and the card are drawn from one snapshot built from a whitelist (`services/share_public.py`); it never holds exact dates.

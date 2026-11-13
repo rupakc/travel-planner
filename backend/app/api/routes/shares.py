@@ -19,7 +19,13 @@ from ...core.urls import request_public_url
 from ...db import quiz_db, shares_db, users_db
 from ...db.database import get_connection
 from ...db.plans_db import get_plan, get_user_plans
-from ...services import alert_moments, share_card, share_public, trip_phase
+from ...services import (
+    alert_moments,
+    share_card,
+    share_card_i18n,
+    share_public,
+    trip_phase,
+)
 
 router = APIRouter()
 # Public crawler/preview routes: own bucket (wired in main.py), no sign-in.
@@ -313,12 +319,23 @@ def share_page(token: str, request: Request):
 
 
 @public_router.get("/share/{token}/card.png")
-def share_card_png(token: str, size: Literal["link", "story"] = "link"):
+def share_card_png(
+    token: str,
+    size: Literal["link", "story"] = "link",
+    lang: str | None = None,
+):
     found = resolve_snapshot(token)
     if not found:
         raise ApiError(404, "share_not_found", "Share not found.")
+    # ?lang= (additive) wins, else the share's own locale, else English; an
+    # unknown or regional code ("es-MX") falls back rather than failing.
+    wanted = (lang or "").split("-")[0].lower() or (
+        (found[0].get("options") or {}).get("locale")
+    )
     try:
-        png = share_card.get_card(token, found[1], size)
+        png = share_card.get_card(
+            token, found[1], size, share_card_i18n.norm_lang(wanted)
+        )
     except share_card.RenderBusy:
         raise ApiError(503, "card_busy", "Card rendering is busy; retry shortly.")
     return Response(

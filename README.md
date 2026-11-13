@@ -248,6 +248,7 @@ The docs live on the **[docs site](https://rupakc.github.io/travel-planner/)** a
 
 ## Data credits
 
+- Share cards embed subsets of **Noto Sans** (Latin, Devanagari, Bengali, SC), (c) The Noto Project Authors, licensed under the [SIL Open Font License 1.1](backend/app/assets/fonts/OFL.txt).
 - Contains data from **GeoNames** ([geonames.org](https://www.geonames.org/)), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The data has been modified (filtered, folded, scored and linked to airports), and GeoNames does not endorse these changes.
 - Airport data from **[OurAirports](https://ourairports.com/data/)**, public domain.
 

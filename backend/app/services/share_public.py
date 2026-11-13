@@ -323,6 +323,7 @@ def savings_card(summary: dict) -> dict:
             if total > 0
             else "Watching prices for my next trip"
         ),
+        "hl": {"total_usd": total},
         "stats": [
             s
             for s in (
@@ -352,6 +353,12 @@ def quiz_card(session: dict) -> dict:
         label = QUIZ_PACK_LABELS.get(session.get("pack"))
         label = f"{label} quiz" if label else "Quiz"
     return {
+        "hl": {
+            "mode": session.get("mode"),
+            "pack": session.get("pack"),
+            "correct": correct,
+            "total": total,
+        },
         "headline": f"{label}: {correct}/{total}" if total else label,
         "stats": [{"key": "correct", "count": correct}] if correct else [],
     }
@@ -372,7 +379,11 @@ def status_card(plan: dict, today: date) -> dict:
         head = f"On a trip in {place}"
     else:
         head = "On a trip"
-    return {"headline": clip_headline(head), "destination": place}
+    return {
+        "headline": clip_headline(head),
+        "destination": place,
+        "hl": {"day": day or None},
+    }
 
 
 def build_snapshot(
@@ -399,16 +410,27 @@ def build_snapshot(
         "origin": None,
         "owner_name": owner_name if opts["show_name"] else None,
         "stats": [],
+        # Structured headline inputs so the card can re-word the headline in
+        # another language (never shown by the API; the card renderer only).
+        "hl": {},
     }
     if kind == "savings":
         card = savings_card(savings or {})
         snap.update(
-            title="Price alerts", headline=card["headline"], stats=card["stats"]
+            title="Price alerts",
+            headline=card["headline"],
+            stats=card["stats"],
+            hl=card["hl"],
         )
         return snap
     if kind == "quiz":
         card = quiz_card(quiz or {})
-        snap.update(title="Quiz", headline=card["headline"], stats=card["stats"])
+        snap.update(
+            title="Quiz",
+            headline=card["headline"],
+            stats=card["stats"],
+            hl=card["hl"],
+        )
         return snap
     if kind == "status":
         card = status_card(plan or {}, today or datetime.now(UTC).date())
@@ -416,6 +438,7 @@ def build_snapshot(
             title="Trip status",
             headline=card["headline"],
             destination=card["destination"],
+            hl=card["hl"],
         )
         return snap
     plan = plan or {}

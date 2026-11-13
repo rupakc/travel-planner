@@ -6,6 +6,13 @@ FROM ${PYTHON_BASE}
 
 WORKDIR /app
 
+# libfribidi0 (~70 KB) lets Pillow's bundled libraqm shape Devanagari and
+# Bengali on share cards (HarfBuzz and raqm ship inside the Pillow wheel).
+# Without it hi/bn cards fall back to the English card (share_card.py).
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libfribidi0 \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install deps first for layer caching
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
