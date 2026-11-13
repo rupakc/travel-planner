@@ -153,7 +153,12 @@ EVENTS: dict[str, dict[str, str]] = {
         "result": _enum("ok", "error", "unsupported", "quota"),
         "kb": "int",
     },
-    "outbox_flush": {"sent": "int", "failed": "int", "dropped": "int", "rejected": "int"},
+    "outbox_flush": {
+        "sent": "int",
+        "failed": "int",
+        "dropped": "int",
+        "rejected": "int",
+    },
     "expense_action": {
         "action": _enum("add", "edit", "delete"),
         "category": _enum(
