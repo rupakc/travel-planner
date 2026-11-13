@@ -77,7 +77,7 @@ Legend: ✅ shipped · ⏳ Phase N planned · — not offered · ? not stated in
 | Today view and daily check-in | ✅ | ✅ | ⏳ 7 |
 | Expenses with currency converter | ✅ | ✅ | ⏳ 7 |
 | Journal and place ratings and visits | ✅ | ✅ | ⏳ 7 |
-| Recap, passport stamps and countries visited | ✅ (web also draws a scratch map: visited countries filled on a world map, lazy chunk) | ✅ (the scratch map is a country list; passport stamps are not built) | ⏳ 7 |
+| Recap, passport stamps and countries visited | ✅ (web also draws a scratch map: visited countries filled on a world map, lazy chunk) | ✅ (offline drawn scratch map from a bundled Natural Earth asset, passport stamp animation on a new country) | ⏳ 7 |
 | Explore, Play and You tabs | ✅ | ✅ | ⏳ 7 |
 
 ## Social and Play
@@ -113,7 +113,7 @@ Both are behind `SOCIAL_ENABLED` / `PLAY_ENABLED` (`features.social`, `features.
 | Alert e-mail | ✅ localised to the account language (server-side `data.i18n`) | ? | ⏳ Phase 7 |
 | Push notifications | — (a toast, or a native notification while the tab is open) | ✅ FCM, per-category channels (inert until configured) | ⏳ Phase 6 |
 | Price story (chart, lowest, typical range, verdict) | ✅ (behind `PRICE_ALERTS_V2_ENABLED`) | ✅ (needs `features.alerts_api` / `price_alerts_v2`) | ⏳ Phase 7 |
-| Drop moment, savings tally and Deal-hunter XP | ✅ (same flag; savings card follows the light/dark theme, drop-moment badge) | ✅ ("caught a drop", never "saved"); the Deal-hunter track, bucket ring and passport stamp are not built | ⏳ Phase 7 |
+| Drop moment, savings tally and Deal-hunter XP | ✅ (same flag; savings card follows the light/dark theme, drop-moment badge) | ✅ ("caught a drop", never "saved"); Deal-hunter progress track, Trips-hub bucket ring and confetti on drops and badges (reduced motion and `hide_game` respected) | ⏳ Phase 7 |
 | One-tap watch and suggestions | ✅ (same flag; needs `SERPAPI_KEY`) | ✅ (needs `live_prices`; Results cards only so far) | ⏳ Phase 7 |
 | Weekly digest, quiet hours, caps and grouping (preferences) | ✅ (same flag; digest text localised) | ✅ | ⏳ Phase 7 |
 | Local trip reminders | — | ✅ | ⏳ Phase 7 |
@@ -122,10 +122,10 @@ Both are behind `SOCIAL_ENABLED` / `PLAY_ENABLED` (`features.social`, `features.
 | Trip-phase pushes (T-30, T-7, T-1, morning brief) | — | ✅ taps open the trip Today tab; the morning-brief switch now also turns the local trip switch on | ⏳ Phase 6 |
 | "Search the web now" on a watch | ✅ | ✅ | ⏳ Phase 7 |
 | Near me | ✅ | ✅ (a background geofence arrival notification is not built, by ruling) |
-| Weather-change push | — | — (not built) | ⏳ Phase 7 |
+| Weather-change push (Open-Meteo, outdoor slots today, `WEATHER_PUSH_ENABLED` default on, `weather` category switch) | ✅ (notification list shows the Open-Meteo credit) | ✅ (push, `weather` switch, credit) | ⏳ Phase 7 |
 
 ## Known gaps
 
-- Android: background geofence arrival notification (not built, by ruling), weather-change push (not built on any client), Deal-hunter track, bucket ring and passport stamp, scratch map is a country list.
+- Android: background geofence arrival notification (not built, by ruling), (weather push, Deal-hunter track, bucket ring, passport stamp and drawn scratch map are now built.)
 - Android: one-tap watch on a saved plan or chat (when live prices and Alerts v2 are on), a dismissible watch offer right after a plan is saved, and Recap "Where next" (AI picks from `/api/discover`, on tap, seeded by the Taste Graph server-side) shipped in #121.
 - Android: follows, comments, head-to-head and the weekly challenge remain Phase 8.
