@@ -541,6 +541,9 @@ async def _loop(interval: int) -> None:
                     t = datetime.now(UTC)
                     await asyncio.to_thread(trip_pushes.run_due, t)
                     await asyncio.to_thread(trip_pushes.prune_log, t)
+                    from . import quiz_pushes
+
+                    await asyncio.to_thread(quiz_pushes.run_due, t)
             except asyncio.CancelledError:
                 raise
             except Exception:  # noqa: BLE001

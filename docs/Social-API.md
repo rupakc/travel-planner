@@ -75,7 +75,7 @@ An **idea** is a snapshot of one of the caller's plans or recaps with a title an
 
 ## Notifications and sharing (additive)
 
-- Notification kinds: `social_idea_saved`, `social_new_follower` (category `social`), `quiz_h2h_invite`, `quiz_h2h_result` (category `quiz`); `GET /notifications/catalog` gains the matching `h2h_invite`, `h2h_result`, `idea_saved`, `new_follower` templates in the 7 languages. Quiz kinds are never sent to hidden-game users. Links: `/play/h2h/{id}` for the quiz kinds; `social_idea_saved` and `social_new_follower` both link to `/feed`.
+- Notification kinds: `social_idea_saved`, `social_new_follower` (category `social`), `social_idea_liked`, `social_idea_comment` (category `social`, one per idea per UTC day), `quiz_h2h_invite`, `quiz_h2h_result`, `quiz_daily` (category `quiz`); `GET /notifications/catalog` gains the matching `h2h_invite`, `h2h_result`, `idea_saved`, `new_follower` templates in the 7 languages. Quiz kinds are never sent to hidden-game users. Links: `/play/h2h/{id}` for the quiz kinds; `social_idea_saved` and `social_new_follower` both link to `/feed`.
 - `POST /shares` (Sharing API) gains `kind: "quiz"` (extra field `session_id`: the caller's finished quiz session; card = pack and score out of 5, never time or answers) and `kind: "status"` (extra field `plan_id`: an active trip of the caller; card = "Day N in Place", from server data). Both hide the sharer's name unless `show_name`.
 
 ## Telemetry

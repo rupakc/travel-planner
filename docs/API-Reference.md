@@ -57,7 +57,7 @@ Limits are configurable (see [Configuration](Configuration.md#rate-limits)). The
 | GET | `/api/admin/telemetry/summary` | admin | Daily users/sessions/events, top events and screens (`days` 1–90) |
 | POST | `/api/search` | optional | SSE streaming search (all agents) |
 | POST | `/api/search/sync` | optional | Same run, one JSON response (testing) |
-| POST | `/api/discover` | optional | 5 destination suggestions |
+| POST | `/api/discover` | optional | 5 destination suggestions; a signed-in caller's Taste Graph is applied (no request change) |
 | POST | `/api/compare/destination` | user | One-destination summary for Compare mode |
 | POST | `/api/import/extract` | user | Places from a link, pasted text or screenshots (plan from a link) |
 | POST | `/api/import/resolve-place` | user | Place one unplaced spot in a typed town |
