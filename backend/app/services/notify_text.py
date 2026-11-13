@@ -20,6 +20,9 @@ TEMPLATES: dict[str, dict[str, str]] = {
         "quiz_h2h_invite": "You have a new head-to-head quiz challenge.",
         "quiz_h2h_result": "Your head-to-head quiz result is in.",
         "quiz_daily": "Your daily travel quiz is ready.",
+        "weather_rain": "Rain is likely around {time}: take an umbrella for {slot}.",
+        "weather_heat": "It will feel very hot around {time}: plan {slot} with water and shade.",
+        "weather_cold": "It will be freezing around {time}: dress warmly for {slot}.",
     },
     "es": {
         "trip_t30": "Faltan {days} días para {destination}. Revisa tu visado y los requisitos de entrada.",
@@ -37,6 +40,9 @@ TEMPLATES: dict[str, dict[str, str]] = {
         "quiz_h2h_invite": "Tienes un nuevo desafío de quiz cara a cara.",
         "quiz_h2h_result": "Ya está el resultado de tu quiz cara a cara.",
         "quiz_daily": "Tu quiz de viajes diario está listo.",
+        "weather_rain": "Es probable que llueva sobre las {time}: lleva paraguas para {slot}.",
+        "weather_heat": "Hará mucho calor sobre las {time}: prepara agua y sombra para {slot}.",
+        "weather_cold": "Habrá heladas sobre las {time}: abrígate para {slot}.",
     },
     "de": {
         "trip_t30": "Noch {days} Tage bis {destination}. Prüf dein Visum und die Einreiseregeln.",
@@ -54,6 +60,9 @@ TEMPLATES: dict[str, dict[str, str]] = {
         "quiz_h2h_invite": "Du hast eine neue Quiz-Herausforderung im Duell.",
         "quiz_h2h_result": "Das Ergebnis deines Quiz-Duells ist da.",
         "quiz_daily": "Dein tägliches Reisequiz ist bereit.",
+        "weather_rain": "Gegen {time} ist Regen wahrscheinlich: nimm einen Regenschirm für {slot} mit.",
+        "weather_heat": "Gegen {time} wird es sehr heiß: plane {slot} mit Wasser und Schatten.",
+        "weather_cold": "Gegen {time} herrscht Frost: zieh dich für {slot} warm an.",
     },
     "fr": {
         "trip_t30": "Plus que {days} jours avant {destination}. Vérifiez votre visa et les règles d'entrée.",
@@ -71,6 +80,9 @@ TEMPLATES: dict[str, dict[str, str]] = {
         "quiz_h2h_invite": "Vous avez un nouveau défi quiz en duel.",
         "quiz_h2h_result": "Le résultat de votre duel quiz est arrivé.",
         "quiz_daily": "Votre quiz voyage du jour est prêt.",
+        "weather_rain": "De la pluie est probable vers {time} : prenez un parapluie pour {slot}.",
+        "weather_heat": "Il fera très chaud vers {time} : prévoyez eau et ombre pour {slot}.",
+        "weather_cold": "Il gèlera vers {time} : habillez-vous chaudement pour {slot}.",
     },
     "hi": {
         "trip_t30": "{destination} में अब {days} दिन बचे हैं। अपना वीज़ा और प्रवेश नियम जाँच लें।",
@@ -88,6 +100,9 @@ TEMPLATES: dict[str, dict[str, str]] = {
         "quiz_h2h_invite": "आपके लिए एक नई आमने-सामने क्विज़ चुनौती है।",
         "quiz_h2h_result": "आपके आमने-सामने क्विज़ का नतीजा आ गया है।",
         "quiz_daily": "आपका दैनिक यात्रा क्विज़ तैयार है।",
+        "weather_rain": "{time} के आसपास बारिश की संभावना है: {slot} के लिए छाता रखें।",
+        "weather_heat": "{time} के आसपास बहुत गर्मी होगी: {slot} के लिए पानी और छाया का इंतज़ाम रखें।",
+        "weather_cold": "{time} के आसपास पाला पड़ेगा: {slot} के लिए गर्म कपड़े पहनें।",
     },
     "zh": {
         "trip_t30": "距离 {destination} 还有 {days} 天。请检查签证和入境规定。",
@@ -105,6 +120,9 @@ TEMPLATES: dict[str, dict[str, str]] = {
         "quiz_h2h_invite": "你收到了新的一对一问答挑战。",
         "quiz_h2h_result": "你的一对一问答结果出来了。",
         "quiz_daily": "你的每日旅行问答已就绪。",
+        "weather_rain": "{time}前后可能下雨：{slot}请带伞。",
+        "weather_heat": "{time}前后会非常炎热：{slot}请备好水并注意遮阴。",
+        "weather_cold": "{time}前后气温在冰点以下：{slot}请穿暖和些。",
     },
     "bn": {
         "trip_t30": "{destination} যেতে আর {days} দিন বাকি। আপনার ভিসা ও প্রবেশের নিয়ম দেখে নিন।",
@@ -122,6 +140,9 @@ TEMPLATES: dict[str, dict[str, str]] = {
         "quiz_h2h_invite": "আপনার জন্য একটি নতুন মুখোমুখি কুইজ চ্যালেঞ্জ এসেছে।",
         "quiz_h2h_result": "আপনার মুখোমুখি কুইজের ফল এসেছে।",
         "quiz_daily": "আপনার দৈনিক ভ্রমণ কুইজ প্রস্তুত।",
+        "weather_rain": "{time} নাগাদ বৃষ্টির সম্ভাবনা: {slot}-এর জন্য ছাতা নিন।",
+        "weather_heat": "{time} নাগাদ প্রচণ্ড গরম পড়বে: {slot}-এর জন্য পানি ও ছায়ার ব্যবস্থা রাখুন।",
+        "weather_cold": "{time} নাগাদ তাপমাত্রা হিমাঙ্কের নিচে থাকবে: {slot}-এর জন্য গরম কাপড় পরুন।",
     },
 }
 

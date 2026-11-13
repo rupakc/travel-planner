@@ -33,7 +33,7 @@ All paths are under `/api`, with JSON in and out. Every route needs `Authorizati
 
 ### Text catalog
 
-`GET /notifications/catalog?locale=xx` answers `{"locale": "es", "templates": {"nearby_arrival": "Estás cerca de {place}: {item} está a {minutes} min", ...}}`: every template the server sends plus on-device ones, with `{name}` placeholders. `locale` is `en es de fr hi zh bn`; an unknown or missing locale answers `en` (the response's `locale` says which). Template keys: `trip_t30`, `trip_t7`, `trip_t1`, `trip_morning`, `nearby_arrival`. New keys may appear; apps ignore keys they do not know.
+`GET /notifications/catalog?locale=xx` answers `{"locale": "es", "templates": {"nearby_arrival": "Estás cerca de {place}: {item} está a {minutes} min", ...}}`: every template the server sends plus on-device ones, with `{name}` placeholders. `locale` is `en es de fr hi zh bn`; an unknown or missing locale answers `en` (the response's `locale` says which). Template keys: `trip_t30`, `trip_t7`, `trip_t1`, `trip_morning`, `nearby_arrival`, `weather_rain`, `weather_heat`, `weather_cold`. New keys may appear; apps ignore keys they do not know.
 
 ### Devices (additive)
 
@@ -41,7 +41,7 @@ All paths are under `/api`, with JSON in and out. Every route needs `Authorizati
 
 ### Notification rows and push data (additive)
 
-Rows from `/notifications` and the push `data` payload gain `category` and `plan_id` (`null` for price drops). New kinds: `trip_t30`, `trip_t7`, `trip_t1`, `trip_morning`; clients ignore a kind they do not know. `link` is a web path (`/trips/{id}`, `/trips/{id}/today`, `/feed`, `/feed/{idea_id}`, `/play/h2h/{match_id}`) that apps map to a screen.
+Rows from `/notifications` and the push `data` payload gain `category` and `plan_id` (`null` for price drops). New kinds: `trip_t30`, `trip_t7`, `trip_t1`, `trip_morning`, `weather_rain`, `weather_heat`, `weather_cold` (category `weather`, link `/trips/{id}/today`; sent only for a trip on the road with an outdoor itinerary slot today, once per slot and condition per day, when the server runs with `WEATHER_PUSH_ENABLED=true`; they follow the `weather` category switch, quiet hours and daily cap; template keys carry `{slot}` and `{time}`; weather data by Open-Meteo.com, CC BY 4.0); clients ignore a kind they do not know. `link` is a web path (`/trips/{id}`, `/trips/{id}/today`, `/feed`, `/feed/{idea_id}`, `/play/h2h/{match_id}`) that apps map to a screen.
 
 ### Delivery rules
 
