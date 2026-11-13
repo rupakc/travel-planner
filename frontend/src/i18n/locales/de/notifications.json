@@ -22,6 +22,14 @@
     "nearby": {
       "label": "In deiner Nähe",
       "hint": "Vorschläge auf diesem Gerät, wenn du in der Nähe von etwas Interessantem bist."
+    },
+    "social": {
+      "label": "Community",
+      "hint": "Likes, Kommentare, neue Follower und gespeicherte Ideen."
+    },
+    "quiz": {
+      "label": "Quiz",
+      "hint": "Einladungen und Ergebnisse von Duellen sowie eine Erinnerung an das tägliche Quiz."
     }
   },
   "quiet": {
