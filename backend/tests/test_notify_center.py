@@ -47,6 +47,29 @@ def test_cap_and_disabled():
     assert nc.decide("weather", off, "UTC", 0, now).reason == "disabled"
 
 
+def test_social_quiz_flood_never_blocks_trip_or_morning_brief():
+    now = utc(2026, 11, 12, 12, 0)
+    # two social/quiz pushes already sent: total 2, low 2
+    for cat in ("trip_reminders", "morning_brief", "weather", "nearby"):
+        assert nc.decide(cat, PREFS, "UTC", 2, now, 2).action == "send"
+    # even an absurd flood (counted total 9, all low) leaves trip pushes open
+    assert nc.decide("trip_reminders", PREFS, "UTC", 9, now, 9).action == "send"
+
+
+def test_low_priority_subcap_and_global_cap():
+    now = utc(2026, 11, 12, 12, 0)
+    assert nc.decide("social", PREFS, "UTC", 1, now, 1).action == "send"
+    assert nc.decide("social", PREFS, "UTC", 2, now, 2).reason == "cap"
+    assert nc.decide("quiz", PREFS, "UTC", 2, now, 2).reason == "cap"
+    # trip pushes used the global cap: social cannot exceed it
+    assert nc.decide("social", PREFS, "UTC", 3, now, 0).reason == "cap"
+    # trip pushes are still limited by their own count
+    assert nc.decide("trip_reminders", PREFS, "UTC", 5, now, 2).reason == "cap"
+    # tiny cap: sub-cap never exceeds the user's cap
+    one = {**PREFS, "daily_cap": 1}
+    assert nc.decide("quiz", one, "UTC", 1, now, 1).reason == "cap"
+
+
 # ── enqueue / flush ───────────────────────────────────────────────────────────
 
 

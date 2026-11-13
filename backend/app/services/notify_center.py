@@ -39,18 +39,36 @@ def _parse(s: str) -> datetime:
     return datetime.strptime(s, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=UTC)
 
 
+# Social and quiz pushes share a sub-cap so they can never crowd out trip
+# reminders, the morning brief and the like.
+LOW_PRIORITY = ("social", "quiz")
+LOW_PRIORITY_SUBCAP = 2
+
+
 def decide(
-    category: str, prefs: dict, tz: str | None, counts: int, now: datetime
+    category: str,
+    prefs: dict,
+    tz: str | None,
+    counts: int,
+    now: datetime,
+    low_counts: int = 0,
 ) -> Decision:
     """Pure. ``prefs`` = ``{"categories": {name: bool}, "daily_cap": int,
     "quiet_hours": {...}}``; ``counts`` = category pushes already sent in the
-    user's local day. No tz means no quiet hours."""
+    user's local day, of which ``low_counts`` were social/quiz. Other categories
+    count only the non-social/quiz pushes; social/quiz are held to
+    ``min(LOW_PRIORITY_SUBCAP, cap)`` combined and to the global total. No tz
+    means no quiet hours."""
     if not (prefs.get("categories") or {}).get(category, True):
         return Decision("drop", None, "disabled")
     until = alert_delivery.quiet_until(now, tz, prefs.get("quiet_hours") or {})
     if until:
         return Decision("hold", until, "quiet")
-    if counts >= int(prefs.get("daily_cap") or notify_settings.DEFAULT_CAP):
+    cap = int(prefs.get("daily_cap") or notify_settings.DEFAULT_CAP)
+    if category in LOW_PRIORITY:
+        if low_counts >= min(LOW_PRIORITY_SUBCAP, cap) or counts >= cap:
+            return Decision("drop", None, "cap")
+    elif counts - low_counts >= cap:
         return Decision("drop", None, "cap")
     return Decision("send", now, "now")
 
@@ -84,14 +102,27 @@ def _tz(user_id: str) -> str | None:
     return alert_delivery._user_tz(user_id)
 
 
-def _sent_today(user_id: str, now: datetime, tz: str | None) -> int:
+def _sent_split(user_id: str, now: datetime, tz: str | None) -> tuple[int, int]:
+    """(all pushes sent, of which social/quiz) in the user's local day."""
     start = _iso(alert_delivery._local_day_start(now, tz))
+    marks = ",".join("?" * len(LOW_PRIORITY))
     with get_connection() as conn:
-        return conn.execute(
-            "SELECT COUNT(*) FROM notify_log WHERE user_id = ? AND status = 'sent'"
+        r = conn.execute(
+            "SELECT COUNT(*), COALESCE(SUM(category IN (" + marks + ")), 0)"
+            " FROM notify_log WHERE user_id = ? AND status = 'sent'"
             " AND sent_at >= ?",
-            (user_id, start),
-        ).fetchone()[0]
+            (*LOW_PRIORITY, user_id, start),
+        ).fetchone()
+    return r[0], int(r[1])
+
+
+def _sent_today(user_id: str, now: datetime, tz: str | None) -> int:
+    return _sent_split(user_id, now, tz)[0]
+
+
+def _decide_for(user_id: str, category: str, tz: str | None, now: datetime):
+    total, low = _sent_split(user_id, now, tz)
+    return decide(category, _prefs(user_id), tz, total, now, low)
 
 
 def enqueue_category(
@@ -125,7 +156,7 @@ def enqueue_category(
         user_id, kind, title, body, row_data, now=now
     )
     tz = _tz(user_id)
-    d = decide(category, _prefs(user_id), tz, _sent_today(user_id, now, tz), now)
+    d = _decide_for(user_id, category, tz, now)
     status = "pending" if d.action != "drop" else "dropped"
     due = _iso(d.due_at) if d.due_at else None
     with get_connection() as conn:
@@ -202,7 +233,7 @@ async def _flush(now: datetime) -> int:
                 continue
             uid = it["user_id"]
             tz = _tz(uid)
-            d = decide(it["category"], _prefs(uid), tz, _sent_today(uid, now, tz), now)
+            d = _decide_for(uid, it["category"], tz, now)
             if d.action == "hold":
                 _rehold(it["id"], d.due_at)
                 continue
