@@ -47,6 +47,29 @@ def test_cap_and_disabled():
     assert nc.decide("weather", off, "UTC", 0, now).reason == "disabled"
 
 
+def test_social_quiz_flood_never_blocks_trip_or_morning_brief():
+    now = utc(2026, 11, 12, 12, 0)
+    # two social/quiz pushes already sent: total 2, low 2
+    for cat in ("trip_reminders", "morning_brief", "weather", "nearby"):
+        assert nc.decide(cat, PREFS, "UTC", 2, now, 2).action == "send"
+    # even an absurd flood (counted total 9, all low) leaves trip pushes open
+    assert nc.decide("trip_reminders", PREFS, "UTC", 9, now, 9).action == "send"
+
+
+def test_low_priority_subcap_and_global_cap():
+    now = utc(2026, 11, 12, 12, 0)
+    assert nc.decide("social", PREFS, "UTC", 1, now, 1).action == "send"
+    assert nc.decide("social", PREFS, "UTC", 2, now, 2).reason == "cap"
+    assert nc.decide("quiz", PREFS, "UTC", 2, now, 2).reason == "cap"
+    # trip pushes used the global cap: social cannot exceed it
+    assert nc.decide("social", PREFS, "UTC", 3, now, 0).reason == "cap"
+    # trip pushes are still limited by their own count
+    assert nc.decide("trip_reminders", PREFS, "UTC", 5, now, 2).reason == "cap"
+    # tiny cap: sub-cap never exceeds the user's cap
+    one = {**PREFS, "daily_cap": 1}
+    assert nc.decide("quiz", one, "UTC", 1, now, 1).reason == "cap"
+
+
 # ── enqueue / flush ───────────────────────────────────────────────────────────
 
 
@@ -244,3 +267,31 @@ def test_interrupted_sending_reset(user, sent):
             (user["id"],),
         ).fetchone()
     assert (r[0], r[1]) == ("dropped", "interrupted")
+
+
+def test_sent_split_counts_only_sent_today(user):
+    now = utc(2026, 11, 12, 12, 0)
+    rows = [
+        ("social", "sent", utc(2026, 11, 12, 9, 0)),
+        ("trip_reminders", "sent", utc(2026, 11, 12, 10, 0)),
+        ("quiz", "dropped", None),
+        ("trip_reminders", "pending", None),
+        ("quiz", "sent", utc(2026, 11, 11, 20, 0)),  # previous local day
+    ]
+    with get_connection() as conn:
+        for i, (cat, status, at) in enumerate(rows):
+            conn.execute(
+                "INSERT INTO notify_log (user_id, plan_id, kind, dedupe_key,"
+                " category, status, created_at, sent_at)"
+                " VALUES (?, 5, 'k', ?, ?, ?, ?, ?)",
+                (
+                    user["id"],
+                    f"split-{i}",
+                    cat,
+                    status,
+                    nc._iso(now),
+                    nc._iso(at) if at else None,
+                ),
+            )
+    assert nc._sent_split(user["id"], now, "UTC") == (2, 1)
+    assert nc._sent_today(user["id"], now, "UTC") == 2
