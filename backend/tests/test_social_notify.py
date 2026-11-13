@@ -187,3 +187,20 @@ def test_hide_community_suppresses_social_pushes(client):
     user_settings_db.patch_settings(b["id"], {"hide_community": True})
     client.put(f"/api/social/follow/{b['handle']}", headers=a["h"])
     assert _log(b, "social_new_follower") == []
+
+
+def test_idea_pushes_link_to_the_idea(client, monkeypatch):
+    from app.services import notify_center
+
+    seen = []
+    real = notify_center.enqueue_category
+
+    def spy(user_id, device, kind, category, key, title, body, data, now):
+        seen.append((kind, data))
+        return real(user_id, device, kind, category, key, title, body, data, now)
+
+    monkeypatch.setattr(notify_center, "enqueue_category", spy)
+    a, b = _mk(client), _mk(client)
+    i = _idea(client, a)
+    client.post(f"/api/social/ideas/{i}/save", headers=b["h"])
+    assert ("social_idea_saved", {"link": f"/feed/{i}"}) in seen

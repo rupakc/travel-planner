@@ -61,7 +61,7 @@ def idea_saved(author_id: str, saver_id: str, idea_id: int) -> None:
             IDEA_SAVED,
             "social",
             f"{IDEA_SAVED}:{author_id}:{saver_id}:{idea_id}",
-            "/feed",
+            f"/feed/{idea_id}",
             None,
         )
 
@@ -98,7 +98,7 @@ def _engagement(
         kind,
         "social",
         f"{kind}:{author_id}:{idea_id}:{now.date().isoformat()}",
-        "/feed",
+        f"/feed/{idea_id}",
         now,
     )
 
