@@ -106,7 +106,7 @@ def test_savings_quiz_status_headlines():
 def test_undrawable_place_is_dropped_not_tofu():
     snap = _snap()
     snap["destination"] = "Ελλάδα"  # Greek: not in any bundled subset
-    assert share_card.headline_for(snap, "es") == "Faltan 7 días"
+    assert share_card.headline_for(snap, "es") == "Viaje de 7 días"
     snap["owner_name"] = "Ελλάδα"
     img = _img(share_card.render(snap, "link", "es"))
     assert not _blank(img)

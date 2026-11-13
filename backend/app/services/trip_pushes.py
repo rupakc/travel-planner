@@ -125,7 +125,7 @@ def _tip(destination: str, idx: int) -> str | None:
     return t.get("title") if isinstance(t, dict) else None
 
 
-def _send(uid, plan, kind, category, key, body, link, now) -> bool:
+def _send(uid, plan, kind, category, key, body, link, now, extra=None) -> bool:
     r = notify_center.enqueue_category(
         uid,
         plan["id"],
@@ -134,7 +134,7 @@ def _send(uid, plan, kind, category, key, body, link, now) -> bool:
         key,
         "Voyager",
         body,
-        {"link": link},
+        {"link": link, **(extra or {})},
         now,
     )
     return r is not None

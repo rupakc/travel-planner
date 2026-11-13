@@ -99,6 +99,7 @@
   },
   "bell": {
     "unreadBadge": "अपठित",
+    "weatherCredit": "मौसम डेटा: Open-Meteo.com",
     "notifications": "सूचनाएँ",
     "notificationsUnread": "सूचनाएँ, {{n}} अपठित",
     "announce_one": "{{count}} अपठित कीमत अलर्ट",

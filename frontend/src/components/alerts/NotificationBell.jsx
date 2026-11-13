@@ -29,6 +29,9 @@ export function NotificationItem({ n, onOpen, now = new Date() }) {
         <span className="min-w-0 flex-1">
           <span className={`block text-sm leading-snug ${unread ? 'font-semibold text-slate-900' : 'text-slate-700'}`}>{keepDeltaTogether(n.title)}</span>
           <span className="mt-0.5 line-clamp-2 block text-xs text-slate-500">{n.body}</span>
+          {String(n.kind || '').startsWith('weather_') && (
+            <span className="mt-0.5 block text-[10px] text-slate-400" data-tid="alerts.weather-credit">{t('bell.weatherCredit')}</span>
+          )}
           <span className="mt-1 flex items-center gap-2 text-[11px]">
             <span className="text-slate-400">{agoLabel(n.created_at, now)}</span>
             <span className="font-medium text-sky-700">{actionText(action)}</span>

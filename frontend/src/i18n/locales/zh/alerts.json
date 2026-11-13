@@ -94,6 +94,7 @@
   },
   "bell": {
     "unreadBadge": "未读",
+    "weatherCredit": "天气数据来自 Open-Meteo.com",
     "notifications": "通知",
     "notificationsUnread": "通知，{{n}} 条未读",
     "announce_other": "{{count}} 条未读价格提醒",

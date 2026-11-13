@@ -849,7 +849,7 @@ When `FCM_SERVICE_ACCOUNT_FILE` is set (`/health` `push_configured`), every new 
 {"kind": "fare_drop", "notification_id": "42", "link": "/alerts?watch=7", "watch_id": "7"}
 ```
 
-`link` is the web deep link (`data.links.alerts` of the notification: `/alerts?watch=<id>` for fare watches, `/alerts?kind=<kind>&watch=<id>` for price watches); price watches add `watch_kind`. The notification itself is unchanged in `/api/notifications`. A deactivated user gets no pushes. A token is deleted only when FCM says it is dead (error code `UNREGISTERED`, or `INVALID_ARGUMENT` naming `message.token`); every other failure, including a bare `404` from a wrong Firebase project, keeps the token, is logged, and the notification stays in-app only.
+`link` is the web deep link (`data.links.alerts` of the notification: `/alerts?watch=<id>` for fare watches, `/alerts?kind=<kind>&watch=<id>` for price watches); price watches add `watch_kind`. Outbox-delivered pushes (price alerts 2.0) also carry `dedupe_key`, equal to `notification_id` (the id of the newest notification in a grouped push): stable across retries, so clients that already skip a seen `notification_id` need no change. Weather pushes (`weather_rain|heat|cold`) carry `valid_until` in the in-app notification data and are dropped if held past it. The notification itself is unchanged in `/api/notifications`. A deactivated user gets no pushes. A token is deleted only when FCM says it is dead (error code `UNREGISTERED`, or `INVALID_ARGUMENT` naming `message.token`); every other failure, including a bare `404` from a wrong Firebase project, keeps the token, is logged, and the notification stays in-app only.
 
 ### POST /api/nearby
 

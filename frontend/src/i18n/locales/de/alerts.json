@@ -99,6 +99,7 @@
   },
   "bell": {
     "unreadBadge": "Ungelesen",
+    "weatherCredit": "Wetterdaten von Open-Meteo.com",
     "notifications": "Benachrichtigungen",
     "notificationsUnread": "Benachrichtigungen, {{n}} ungelesen",
     "announce_one": "{{count}} ungelesener Preisalarm",

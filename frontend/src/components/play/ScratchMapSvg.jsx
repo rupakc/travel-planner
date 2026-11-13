@@ -26,8 +26,10 @@ export default function ScratchMapSvg({ countries = [] }) {
         className="h-auto w-full rounded-lg bg-slate-100">
         {shapes.map((s) => (
           <path key={s.code} d={s.d} data-tid={`play.map.${s.code}`}
-            onClick={() => setPicked(s.code)} onMouseEnter={() => setPicked(s.code)}
-            className={`${visited.has(s.code) ? 'fill-teal-500' : 'fill-slate-300'} stroke-white`}
+            role="button" tabIndex={0} aria-label={`${regionName(s.code, lang)}${visited.has(s.code) ? ' ✓' : ''}`}
+            onClick={() => setPicked(s.code)} onMouseEnter={() => setPicked(s.code)} onFocus={() => setPicked(s.code)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setPicked(s.code) } }}
+            className={`${visited.has(s.code) ? 'fill-teal-500' : 'fill-slate-300'} stroke-white focus:outline-none focus-visible:stroke-sky-600 focus-visible:[stroke-width:2.5px]`}
             strokeWidth="0.6" vectorEffect="non-scaling-stroke" />
         ))}
       </svg>

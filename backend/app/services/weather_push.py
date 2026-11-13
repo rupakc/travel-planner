@@ -30,6 +30,7 @@ RAIN_PROB_PCT = 60.0
 RAIN_MM = 1.0
 HEAT_C = 35.0
 COLD_C = 0.0
+PASS_MAX_CALLS = 30  # forecast calls per pass
 LOOKAHEAD_H = 3  # alert for slots starting within this many hours
 _HOURS = {"morning": 9, "afternoon": 14, "evening": 19}  # night: no outdoor alert
 _OUTDOOR = re.compile(
@@ -139,6 +140,22 @@ def _slot_name(slot: dict) -> str:
     return (trip_pushes._slot_text(slot) or "")[:60]
 
 
+def _slot_minute(slot: dict) -> int | None:
+    """Minute of the destination-local day the slot starts."""
+    st = slot.get("start_time")
+    if isinstance(st, str) and re.match(r"^([01]\d|2[0-3]):[0-5]\d", st):
+        return int(st[:2]) * 60 + int(st[3:5])
+    h = slot_hour(slot)
+    return None if h is None else h * 60
+
+
+def _on_road(plan, start, end, day) -> int | None:
+    """The itinerary day index when the trip is on the road on ``day``."""
+    if effective_phase(start, end, plan.get("phase"), day, False) != "on_the_road":
+        return None
+    return day_index(start, end, day) or 0
+
+
 def _plan_alerts(plan, now, ctx, fetch) -> int:
     uid = plan["user_id"]
     u = ctx.setdefault(uid, {})
@@ -149,22 +166,23 @@ def _plan_alerts(plan, now, ctx, fetch) -> int:
         u["locale"] = notify_center.user_locale(uid)
     if not u["on"]:
         return 0
-    today = now.astimezone(trip_pushes._zone(u["tz"])).date()
     start, end = trip_dates(plan)
-    if (
-        start is None
-        or effective_phase(start, end, plan.get("phase"), today, False) != "on_the_road"
-    ):
+    if start is None:
         return 0
-    idx = day_index(start, end, today)
-    slots = [
-        s
-        for s in _day_slots(plan.get("selections"), idx or 0)
-        if is_outdoor(s) and slot_hour(s) is not None
-    ]
-    if not slots:
+    # The account clock may sit on another date than the destination's, so
+    # find a provisional day (to pick the city), fetch the forecast, then
+    # redo the day from the destination-local date.
+    acct = now.astimezone(trip_pushes._zone(u["tz"])).date()
+    prov = None
+    for delta in (0, 1, -1):
+        d0 = acct + timedelta(days=delta)
+        idx0 = _on_road(plan, start, end, d0)
+        if idx0 is not None:
+            prov = idx0
+            break
+    if prov is None:
         return 0
-    city = city_for_day(plan.get("search_data") or {}, start, end, idx)
+    city = city_for_day(plan.get("search_data") or {}, start, end, prov)
     xy = _coords(city) if city else None
     if not xy:
         return 0
@@ -172,11 +190,22 @@ def _plan_alerts(plan, now, ctx, fetch) -> int:
     if fc is None:
         return 0
     dest_now = now + timedelta(seconds=fc.utc_offset_s)
-    day = dest_now.date().isoformat()
+    dest_day = dest_now.date()
+    idx = _on_road(plan, start, end, dest_day)
+    if idx is None:
+        return 0
+    slots = [
+        s
+        for s in _day_slots(plan.get("selections"), idx)
+        if is_outdoor(s) and slot_hour(s) is not None
+    ]
+    day = dest_day.isoformat()
+    now_min = dest_now.hour * 60 + dest_now.minute
     sent = 0
     for s in slots:
+        m = _slot_minute(s)
         h = slot_hour(s)
-        if not dest_now.hour <= h <= dest_now.hour + LOOKAHEAD_H:
+        if not now_min < m <= now_min + LOOKAHEAD_H * 60:  # not yet started
             continue
         cond = evaluate(fc, day, h)
         if not cond:
@@ -184,28 +213,50 @@ def _plan_alerts(plan, now, ctx, fetch) -> int:
         name = _slot_name(s)
         kind = f"weather_{cond}"
         body = notify_text.render(
-            kind, u["locale"], slot=name or "", time=f"{h:02d}:00"
+            kind if name else f"{kind}_generic",
+            u["locale"],
+            slot=name,
+            time=f"{h:02d}:00",
         )
         key = f"weather:{uid}:{plan['id']}:{day}:{h}:{name.lower()}:{cond}"
+        slot_start = (
+            datetime.combine(dest_day, datetime.min.time(), tzinfo=UTC)
+            + timedelta(minutes=m)
+            - timedelta(seconds=fc.utc_offset_s)
+        )
         sent += trip_pushes._send(
-            uid, plan, kind, "weather", key, body, f"/trips/{plan['id']}/today", now
+            uid,
+            plan,
+            kind,
+            "weather",
+            key,
+            body,
+            f"/trips/{plan['id']}/today",
+            now,
+            {"valid_until": slot_start.strftime("%Y-%m-%dT%H:%M:%SZ")},
         )
     return sent
 
 
-def run_due(now: datetime, client: WeatherClient | None = None) -> int:
+def run_due(
+    now: datetime, client: WeatherClient | None = None, max_calls: int | None = None
+) -> int:
     """Enqueue due weather pushes; returns how many. One failing plan never
     stops the pass, and at most one forecast call is made per place."""
     now = now.astimezone(UTC)
     client = client or _get_client()
     memo: dict[tuple, Forecast | None] = {}
+    cap = PASS_MAX_CALLS if max_calls is None else max_calls
+    made = 0
 
     def fetch(xy):
+        nonlocal made
         key = (round(xy[0], 1), round(xy[1], 1))
         if key not in memo:
-            if not _budget_ok():
+            if made >= cap or not _budget_ok():
                 logger.warning("weather push hourly call budget reached")
                 return None
+            made += 1
             _calls.append(time_mod.monotonic())
             memo[key] = client.forecast(*xy)
         return memo[key]
