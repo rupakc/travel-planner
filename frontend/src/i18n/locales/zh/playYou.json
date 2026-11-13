@@ -6,7 +6,10 @@
     "title": "到访过的国家",
     "empty": "在旅行中签到或完成回顾，即可添加你的第一个国家。",
     "count_other": "已到访 {{count}} 个国家",
-    "countOfGoal_other": "已到访 {{count}} / {{goal}} 个国家"
+    "countOfGoal_other": "已到访 {{count}} / {{goal}} 个国家",
+    "mapLabel": "世界地图，已到访 {{count}} 个（已高亮）",
+    "mapHint": "点按国家即可查看其名称。",
+    "mapLoading": "正在加载地图…"
   },
   "continents": {
     "title_other": "大洲（{{count}}）",

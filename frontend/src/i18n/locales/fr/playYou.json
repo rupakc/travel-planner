@@ -10,7 +10,10 @@
     "countOfGoal_one": "{{count}} pays visité sur {{goal}}",
     "countOfGoal_other": "{{count}} pays visités sur {{goal}}",
     "count_many": "{{count}} pays visités",
-    "countOfGoal_many": "{{count}} pays visités sur {{goal}}"
+    "countOfGoal_many": "{{count}} pays visités sur {{goal}}",
+    "mapLabel": "Carte du monde, {{count}} visités (en surbrillance)",
+    "mapHint": "Touchez un pays pour voir son nom.",
+    "mapLoading": "Chargement de la carte…"
   },
   "continents": {
     "title_one": "Continents ({{count}})",

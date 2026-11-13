@@ -8,7 +8,10 @@
     "count_one": "{{count}} देश देखा गया",
     "count_other": "{{count}} देश देखे गए",
     "countOfGoal_one": "{{goal}} में से {{count}} देश देखा गया",
-    "countOfGoal_other": "{{goal}} में से {{count}} देश देखे गए"
+    "countOfGoal_other": "{{goal}} में से {{count}} देश देखे गए",
+    "mapLabel": "विश्व मानचित्र, {{count}} देखे गए (हाइलाइट किए गए)",
+    "mapHint": "किसी देश का नाम देखने के लिए उस पर टैप करें।",
+    "mapLoading": "मानचित्र लोड हो रहा है…"
   },
   "continents": {
     "title_one": "महाद्वीप ({{count}})",
