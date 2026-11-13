@@ -1974,6 +1974,16 @@
 <td>How often the delivery loop sends held (quiet-hours, grouped) pushes and emails.</td>
 </tr>
 <tr>
+<td><code>ALERT_OUTBOX_MAX_ATTEMPTS</code></td>
+<td><code>5</code></td>
+<td>Sends tried per held alert (claim, send, then ack) before it is dropped with a log line; failures retry with backoff.</td>
+</tr>
+<tr>
+<td><code>ALERT_OUTBOX_LEASE_S</code></td>
+<td><code>300</code></td>
+<td>How long a claimed alert is leased; after a crash it is redelivered once the lease expires.</td>
+</tr>
+<tr>
 <td><code>ALERT_ADVICE_TTL_HOURS</code></td>
 <td><code>24</code></td>
 <td>How long an AI price tip for a flight watch is cached.</td>
