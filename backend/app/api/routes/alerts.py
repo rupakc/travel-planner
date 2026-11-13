@@ -230,8 +230,6 @@ def _require_room(user: dict) -> None:
 def quick_watch(body: QuickWatchBody, user: dict = Depends(get_current_user)):
     """One-tap watch: a pending row, no live look (the scheduler makes the
     first one, which is the baseline and never alerts)."""
-    if not settings.price_alerts_v2_enabled:
-        raise ApiError(404, "alerts_v2_off", "Price alerts 2.0 is switched off.")
     if not settings.serpapi_key:
         raise ApiError(
             503,
