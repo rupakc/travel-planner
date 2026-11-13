@@ -202,6 +202,20 @@ def sent_today(user_id: str, kind: str, day_start_utc: str, channel: str) -> int
         ).fetchone()[0]
 
 
+def prune(cutoff_iso: str) -> int:
+    """Drop outbox and digest rows older than ``cutoff_iso`` (same retention
+    as the notifications they point at); returns the rows removed."""
+    with get_connection() as conn:
+        a = conn.execute(
+            "DELETE FROM alert_outbox WHERE due_at < ?", (cutoff_iso,)
+        ).rowcount
+        b = conn.execute(
+            "DELETE FROM alert_digests WHERE sent_at IS NOT NULL AND sent_at < ?",
+            (cutoff_iso,),
+        ).rowcount
+    return a + b
+
+
 # ── Digests ───────────────────────────────────────────────────────────────────
 
 
