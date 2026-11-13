@@ -23,7 +23,9 @@ from jwt import PyJWTError
 
 from ..core.config import settings
 from ..db import fare_watch_db, notifications_db, price_watch_db
-from .fare_watch import date_range, route_label, travellers, usd
+from . import alert_text
+from .alert_text import DR, S
+from .fare_watch import route_label, usd
 from .price_watch import format_price
 
 logger = logging.getLogger(__name__)
@@ -80,7 +82,9 @@ def _url(path: str) -> str:
     return settings.app_base_url.rstrip("/") + path
 
 
-def _facts(note: dict, watch: dict, history: list[dict]) -> dict:
+def _facts(
+    note: dict, watch: dict, history: list[dict], locale: str | None = None
+) -> dict:
     data = note["data"]
     cheaper = note["kind"] == "fare_cheaper_date"
     dep = data["cheapest_departure_date"] if cheaper else watch["departure_date"]
@@ -93,8 +97,8 @@ def _facts(note: dict, watch: dict, history: list[dict]) -> dict:
     links = data.get("links") or {}
     return {
         "route": route_label(watch),
-        "dates": date_range(dep, ret),
-        "who": travellers(watch["num_travelers"]),
+        "dates": alert_text.render(DR(dep, ret), locale),
+        "who": alert_text.render(S("f_trav", n=watch["num_travelers"]), locale),
         "old": usd(old),
         "new": usd(new),
         "delta": f"−{usd(old - new)}" if new < old else "",
@@ -108,40 +112,44 @@ def _facts(note: dict, watch: dict, history: list[dict]) -> dict:
     }
 
 
-def _text(note: dict, f: dict) -> str:
+def _text(note: dict, f: dict, locale: str | None = None) -> str:
+    t = alert_text.t
+    title, body = alert_text.localise(note, locale)
     lines = [
-        note["title"],
+        title,
         "",
-        note["body"],
+        body,
         "",
         f"{f['route']} · {f['dates']} · {f['who']}",
-        f"Price: {f['old']} → {f['new']}" + (f" ({f['delta']})" if f["delta"] else ""),
-        f"Lowest seen: {f['lowest']}",
+        t("e_price_line", locale, old=f["old"], new=f["new"])
+        + (f" ({f['delta']})" if f["delta"] else ""),
+        t("e_lowest_line", locale, p=f["lowest"]),
     ]
     if f["spark"]:
-        lines.append(f"Recent checks: {f['spark']}")
+        lines.append(t("e_recent_line", locale, s=f["spark"]))
     lines += [
         "",
-        f"See flights: {f['see']}",
-        f"Re-plan with this fare: {f['replan']}",
+        t("e_label_line", locale, label=t("e_see_flights", locale), url=f["see"]),
+        t("e_label_line", locale, label=t("e_replan", locale), url=f["replan"]),
         "",
-        "Fares change fast — book soon if this one works for you.",
+        t("e_fares_fast", locale),
         "",
-        f"Stop emails for this watch: {f['unsubscribe']}",
+        t("e_stop_line", locale, url=f["unsubscribe"]),
     ]
     return "\n".join(lines) + "\n"
 
 
-def _html(note: dict, f: dict) -> str:
+def _html(note: dict, f: dict, locale: str | None = None) -> str:
+    t = alert_text.t
     e = {k: html.escape(v) for k, v in f.items()}
-    title, body = html.escape(note["title"]), html.escape(note["body"])
+    title, body = (html.escape(x) for x in alert_text.localise(note, locale))
     delta = (
         f'<span style="color:#047857;font-weight:600;"> {e["delta"]}</span>'
         if f["delta"]
         else ""
     )
     spark = (
-        f'<p style="margin:12px 0 0;font-size:13px;color:#64748b;">Recent checks '
+        f'<p style="margin:12px 0 0;font-size:13px;color:#64748b;">{html.escape(t("e_recent", locale))} '
         f'<span style="letter-spacing:1px;color:#0284c7;">{e["spark"]}</span></p>'
         if f["spark"]
         else ""
@@ -154,21 +162,21 @@ def _html(note: dict, f: dict) -> str:
 <html><body style="margin:0;padding:24px;background:#f0f9ff;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#0f172a;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;margin:0 auto;background:#ffffff;border-radius:16px;border:1px solid #e2e8f0;">
 <tr><td style="padding:24px 28px;">
-<p style="margin:0 0 4px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#0d9488;font-weight:700;">Fare watch</p>
+<p style="margin:0 0 4px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#0d9488;font-weight:700;">{html.escape(t("e_fare_eyebrow", locale))}</p>
 <h1 style="margin:0 0 8px;font-size:20px;line-height:1.3;">{title}</h1>
 <p style="margin:0 0 16px;font-size:14px;color:#475569;">{body}</p>
 <p style="margin:0;font-size:13px;color:#64748b;">{e["route"]} · {e["dates"]} · {e["who"]}</p>
 <p style="margin:8px 0 0;font-size:16px;"><span style="color:#94a3b8;text-decoration:line-through;">{e["old"]}</span> → <strong style="font-size:24px;">{e["new"]}</strong>{delta}</p>
-<p style="margin:6px 0 0;font-size:13px;color:#64748b;">Lowest seen: {e["lowest"]}</p>
+<p style="margin:6px 0 0;font-size:13px;color:#64748b;">{html.escape(t("e_lowest_line", locale, p=f["lowest"]))}</p>
 {spark}
 <p style="margin:20px 0 0;">
-<a href="{e["see"]}" style="{btn}background:#0284c7;color:#ffffff;">See flights</a>
+<a href="{e["see"]}" style="{btn}background:#0284c7;color:#ffffff;">{html.escape(t("e_see_flights", locale))}</a>
 &nbsp;
-<a href="{e["replan"]}" style="{btn}background:#ecfeff;color:#0f766e;border:1px solid #99f6e4;">Re-plan with this fare</a>
+<a href="{e["replan"]}" style="{btn}background:#ecfeff;color:#0f766e;border:1px solid #99f6e4;">{html.escape(t("e_replan", locale))}</a>
 </p>
-<p style="margin:20px 0 0;font-size:12px;color:#94a3b8;">Fares change fast — book soon if this one works for you.</p>
+<p style="margin:20px 0 0;font-size:12px;color:#94a3b8;">{html.escape(t("e_fares_fast", locale))}</p>
 </td></tr></table>
-<p style="max-width:520px;margin:12px auto 0;font-size:11px;color:#94a3b8;text-align:center;">You're getting this because you watch this fare. <a href="{e["unsubscribe"]}" style="color:#64748b;">Stop emails for this watch</a></p>
+<p style="max-width:520px;margin:12px auto 0;font-size:11px;color:#94a3b8;text-align:center;">{html.escape(t("e_why_fare", locale))} <a href="{e["unsubscribe"]}" style="color:#64748b;">{html.escape(t("e_stop", locale))}</a></p>
 </body></html>
 """
 
@@ -191,10 +199,16 @@ def _mail_domain() -> str:
     return urlparse(settings.app_base_url).hostname or "localhost"
 
 
-def build_message(note: dict, watch: dict, to_addr: str, history: list[dict]):
-    f = _facts(note, watch, history)
+def build_message(
+    note: dict,
+    watch: dict,
+    to_addr: str,
+    history: list[dict],
+    locale: str | None = None,
+):
+    f = _facts(note, watch, history, locale)
     msg = EmailMessage(policy=_POLICY)
-    msg["Subject"] = note["title"]
+    msg["Subject"] = alert_text.localise(note, locale)[0]
     msg["From"] = _sender()
     msg["To"] = to_addr
     msg["Date"] = formatdate(localtime=False, usegmt=True)
@@ -202,8 +216,8 @@ def build_message(note: dict, watch: dict, to_addr: str, history: list[dict]):
     # RFC 8058 one-click: mail clients POST "List-Unsubscribe=One-Click"
     msg["List-Unsubscribe"] = f"<{f['unsubscribe']}>"
     msg["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click"
-    msg.set_content(_text(note, f))
-    msg.add_alternative(_html(note, f), subtype="html")
+    msg.set_content(_text(note, f, locale))
+    msg.add_alternative(_html(note, f, locale), subtype="html")
     return msg
 
 
@@ -217,6 +231,12 @@ def send_message(msg: EmailMessage) -> None:
         if settings.smtp_username:
             smtp.login(settings.smtp_username, settings.smtp_password)
         smtp.send_message(msg)
+
+
+def _locale_of(user_id: str) -> str:
+    from . import notify_center
+
+    return notify_center.user_locale(user_id)
 
 
 async def deliver(watch: dict, note: dict, now: datetime) -> bool:
@@ -234,7 +254,11 @@ async def deliver(watch: dict, note: dict, now: datetime) -> bool:
         if not user or not user.get("email"):
             return False
         msg = build_message(
-            note, watch, user["email"], fare_watch_db.get_history(watch["id"])
+            note,
+            watch,
+            user["email"],
+            fare_watch_db.get_history(watch["id"]),
+            _locale_of(watch["user_id"]),
         )
         await asyncio.to_thread(send_message, msg)
         notifications_db.mark_emailed(note["id"], now=now)
@@ -255,17 +279,30 @@ PRICE_KIND_LABELS = {
     "activity": ("Activity price watch", "See activity"),
     "trip": ("Trip price watch", "See trip"),
 }
+_PRICE_LABEL_KEYS = {
+    "hotel": ("e_hotel_eyebrow", "e_see_hotel"),
+    "activity": ("e_activity_eyebrow", "e_see_activity"),
+    "trip": ("e_trip_eyebrow", "e_see_trip"),
+}
 _PRICE_ALERT_SUFFIXES = ("_drop", "_target")
 
 
-def _price_facts(note: dict, watch: dict, history: list[dict]) -> dict:
+def _price_facts(
+    note: dict, watch: dict, history: list[dict], locale: str | None = None
+) -> dict:
     data = note["data"]
     old, new = data["previous_price"], data["price"]
     lowest = min(
         [v for v in (watch.get("lowest_price"), new) if v is not None], default=new
     )
     links = data.get("links") or {}
-    eyebrow, see = PRICE_KIND_LABELS.get(watch["kind"], ("Price watch", "See details"))
+    eyebrow_key, see_key = _PRICE_LABEL_KEYS.get(
+        watch["kind"], ("e_price_eyebrow", "e_see_details")
+    )
+    eyebrow, see = (
+        alert_text.t(eyebrow_key, locale),
+        alert_text.t(see_key, locale),
+    )
     token = unsubscribe_token(watch["id"], PRICE_UNSUB_PURPOSE)
 
     def money(amount: float) -> str:
@@ -290,40 +327,44 @@ def _price_facts(note: dict, watch: dict, history: list[dict]) -> dict:
     }
 
 
-def _price_text(note: dict, f: dict) -> str:
+def _price_text(note: dict, f: dict, locale: str | None = None) -> str:
+    t = alert_text.t
+    title, body = alert_text.localise(note, locale)
     lines = [
-        note["title"],
+        title,
         "",
-        note["body"],
+        body,
         "",
         f["subject"],
-        f"Price: {f['old']} → {f['new']}" + (f" ({f['delta']})" if f["delta"] else ""),
-        f"Lowest seen: {f['lowest']}",
+        t("e_price_line", locale, old=f["old"], new=f["new"])
+        + (f" ({f['delta']})" if f["delta"] else ""),
+        t("e_lowest_line", locale, p=f["lowest"]),
     ]
     if f["spark"]:
-        lines.append(f"Recent checks: {f['spark']}")
-    lines += ["", f"{f['see_label']}: {f['see']}"]
+        lines.append(t("e_recent_line", locale, s=f["spark"]))
+    lines += ["", t("e_label_line", locale, label=f["see_label"], url=f["see"])]
     if f["book"]:
-        lines.append(f"Open the listing: {f['book']}")
+        lines.append(t("e_open_listing_line", locale, url=f["book"]))
     lines += [
         "",
-        "Prices change fast — book soon if this one works for you.",
+        t("e_prices_fast", locale),
         "",
-        f"Stop emails for this watch: {f['unsubscribe']}",
+        t("e_stop_line", locale, url=f["unsubscribe"]),
     ]
     return "\n".join(lines) + "\n"
 
 
-def _price_html(note: dict, f: dict) -> str:
+def _price_html(note: dict, f: dict, locale: str | None = None) -> str:
+    t = alert_text.t
     e = {k: html.escape(v) for k, v in f.items()}
-    title, body = html.escape(note["title"]), html.escape(note["body"])
+    title, body = (html.escape(x) for x in alert_text.localise(note, locale))
     delta = (
         f'<span style="color:#047857;font-weight:600;"> {e["delta"]}</span>'
         if f["delta"]
         else ""
     )
     spark = (
-        f'<p style="margin:12px 0 0;font-size:13px;color:#64748b;">Recent checks '
+        f'<p style="margin:12px 0 0;font-size:13px;color:#64748b;">{html.escape(t("e_recent", locale))} '
         f'<span style="letter-spacing:1px;color:#0284c7;">{e["spark"]}</span></p>'
         if f["spark"]
         else ""
@@ -334,7 +375,7 @@ def _price_html(note: dict, f: dict) -> str:
     )
     book = (
         f'&nbsp;<a href="{e["book"]}" style="{btn}background:#ecfeff;color:#0f766e;'
-        f'border:1px solid #99f6e4;">Open the listing</a>'
+        f'border:1px solid #99f6e4;">{html.escape(t("e_open_listing", locale))}</a>'
         if f["book"]
         else ""
     )
@@ -347,33 +388,39 @@ def _price_html(note: dict, f: dict) -> str:
 <p style="margin:0 0 16px;font-size:14px;color:#475569;">{body}</p>
 <p style="margin:0;font-size:13px;color:#64748b;">{e["subject"]}</p>
 <p style="margin:8px 0 0;font-size:16px;"><span style="color:#94a3b8;text-decoration:line-through;">{e["old"]}</span> → <strong style="font-size:24px;">{e["new"]}</strong>{delta}</p>
-<p style="margin:6px 0 0;font-size:13px;color:#64748b;">Lowest seen: {e["lowest"]}</p>
+<p style="margin:6px 0 0;font-size:13px;color:#64748b;">{html.escape(t("e_lowest_line", locale, p=f["lowest"]))}</p>
 {spark}
 <p style="margin:20px 0 0;">
 <a href="{e["see"]}" style="{btn}background:#0284c7;color:#ffffff;">{e["see_label"]}</a>
 {book}
 </p>
-<p style="margin:20px 0 0;font-size:12px;color:#94a3b8;">Prices change fast — book soon if this one works for you.</p>
+<p style="margin:20px 0 0;font-size:12px;color:#94a3b8;">{html.escape(t("e_prices_fast", locale))}</p>
 </td></tr></table>
-<p style="max-width:520px;margin:12px auto 0;font-size:11px;color:#94a3b8;text-align:center;">You're getting this because you watch this price. <a href="{e["unsubscribe"]}" style="color:#64748b;">Stop emails for this watch</a></p>
+<p style="max-width:520px;margin:12px auto 0;font-size:11px;color:#94a3b8;text-align:center;">{html.escape(t("e_why_price", locale))} <a href="{e["unsubscribe"]}" style="color:#64748b;">{html.escape(t("e_stop", locale))}</a></p>
 </body></html>
 """
 
 
-def build_price_message(note: dict, watch: dict, to_addr: str, history: list[dict]):
+def build_price_message(
+    note: dict,
+    watch: dict,
+    to_addr: str,
+    history: list[dict],
+    locale: str | None = None,
+):
     """A price-watch alert email (any kind; the wording comes from the
     notification, the eyebrow and button from PRICE_KIND_LABELS)."""
-    f = _price_facts(note, watch, history)
+    f = _price_facts(note, watch, history, locale)
     msg = EmailMessage(policy=_POLICY)
-    msg["Subject"] = note["title"]
+    msg["Subject"] = alert_text.localise(note, locale)[0]
     msg["From"] = _sender()
     msg["To"] = to_addr
     msg["Date"] = formatdate(localtime=False, usegmt=True)
     msg["Message-ID"] = make_msgid(domain=_mail_domain())
     msg["List-Unsubscribe"] = f"<{f['unsubscribe']}>"
     msg["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click"
-    msg.set_content(_price_text(note, f))
-    msg.add_alternative(_price_html(note, f), subtype="html")
+    msg.set_content(_price_text(note, f, locale))
+    msg.add_alternative(_price_html(note, f, locale), subtype="html")
     return msg
 
 
@@ -396,7 +443,11 @@ async def deliver_price(watch: dict, note: dict, now: datetime) -> bool:
         if not user or not user.get("email"):
             return False
         msg = build_price_message(
-            note, watch, user["email"], price_watch_db.get_history(watch["id"])
+            note,
+            watch,
+            user["email"],
+            price_watch_db.get_history(watch["id"]),
+            _locale_of(watch["user_id"]),
         )
         await asyncio.to_thread(send_message, msg)
         notifications_db.mark_emailed(note["id"], now=now)
@@ -450,7 +501,8 @@ def _money(amount, currency: str | None) -> str:
     return f"{currency or 'USD'} {amount:,.0f}"
 
 
-def _digest_lines(digest: dict) -> list[dict]:
+def _digest_lines(digest: dict, locale: str | None = None) -> list[dict]:
+    t = alert_text.t
     lines = []
     for w in digest.get("watches", []):
         latest = w.get("latest")  # observed prices only, never an estimate
@@ -459,11 +511,17 @@ def _digest_lines(digest: dict) -> list[dict]:
         lines.append(
             {
                 "title": w.get("title") or "",
-                "now": _money(latest, cur) if latest is not None else "no price yet",
+                "now": _money(latest, cur)
+                if latest is not None
+                else t("d_none", locale),
                 "change": (
                     ""
                     if not ch
-                    else f"{'down' if ch < 0 else 'up'} {_money(abs(ch), cur)} this week"
+                    else t(
+                        "d_down" if ch < 0 else "d_up",
+                        locale,
+                        amount=_money(abs(ch), cur),
+                    )
                 ),
                 "spark": sparkline(w.get("spark") or []),
             }
@@ -471,9 +529,14 @@ def _digest_lines(digest: dict) -> list[dict]:
     return lines
 
 
-def build_digest_message(user: dict, digest: dict) -> EmailMessage:
+def build_digest_message(
+    user: dict, digest: dict, locale: str | None = None
+) -> EmailMessage:
     """The weekly digest: text + HTML, one line per watch, observed prices only."""
-    lines = _digest_lines(digest)
+    t = alert_text.t
+    if locale is None:
+        locale = _locale_of(user["id"])
+    lines = _digest_lines(digest, locale)
     sav = digest.get("savings") or {}
     caught = sav.get("total_usd") or 0
     week = digest.get("week", "")
@@ -481,7 +544,8 @@ def build_digest_message(user: dict, digest: dict) -> EmailMessage:
         f"/api/alerts/digest/unsubscribe?token={digest_unsubscribe_token(user['id'])}"
     )
     see = _url("/alerts")
-    text = [f"Your weekly price digest ({week})", ""]
+    caught_s = f"${caught:,.0f}"
+    text = [t("d_subject", locale, week=week), ""]
     for ln in lines:
         text.append(
             f"- {ln['title']}: {ln['now']}"
@@ -489,11 +553,11 @@ def build_digest_message(user: dict, digest: dict) -> EmailMessage:
             + (f"  {ln['spark']}" if ln["spark"] else "")
         )
     if caught:
-        text += ["", f"Caught so far: ${caught:,.0f}"]
+        text += ["", t("d_caught_line", locale, amount=caught_s)]
     text += [
         "",
-        f"Open your alerts: {see}",
-        f"Stop the weekly digest: {unsub}",
+        t("d_open_line", locale, url=see),
+        t("d_stop_line", locale, url=unsub),
     ]
     rows = "".join(
         "<tr><td style='padding:6px 0'>"
@@ -507,16 +571,20 @@ def build_digest_message(user: dict, digest: dict) -> EmailMessage:
     body = (
         "<!doctype html><html><body style='font-family:system-ui,sans-serif;"
         "color:#0f172a;max-width:520px;margin:0 auto;padding:16px'>"
-        f"<h1 style='font-size:20px'>Your weekly price digest</h1>"
+        f"<h1 style='font-size:20px'>{html.escape(t('d_title', locale))}</h1>"
         f"<table style='width:100%;border-collapse:collapse'>{rows}</table>"
-        + (f"<p>Caught so far: <b>${caught:,.0f}</b></p>" if caught else "")
-        + f"<p><a href='{html.escape(see)}'>Open your alerts</a></p>"
+        + (
+            f"<p>{html.escape(t('d_caught', locale))}: <b>{caught_s}</b></p>"
+            if caught
+            else ""
+        )
+        + f"<p><a href='{html.escape(see)}'>{html.escape(t('d_open', locale))}</a></p>"
         f"<p style='color:#64748b;font-size:12px'>"
-        f"<a href='{html.escape(unsub)}'>Stop the weekly digest</a></p>"
+        f"<a href='{html.escape(unsub)}'>{html.escape(t('d_stop', locale))}</a></p>"
         "</body></html>"
     )
     msg = EmailMessage(policy=_POLICY)
-    msg["Subject"] = f"Your weekly price digest ({week})"
+    msg["Subject"] = t("d_subject", locale, week=week)
     msg["From"] = _sender()
     msg["To"] = user["email"]
     msg["Date"] = formatdate(localtime=False, usegmt=True)

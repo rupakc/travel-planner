@@ -20,6 +20,7 @@ from ..db import fare_watch_db, notifications_db
 from ..db.database import airport_city
 from ..schemas.request import TravelSearchRequest
 from . import alert_pipeline, alert_schedule, price_rules, push, serp_flights
+from .alert_text import DR, D, J, S, note_text
 from .serp_flights import SerpAPIError
 
 logger = logging.getLogger(__name__)
@@ -101,6 +102,10 @@ def date_range(dep: str, ret: str | None) -> str:
 
 def travellers(n: int) -> str:
     return f"total for {n} traveller{'s' if n != 1 else ''}"
+
+
+def _trav(n: int) -> dict:
+    return S("f_trav", n=n)
 
 
 def parse_ts(value: str) -> datetime:
@@ -281,6 +286,16 @@ def _compose(kind: str, watch: dict, check: FareCheck, ref: float) -> dict:
             f"{usd(c)} for {date_range(cdep, cret)} vs {usd(check.price)} for "
             f"your dates · {travellers(n)}."
         )
+        data["i18n"] = note_text(
+            S("f_cheaper_title", route=route, day=D(cdep), save=usd(save)),
+            S(
+                "f_cheaper_body",
+                cheap=usd(c),
+                dates=DR(cdep, cret),
+                sel=usd(check.price),
+                trav=_trav(n),
+            ),
+        )
         return {"kind": kind, "title": title, "body": body, "data": data}
 
     p = check.price
@@ -294,26 +309,39 @@ def _compose(kind: str, watch: dict, check: FareCheck, ref: float) -> dict:
     )
     when = f"For {date_range(dep, ret)} · {travellers(n)}."
     extras = []
+    x_extras: list = []
     if is_lowest:
         extras.append("The lowest we've seen since you started watching.")
+        x_extras.append(S("f_lowest"))
     google_low = "Google says this is a low price for this route."
     if kind == "fare_target":
         title = (
             f"{route} is now {usd(p)} — under your {usd(watch['target_price'])} target"
         )
+        x_title = S(
+            "f_target_title", route=route, p=usd(p), t=usd(watch["target_price"])
+        )
         if check.price_level == "low":
             extras.append(google_low)
+            x_extras.append(S("f_google_low"))
     elif kind == "fare_drop":
         title = f"{route} dropped to {usd(p)} (−{usd(ref - p)})"
+        x_title = S("f_drop_title", route=route, p=usd(p), d=usd(ref - p))
         if check.price_level == "low":
             extras.append(google_low)
+            x_extras.append(S("f_google_low"))
     else:  # fare_low_level
         title = f"{route}: {usd(p)} is a low price"
+        x_title = S("f_low_title", route=route, p=usd(p))
         extras = [
             "Google Flights rates this as low for the route — and it's the "
             "lowest we've seen since you started watching."
         ]
+        x_extras = [S("f_low_extra")]
     body = " ".join([when, *extras])
+    data["i18n"] = note_text(
+        x_title, J(S("f_when", dates=DR(dep, ret), trav=_trav(n)), *x_extras)
+    )
     return {"kind": kind, "title": title, "body": body, "data": data}
 
 
@@ -323,11 +351,22 @@ def _expired_note(watch: dict) -> dict:
     body = f"Departure day ({d.day} {d:%b}) has arrived, so we've stopped checking."
     if watch.get("lowest_price") is not None:
         body += f" The lowest fare we saw was {usd(watch['lowest_price'])}."
+    x_body = J(
+        S("f_expired_body", day=D(watch["departure_date"])),
+        S("f_expired_lowest", p=usd(watch["lowest_price"]))
+        if watch.get("lowest_price") is not None
+        else None,
+        sep="",
+    )
     return {
         "kind": "watch_expired",
         "title": f"Your {route} fare watch has ended",
         "body": body,
-        "data": {"watch_id": watch["id"], "route": route},
+        "data": {
+            "watch_id": watch["id"],
+            "route": route,
+            "i18n": note_text(S("f_expired_title", route=route), x_body),
+        },
     }
 
 
@@ -345,6 +384,7 @@ def _error_note(watch: dict) -> dict:
             "route": route,
             "action": "retry",
             "links": {"alerts": f"/alerts?watch={watch['id']}"},
+            "i18n": note_text(S("f_error_title", route=route), S("f_error_body")),
         },
     }
 

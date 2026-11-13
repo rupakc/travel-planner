@@ -1454,3 +1454,24 @@ def test_detail_money_matches_ui_rule(amount, currency, text):
 )
 def test_signed_moves_keep_small_cents(delta, text):
     assert trip._signed(delta) == text
+
+
+def test_trip_note_localises_and_english_spec_matches(stubs):
+    from app.services.alert_text import localise, render
+
+    created = _created_with_prices(stubs)
+    w = _watch(created)
+    obs = _obs_from(created, flight=542.0, hotel=356.0)
+    note = trip.SOURCE.compose("trip_drop", w, obs, created.baseline.price)
+    spec = note["data"]["i18n"]
+    assert render(spec["title"], "en") == note["title"]
+    assert render(spec["body"], "en") == note["body"]
+    for lang in ("es", "de", "fr", "hi", "zh", "bn"):
+        title, body = localise(note, lang)
+        assert title != note["title"] and body != note["body"]
+        assert "$112" in title and "$70" in title and "Lisbon" in title
+        assert "Estimates" not in body and "{" not in body
+    target = trip.SOURCE.compose(
+        "trip_target", {**w, "target_price": 900.0}, obs, created.baseline.price
+    )
+    assert render(target["data"]["i18n"]["title"], "en") == target["title"]

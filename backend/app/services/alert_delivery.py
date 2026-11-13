@@ -18,6 +18,7 @@ from ..core.errors import ApiError
 from ..db import alerts_db, fare_watch_db, price_watch_db
 from ..db.alerts_db import DEFAULT_PREFS
 from ..db.database import get_connection
+from . import alert_text
 
 logger = logging.getLogger(__name__)
 
@@ -400,7 +401,7 @@ def _is_legacy(item: dict) -> bool:
     return bool(note and note.get("kind") in LEGACY_NOTE_KINDS)
 
 
-def _push_payload(rows: list[dict]) -> tuple[str, str, dict]:
+def _push_payload(rows: list[dict], locale: str | None = None) -> tuple[str, str, dict]:
     last = rows[-1]
     if len(rows) == 1:
         extra = last.get("data") or {}
@@ -415,10 +416,11 @@ def _push_payload(rows: list[dict]) -> tuple[str, str, dict]:
         for key in ("watch_id", "watch_kind"):
             if extra.get(key) is not None:
                 data[key] = str(extra[key])
-        return last["title"], last["body"], data
-    body = "; ".join(r["title"] for r in rows[:3])
+        title, body = alert_text.localise(last, locale)
+        return title, body, data
+    body = "; ".join(alert_text.localise(r, locale)[0] for r in rows[:3])
     if len(rows) > 3:
-        body += f" and {len(rows) - 3} more"
+        body += alert_text.t("g_more", locale, k=len(rows) - 3)
     data = {
         "kind": last["kind"],
         "notification_id": str(last["id"]),
@@ -427,7 +429,7 @@ def _push_payload(rows: list[dict]) -> tuple[str, str, dict]:
         "plan_id": "",
         "group_count": str(len(rows)),
     }
-    return f"{len(rows)} prices dropped", body, data
+    return alert_text.t("g_title", locale, n=len(rows)), body, data
 
 
 async def _send_push(user_id: str, rows: list[dict]) -> None:
@@ -437,7 +439,10 @@ async def _send_push(user_id: str, rows: list[dict]) -> None:
     user = get_user_by_id(user_id)
     if not user or not user.get("is_active"):
         return
-    title, body, data = _push_payload(rows)
+    from . import notify_center
+
+    locale = await asyncio.to_thread(notify_center.user_locale, user_id)
+    title, body, data = _push_payload(rows, locale)
     await push.send_to_user(user["username"], title, body, data)
 
 

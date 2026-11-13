@@ -35,6 +35,7 @@ from datetime import date
 from ...db import plans_db, price_watch_db
 from ...db.database import airport_city
 from .. import fare_watch, hotel_prices
+from ..alert_text import DR, J, S, note_text
 from ..fare_watch import date_range
 from ..hotel_prices import HotelOffer, HotelPrice
 from ..price_watch import (
@@ -442,16 +443,32 @@ class HotelSource:
         rooms = int(subject.get("rooms") or 1)
         name, p = watch["title"], obs.price
         if kind == "hotel_target":
+            x_title = S(
+                "h_target_title", name=name, p=usd(p), t=usd(watch["target_price"])
+            )
             title = (
                 f"🏨 {name} is now {usd(p)} — below your "
                 f"{usd(watch['target_price'])} target"
             )
         else:
             title = f"🏨 {name} dropped to {usd(p)} for {date_range(ci, co)} (−{usd(ref - p)})"
+            x_title = S(
+                "h_drop_title", name=name, p=usd(p), dates=DR(ci, co), d=usd(ref - p)
+            )
         guests = _plural(adults, "guest") + (
             f" in {_plural(rooms, 'room')}" if rooms > 1 else ""
         )
         stay = f"{_plural(nights, 'night')}, {guests}"
+        x_guests = (
+            S(
+                "h_guests_rooms",
+                guests=S("u_guest", n=adults),
+                rooms=S("u_room", n=rooms),
+            )
+            if rooms > 1
+            else S("u_guest", n=adults)
+        )
+        x_body: list = [S("h_total", nights=S("u_night", n=nights), guests=x_guests)]
         nightly = obs.unit_price
         if (
             nightly is not None
@@ -464,17 +481,30 @@ class HotelSource:
         body = f"That's the total for {stay}"
         if nightly is not None and rooms > 1:
             per_room = f"{_plural(rooms, 'room')} × {usd(nightly / rooms)} a night"
+            x_body.append(
+                S(
+                    "h_nightly_rooms",
+                    nightly=usd(nightly),
+                    rooms=S("u_room", n=rooms),
+                    per=usd(nightly / rooms),
+                )
+            )
             body += f" ({usd(nightly)} a night: {per_room})"
         elif nightly is not None:
             body += f" ({usd(nightly)} a night)"
+            x_body.append(S("h_nightly", nightly=usd(nightly)))
         taxes = (obs.observed or {}).get("taxes_included")
         body += {
             True: " on Google Hotels, taxes and fees included.",
             False: " on Google Hotels, before taxes and fees.",
         }.get(taxes, " on Google Hotels.")
+        x_body.append(
+            S({True: "h_tail_incl", False: "h_tail_excl"}.get(taxes, "h_tail"))
+        )
         lowest = watch.get("lowest_price")
         if lowest is None or p < lowest:
             body += " The lowest we've seen since you started watching."
+            x_body.append(S("h_lowest"))
         return {
             "kind": kind,
             "title": title,
@@ -486,6 +516,7 @@ class HotelSource:
                 "nights": nights,
                 "adults": adults,
                 "rooms": rooms,
+                "i18n": note_text(x_title, J(*x_body, sep="")),
             },
         }
 
