@@ -235,3 +235,10 @@ async def test_pending_hotel_unavailable_freezes_estimate(client, src):
     # still waiting for a live match: the next look retries the create
     assert price_watch.is_pending(p)
     assert notifications_db.list_notifications(u["id"])["items"] == []
+
+
+def test_quick_watch_404_when_v2_off(client, monkeypatch):
+    monkeypatch.setattr(settings, "price_alerts_v2_enabled", False)
+    _, h = _user()
+    r = _post(client, h, _flight())
+    assert r.status_code == 404 and r.json()["error_code"] == "alerts_v2_off"
