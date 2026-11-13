@@ -267,3 +267,31 @@ def test_interrupted_sending_reset(user, sent):
             (user["id"],),
         ).fetchone()
     assert (r[0], r[1]) == ("dropped", "interrupted")
+
+
+def test_sent_split_counts_only_sent_today(user):
+    now = utc(2026, 11, 12, 12, 0)
+    rows = [
+        ("social", "sent", utc(2026, 11, 12, 9, 0)),
+        ("trip_reminders", "sent", utc(2026, 11, 12, 10, 0)),
+        ("quiz", "dropped", None),
+        ("trip_reminders", "pending", None),
+        ("quiz", "sent", utc(2026, 11, 11, 20, 0)),  # previous local day
+    ]
+    with get_connection() as conn:
+        for i, (cat, status, at) in enumerate(rows):
+            conn.execute(
+                "INSERT INTO notify_log (user_id, plan_id, kind, dedupe_key,"
+                " category, status, created_at, sent_at)"
+                " VALUES (?, 5, 'k', ?, ?, ?, ?, ?)",
+                (
+                    user["id"],
+                    f"split-{i}",
+                    cat,
+                    status,
+                    nc._iso(now),
+                    nc._iso(at) if at else None,
+                ),
+            )
+    assert nc._sent_split(user["id"], now, "UTC") == (2, 1)
+    assert nc._sent_today(user["id"], now, "UTC") == 2
