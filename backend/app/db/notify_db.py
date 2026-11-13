@@ -3,7 +3,7 @@ once-per-(user, plan, kind) delivery log. Additive tables only; both are user
 tables (backed up, exported and deleted with the account)."""
 
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 
 from .database import get_connection
 
@@ -38,7 +38,7 @@ def create_notify_tables() -> None:
 
 
 def _now() -> str:
-    return datetime.utcnow().isoformat() + "Z"
+    return datetime.now(UTC).replace(tzinfo=None).isoformat() + "Z"
 
 
 def get_data(user_id: str) -> dict:
