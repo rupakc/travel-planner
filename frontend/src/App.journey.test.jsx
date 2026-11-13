@@ -41,7 +41,11 @@ vi.mock('./components/FeedbackWidget', () => blank)
 vi.mock('./components/ui/AttributionFooter', () => blank)
 vi.mock('./components/ConsentPrompt', () => blank)
 vi.mock('./components/alerts/AlertToast', () => blank)
-vi.mock('./components/account/SettingsSync', () => blank)
+vi.mock('./components/account/SettingsSync', () => ({
+  default: () => null,
+  useAccountSettings: () => ({ settings: {} }),
+  useSettingsLoading: () => false,
+}))
 vi.mock('./components/account/VerifyBanner', () => blank)
 vi.mock('./components/game/GameCelebration', () => blank)
 
