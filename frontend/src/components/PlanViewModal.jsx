@@ -209,7 +209,7 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
                     </>
                   )}
                   {sel.flight.booking_url && (
-                    <a href={sel.flight.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-sky-600 hover:text-sky-800 font-medium mt-1"><ExternalLink size={10} /> {t('modal.flight.bookThis')}</a>
+                    <a data-tid="plan.flight-booking-link" href={sel.flight.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-sky-600 hover:text-sky-800 font-medium mt-1"><ExternalLink size={10} /> {t('modal.flight.bookThis')}</a>
                   )}
                   <div className="mt-1 flex flex-wrap gap-2">
                     <QuickWatchFare trip={tripFromPlan(plan)} planId={plan.id ?? null} surface="results" />
@@ -241,7 +241,7 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
                         {f.price_usd != null && <span className="font-semibold text-sky-700"> · {usdX(f.price_usd)}</span>}
                       </p>
                       {f.booking_url && (
-                        <a href={f.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-sky-600 hover:text-sky-800 font-medium mt-0.5"><ExternalLink size={10} /> {t('modal.book')}</a>
+                        <a data-tid="plan.flight-option-link" href={f.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-sky-600 hover:text-sky-800 font-medium mt-0.5"><ExternalLink size={10} /> {t('modal.book')}</a>
                       )}
                     </div>
                     <button data-tid="plan.remove-flights" aria-label={t('modal.delete')} onClick={() => removeItem('flights', f)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0">
@@ -268,7 +268,7 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
                   <p className="text-xs text-gray-500 mt-0.5">{sel.hotel.location}</p>
                   {sel.hotel.price_per_night_usd && <p className="text-xs font-medium text-purple-700 mt-0.5">{sel.hotel.total_price_usd ? t('modal.hotel.perNightTotal', { price: usdX(sel.hotel.price_per_night_usd), total: usdX(sel.hotel.total_price_usd) }) : t('modal.hotel.perNight', { price: usdX(sel.hotel.price_per_night_usd) })}</p>}
                   {sel.hotel.booking_url && (
-                    <a href={sel.hotel.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 font-medium mt-1"><ExternalLink size={10} /> {t('modal.hotel.viewBook')}</a>
+                    <a data-tid="plan.hotel-booking-link" href={sel.hotel.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 font-medium mt-1"><ExternalLink size={10} /> {t('modal.hotel.viewBook')}</a>
                   )}
                   <div className="mt-1"><QuickWatchHotel hotel={sel.hotel} searchData={sd} planId={plan.id ?? null} surface="results" /></div>
                 </div>
@@ -293,7 +293,7 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
                         {a.location && <span className="truncate">{a.location}</span>}
                       </div>
                       {a.booking_url && (
-                        <a href={a.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium mt-0.5"><ExternalLink size={10} /> {t('modal.book')}</a>
+                        <a data-tid="plan.activity-booking-link" href={a.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium mt-0.5"><ExternalLink size={10} /> {t('modal.book')}</a>
                       )}
                       <div className="mt-1">
                         <ActivityTripContext.Provider value={{ searchData: sd, itinerary: sel.itinerary || null }}>
@@ -325,7 +325,7 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
                     {sel.sim.network_quality?.coverage_rating && <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${sel.sim.network_quality.coverage_rating === 'excellent' ? 'bg-green-100 text-green-700' : sel.sim.network_quality.coverage_rating === 'good' ? 'bg-blue-100 text-blue-700' : sel.sim.network_quality.coverage_rating === 'moderate' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>{enumLabel('coverage', sel.sim.network_quality.coverage_rating)}</span>}
                   </div>
                   {sel.sim.url && (
-                    <a href={sel.sim.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-pink-600 hover:text-pink-800 font-medium mt-1"><ExternalLink size={10} /> {t('modal.sim.getPlan')}</a>
+                    <a data-tid="plan.sim-link" href={sel.sim.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-pink-600 hover:text-pink-800 font-medium mt-1"><ExternalLink size={10} /> {t('modal.sim.getPlan')}</a>
                   )}
                 </div>
                 <button data-tid="plan.remove-sim" aria-label={t('modal.delete')} onClick={() => removeItem('sim')} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
@@ -349,7 +349,7 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
                       </div>
                       {opt.price_info && <p className="text-xs text-gray-500 mt-0.5">{opt.price_info}</p>}
                       {opt.booking_url && (
-                        <a href={opt.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-cyan-600 hover:text-cyan-800 font-medium mt-0.5"><ExternalLink size={10} /> {t('modal.moreInfo')}</a>
+                        <a data-tid="plan.transport-booking-link" href={opt.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-cyan-600 hover:text-cyan-800 font-medium mt-0.5"><ExternalLink size={10} /> {t('modal.moreInfo')}</a>
                       )}
                     </div>
                     <button data-tid="plan.remove-getting-around" aria-label={t('modal.delete')} onClick={() => removeItem('getting_around', opt)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0">
@@ -374,7 +374,7 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
                       </div>
                       {t.body && <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{t.body}</p>}
                       {t.source_url && (
-                        <a href={t.source_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-800 font-medium mt-0.5"><ExternalLink size={10} /> {t('modal.source')}</a>
+                        <a data-tid="plan.tip-source-link" href={t.source_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-800 font-medium mt-0.5"><ExternalLink size={10} /> {t('modal.source')}</a>
                       )}
                     </div>
                     <button data-tid="plan.remove-tips" aria-label={t('modal.delete')} onClick={() => removeItem('tips', t)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0">
@@ -420,7 +420,7 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
                     <div key={t.url || i} className="flex items-start justify-between py-1.5 border-b border-gray-100 last:border-0">
                       <div className="flex-1 min-w-0 mr-2">
                         {href ? (
-                          <a href={href} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-gray-900 hover:text-green-700 inline-flex items-center gap-1">
+                          <a data-tid="plan.place-link" href={href} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-gray-900 hover:text-green-700 inline-flex items-center gap-1">
                             {t.name}<ExternalLink size={11} className="shrink-0" />
                           </a>
                         ) : (

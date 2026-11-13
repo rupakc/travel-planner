@@ -94,7 +94,7 @@ export default function ImportMap({ places }) {
     <div className="h-64 overflow-hidden rounded-2xl ring-1 ring-gray-200 sm:h-80" role="region" aria-label={t('map.aria')}>
       <MapContainer center={points[0]} zoom={12} style={{ height: '100%', width: '100%' }} scrollWheelZoom={false}>
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          attribution='&copy; <a data-tid="search.import-map-attribution" href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <FitBounds points={points} />

@@ -74,7 +74,7 @@ export default function NationalitySearch({ label, value, onChange, placeholder,
         </label>
       )}
       <div className="relative">
-        <input
+        <input data-tid="search.nationality-input"
           ref={inputRef}
           type="text"
           value={displayText}

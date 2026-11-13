@@ -33,6 +33,16 @@
     "signOutAll": "Cerrar sesión en todas partes",
     "confirm": "¿Cerrar sesión en todos los dispositivos?",
     "confirmYes": "Sí, cerrar sesión en todas partes",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "devicesTitle": "Dispositivos con sesión iniciada",
+    "lastUsed": "Última actividad {{when}}",
+    "thisDevice": "Este dispositivo",
+    "signOutDevice": "Cerrar sesión",
+    "signOutDeviceLabel": "Cerrar sesión en {{device}}",
+    "unnamed": "Dispositivo sin nombre",
+    "revokeFailed": "No se pudo cerrar la sesión de ese dispositivo. Inténtalo de nuevo.",
+    "client_web": "Web",
+    "client_ios": "iPhone o iPad",
+    "client_android": "Android"
   }
 }

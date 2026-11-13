@@ -33,6 +33,16 @@
     "signOutAll": "हर जगह साइन-आउट करें",
     "confirm": "सभी डिवाइस से साइन-आउट करें?",
     "confirmYes": "हां, हर जगह साइन-आउट करें",
-    "cancel": "रद्द करें"
+    "cancel": "रद्द करें",
+    "devicesTitle": "साइन इन किए गए डिवाइस",
+    "lastUsed": "आखिरी बार सक्रिय: {{when}}",
+    "thisDevice": "यह डिवाइस",
+    "signOutDevice": "साइन आउट करें",
+    "signOutDeviceLabel": "{{device}} को साइन आउट करें",
+    "unnamed": "बिना नाम का डिवाइस",
+    "revokeFailed": "उस डिवाइस को साइन आउट नहीं किया जा सका। फिर से कोशिश करें।",
+    "client_web": "वेब",
+    "client_ios": "iPhone या iPad",
+    "client_android": "Android"
   }
 }

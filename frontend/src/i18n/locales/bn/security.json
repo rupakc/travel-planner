@@ -33,6 +33,16 @@
     "signOutAll": "সবখানে সাইন আউট করুন",
     "confirm": "সব ডিভাইস থেকে সাইন আউট করবেন?",
     "confirmYes": "হ্যাঁ, সবখানে সাইন আউট",
-    "cancel": "বাতিল"
+    "cancel": "বাতিল",
+    "devicesTitle": "সাইন-ইন করা ডিভাইস",
+    "lastUsed": "শেষ সক্রিয়: {{when}}",
+    "thisDevice": "এই ডিভাইস",
+    "signOutDevice": "সাইন আউট",
+    "signOutDeviceLabel": "{{device}} সাইন আউট করুন",
+    "unnamed": "নামহীন ডিভাইস",
+    "revokeFailed": "ওই ডিভাইস সাইন আউট করা যায়নি। আবার চেষ্টা করুন।",
+    "client_web": "ওয়েব",
+    "client_ios": "iPhone বা iPad",
+    "client_android": "Android"
   }
 }

@@ -51,7 +51,7 @@ function TourCard({ tour, isSelected, showCity, onSelect }) {
       </div>
       <h3 className="font-semibold text-gray-900 mb-1">
         {href
-          ? <a href={href} target="_blank" rel={LINK_REL} onClick={stop} className="hover:underline">{tour.name}</a>
+          ? <a data-tid="tours.title-link" href={href} target="_blank" rel={LINK_REL} onClick={stop} className="hover:underline">{tour.name}</a>
           : tour.name}
       </h3>
       <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 mb-1.5">
@@ -69,7 +69,7 @@ function TourCard({ tour, isSelected, showCity, onSelect }) {
       <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
         {showCity && <CityChip city={tour.city} />}
         {href && (
-          <a href={href} target="_blank" rel={LINK_REL} onClick={stop}
+          <a data-tid="tours.booking-link" href={href} target="_blank" rel={LINK_REL} onClick={stop}
             className="flex items-center gap-1 text-xs text-lime-600 hover:text-lime-700 font-medium">
             <ExternalLink size={10} /> {t('tours.viewOn', { provider: tour.provider })}
           </a>
@@ -111,7 +111,7 @@ export function WalkingTourPlanRow({ tour, onRemove }) {
           {tour.city && <span className="truncate">{tour.city}</span>}
         </div>
         {href && (
-          <a href={href} target="_blank" rel={LINK_REL} className="flex items-center gap-1 text-xs text-teal-600 hover:text-teal-800 font-medium mt-0.5"><ExternalLink size={9} /> {t('tours.details')}</a>
+          <a data-tid="tours.source-link" href={href} target="_blank" rel={LINK_REL} className="flex items-center gap-1 text-xs text-teal-600 hover:text-teal-800 font-medium mt-0.5"><ExternalLink size={9} /> {t('tours.details')}</a>
         )}
       </div>
       <button type="button" aria-label={t('tours.removeAria', { name: tour.name })} data-tid="tours.plan-remove" onClick={() => onRemove(tour)} className="text-gray-400 hover:text-red-500 shrink-0 mt-0.5"><X size={12}/></button>
@@ -151,7 +151,7 @@ export default function WalkingToursSection({ data, selections, onSelect }) {
               <span key={`${s.provider_key}-${s.city}-${i}`}>
                 {i > 0 && (multiCitySources ? ', ' : ' · ')}
                 {href
-                  ? <a href={href} target="_blank" rel={LINK_REL} className="hover:underline">{label}</a>
+                  ? <a data-tid="tours.card-link" href={href} target="_blank" rel={LINK_REL} className="hover:underline">{label}</a>
                   : label}
               </span>
             )

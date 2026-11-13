@@ -232,7 +232,7 @@ export default function ImportPanel({ token, onPreview, seed = null }) {
         <label htmlFor="import-input" className="block text-sm font-medium text-gray-700 mb-1">
           {t('import.pasteLabel')}
         </label>
-        <textarea
+        <textarea data-tid="search.import-input"
           id="import-input"
           ref={textRef}
           value={text}

@@ -33,6 +33,16 @@
     "signOutAll": "Überall abmelden",
     "confirm": "Auf allen Geräten abmelden?",
     "confirmYes": "Ja, überall abmelden",
-    "cancel": "Abbrechen"
+    "cancel": "Abbrechen",
+    "devicesTitle": "Angemeldete Geräte",
+    "lastUsed": "Zuletzt aktiv {{when}}",
+    "thisDevice": "Dieses Gerät",
+    "signOutDevice": "Abmelden",
+    "signOutDeviceLabel": "{{device}} abmelden",
+    "unnamed": "Unbenanntes Gerät",
+    "revokeFailed": "Dieses Gerät konnte nicht abgemeldet werden. Bitte versuche es erneut.",
+    "client_web": "Web",
+    "client_ios": "iPhone oder iPad",
+    "client_android": "Android"
   }
 }

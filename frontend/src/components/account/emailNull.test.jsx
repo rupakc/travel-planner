@@ -15,7 +15,7 @@ const USER = {
 const auth = { token: 'tok', user: USER, accountVerified: false, logout: vi.fn(), refreshUser: vi.fn(), updateTokenAfterPasswordChange: vi.fn() }
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => auth, useOptionalAuth: () => auth }))
 vi.mock('../../services/api', () => ({ getAuthProviders: vi.fn(async () => []) }))
-vi.mock('../../services/authApi', () => ({ getLinkTicket: vi.fn(), changePassword: vi.fn(), logoutAll: vi.fn() }))
+vi.mock('../../services/authApi', () => ({ getLinkTicket: vi.fn(), changePassword: vi.fn(), logoutAll: vi.fn(), listSessions: vi.fn().mockRejectedValue({ status: 404 }), revokeSession: vi.fn() }))
 vi.mock('../../services/accountApi', () => ({
   unlinkIdentity: vi.fn(), requestEmailVerification: vi.fn(), updateProfile: vi.fn(), uploadAvatar: vi.fn(),
   removeAvatar: vi.fn(), exportAccount: vi.fn(), deleteAccount: vi.fn(),

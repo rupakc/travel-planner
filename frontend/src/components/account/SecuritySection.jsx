@@ -3,11 +3,12 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { getAuthProviders } from '../../services/api'
-import { getLinkStartUrl, logoutAll, changePasswordV2 } from '../../services/authApi'
+import { getLinkStartUrl, logoutAll, changePasswordV2, listSessions, revokeSession } from '../../services/authApi'
 import { unlinkIdentity, requestEmailVerification } from '../../services/accountApi'
 import { errorText } from '../../services/apiError'
 import { navigateTo } from '../auth/navigate'
 import { safeAuthStart } from '../../utils/navigate'
+import { fmtRelative } from '../../i18n/format'
 import PasswordStrengthMeter from '../auth/PasswordStrengthMeter'
 
 // Provider order follows the contract. Brand names are not translated.
@@ -35,6 +36,17 @@ export default function SecuritySection({ account, reload }) {
   const [pwMsg, setPwMsg] = useState(null)
   const [confirmAll, setConfirmAll] = useState(false)
   const [allErr, setAllErr] = useState(null)
+  const [devices, setDevices] = useState([])   // [] on an older backend (no /auth/sessions)
+  const [deviceErr, setDeviceErr] = useState(null)
+
+  useEffect(() => {
+    let alive = true
+    if (!token) return undefined
+    listSessions(token)
+      .then((res) => { if (alive && Array.isArray(res?.sessions)) setDevices(res.sessions) })
+      .catch(() => {})
+    return () => { alive = false }
+  }, [token])
 
   useEffect(() => {
     let alive = true
@@ -123,6 +135,23 @@ export default function SecuritySection({ account, reload }) {
       setBusy(null)
     }
   }
+
+  const signOutDevice = async (id) => {
+    setDeviceErr(null)
+    setBusy(`device:${id}`)
+    try {
+      await revokeSession(token, id)
+      setDevices((list) => list.filter((d) => d.id !== id))
+    } catch (err) {
+      if (err?.code === 'session_not_found') setDevices((list) => list.filter((d) => d.id !== id))
+      else setDeviceErr(t('security:sessions.revokeFailed'))
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const deviceName = (d) => d.device_name
+    || (['web', 'ios', 'android'].includes(d.client) ? t(`security:sessions.client_${d.client}`) : t('security:sessions.unnamed'))
 
   const signOutEverywhere = async () => {
     setAllErr(null)
@@ -233,6 +262,40 @@ export default function SecuritySection({ account, reload }) {
       <div data-tid="security.sessions">
         <h3 className="text-sm font-semibold text-slate-800 mb-1">{t('security:sessions.title')}</h3>
         <p className="text-sm text-slate-700 mb-2">{t('security:sessions.body')}</p>
+        {devices.length > 0 && (
+          <div className="mb-3">
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-600 mb-1">{t('security:sessions.devicesTitle')}</h4>
+            <ul className="divide-y divide-slate-200">
+              {devices.map((d) => {
+                const name = deviceName(d)
+                const ts = Date.parse(d.last_used_at)
+                return (
+                  <li key={d.id} data-tid="security.device" className="flex items-center justify-between gap-3 py-2">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-slate-800 truncate">
+                        {name}
+                        {d.current && <span className="ml-2 text-xs font-normal text-teal-800">{t('security:sessions.thisDevice')}</span>}
+                      </p>
+                      {!Number.isNaN(ts) && (
+                        <p className="text-xs text-slate-600">{t('security:sessions.lastUsed', { when: fmtRelative(ts - Date.now()) })}</p>
+                      )}
+                    </div>
+                    {!d.current && (
+                      <button type="button" className={btnPlain} disabled={busy === `device:${d.id}`}
+                        data-tid="security.device-signout" aria-label={t('security:sessions.signOutDeviceLabel', { device: name })}
+                        onClick={() => signOutDevice(d.id)}>
+                        {t('security:sessions.signOutDevice')}
+                      </button>
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
+            <div aria-live="polite">
+              {deviceErr && <p data-tid="security.device-msg" className="mt-2 text-sm text-red-700">{deviceErr}</p>}
+            </div>
+          </div>
+        )}
         {confirmAll ? (
           <div role="alertdialog" aria-label={t('security:sessions.confirm')} className="space-y-2">
             <p className="text-sm text-slate-800">{t('security:sessions.confirm')}</p>
