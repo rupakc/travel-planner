@@ -121,3 +121,37 @@ def test_discovery_visa_override_uses_exact_rows():
     assert out[1]["visa_type"] == "visa-required"  # ("indian", "usa"), not india
     assert out[1]["visa_verified"] is True
     assert out[2]["visa_verified"] is False  # "uk" ⊂ "ukraine" no longer matches
+
+
+def test_discover_uses_taste_graph_only_when_signed_in(client, monkeypatch):
+    import uuid
+
+    from app.core.auth import create_access_token
+    from app.db import taste_db, users_db
+
+    monkeypatch.setattr(users_db, "_hash", lambda pw: f"plain:{pw}")
+    name = f"dt_{uuid.uuid4().hex[:8]}"
+    users_db.create_user(name, "pw-long-enough-1", is_first_login=False)
+    taste_db.record_signals(name, [("interest", "street food")])
+    h = {"Authorization": f"Bearer {create_access_token({'sub': name})}"}
+    payload = {**_VALID_PAYLOAD, "budget_usd": 4321}  # own cache entry
+    with patch("app.api.routes.discover.get_discovery_agent") as f:
+        f.return_value.run = AsyncMock(return_value=_FAKE_RESULT)
+        client.post("/api/discover", json=payload, headers=h)
+        assert "street food" in f.return_value.run.call_args.kwargs["taste_context"]
+        # anonymous: no taste context, separate cache entry
+        client.post("/api/discover", json=payload)
+        assert f.return_value.run.call_args.kwargs["taste_context"] is None
+
+
+def test_discovery_prompt_includes_taste_context():
+    import asyncio
+
+    from app.agents.discovery_agent import DiscoveryAgent
+    from app.schemas.request import DiscoveryRequest
+
+    agent = DiscoveryAgent.__new__(DiscoveryAgent)
+    agent.execute = AsyncMock(return_value={"destinations": []})
+    req = DiscoveryRequest(**_VALID_PAYLOAD)
+    asyncio.run(agent.run(req, taste_context="TASTE-X"))
+    assert "TASTE-X" in agent.execute.call_args.args[0]

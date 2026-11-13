@@ -9,13 +9,17 @@ are never sent to a user who hides the game."""
 import logging
 from datetime import UTC, datetime
 
-from ..db import game_db
+from ..core.config import settings
+from ..db import game_db, social_db
 from . import notify_center, notify_text
 
 logger = logging.getLogger(__name__)
 
 IDEA_SAVED = "social_idea_saved"
 NEW_FOLLOWER = "social_new_follower"
+IDEA_LIKED = "social_idea_liked"
+IDEA_COMMENT = "social_idea_comment"
+QUIZ_DAILY = "quiz_daily"
 H2H_INVITE = "quiz_h2h_invite"
 H2H_RESULT = "quiz_h2h_result"
 
@@ -24,7 +28,11 @@ def _enqueue(
     user_id: str, kind: str, category: str, key: str, link: str, now: datetime | None
 ) -> None:
     try:
-        if category == "quiz" and game_db.hide_game(user_id):
+        if category == "quiz" and (
+            game_db.hide_game(user_id)
+            or not settings.play_enabled
+            or not settings.game_enabled
+        ):
             return
         body = notify_text.render(kind, notify_center.user_locale(user_id))
         notify_center.enqueue_category(
@@ -64,6 +72,50 @@ def new_follower(followee_id: str, follower_id: str) -> None:
             "/feed",
             None,
         )
+
+
+def _engagement(
+    kind: str, author_id: str, actor_id: str, idea_id: int, now: datetime | None
+) -> None:
+    """Like / comment push: never for one's own action or across a block, and
+    batched to at most one per idea per UTC day (so a popular idea cannot
+    spam its author; the user's daily cap applies on top)."""
+    try:
+        if author_id == actor_id or social_db.is_blocked_either_way(
+            author_id, actor_id
+        ):
+            return
+    except Exception:  # noqa: BLE001
+        logger.warning("social notification failed (kind=%s)", kind, exc_info=True)
+        return
+    now = now or datetime.now(UTC)
+    _enqueue(
+        author_id,
+        kind,
+        "social",
+        f"{kind}:{author_id}:{idea_id}:{now.date().isoformat()}",
+        "/feed",
+        now,
+    )
+
+
+def idea_liked(
+    author_id: str, liker_id: str, idea_id: int, now: datetime | None = None
+) -> None:
+    _engagement(IDEA_LIKED, author_id, liker_id, idea_id, now)
+
+
+def idea_commented(
+    author_id: str, commenter_id: str, idea_id: int, now: datetime | None = None
+) -> None:
+    """Call only for a published comment (held ones are not announced)."""
+    _engagement(IDEA_COMMENT, author_id, commenter_id, idea_id, now)
+
+
+def quiz_daily(user_id: str, day: str, now: datetime | None = None) -> None:
+    """Daily-quiz reminder; ``day`` is the user's local date (ISO), so it goes
+    out at most once per user per local day."""
+    _enqueue(user_id, QUIZ_DAILY, "quiz", f"{QUIZ_DAILY}:{user_id}:{day}", "/play", now)
 
 
 def h2h_invite(opponent_id: str, match_id: str) -> None:

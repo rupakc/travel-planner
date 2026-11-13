@@ -8,6 +8,7 @@ vi.mock('../../hooks/useJourney', () => ({ useJourney: () => ({ enabled: true, l
 vi.mock('../../services/tripsApi', () => ({ getRecap: vi.fn(), completeRecap: vi.fn() }))
 vi.mock('../../services/api', () => ({ discoverDestinations: vi.fn(), sharePlan: vi.fn() }))
 vi.mock('../../game/announce', () => ({ announceGame: vi.fn() }))
+vi.mock('../../context/AuthContext', () => ({ useOptionalAuth: () => globalThis.__testAuth || {} }))
 vi.mock('../../telemetry/client', () => ({ emit: vi.fn() }))
 vi.mock('./RecapMap', () => ({ default: ({ points }) => <div data-testid="map">{points.length}</div> }))
 
@@ -105,6 +106,20 @@ describe('Recap', () => {
     await click(tid('recap.where-next-go'))
     expect(discoverDestinations).not.toHaveBeenCalled()
     expect(container.textContent).toContain('home airport')
+  })
+
+  it('where next falls back to the saved home airport', async () => {
+    globalThis.__testAuth = { user: { id: 'u1' }, preferences: {} }
+    window.localStorage.setItem('tp_home_airport_u1', 'LIS')
+    discoverDestinations.mockResolvedValue({ destinations: [] })
+    try {
+      await mount(RECAP, { ...TRIP, origin: undefined, search_data: {} })
+      await click(tid('recap.where-next-go'))
+      expect(discoverDestinations.mock.calls[0][0]).toMatchObject({ origin: 'LIS' })
+    } finally {
+      delete globalThis.__testAuth
+      window.localStorage.removeItem('tp_home_airport_u1')
+    }
   })
 
   it('works without selections or search_data on the trip', async () => {

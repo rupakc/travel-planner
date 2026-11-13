@@ -198,8 +198,9 @@ def profile_ideas(
 
 @writes.put("/social/ideas/{idea_id}/like", status_code=204)
 def like(idea_id: int, user: dict = Depends(get_current_user)):
-    _visible(user, idea_id, published=True)
+    idea = _visible(user, idea_id, published=True)
     db.set_like(idea_id, user["id"], True)
+    social_notify.idea_liked(idea["author_id"], user["id"], idea_id)
     return Response(status_code=204)
 
 
@@ -277,7 +278,7 @@ def add_comment(
     idea_id: int, body: CommentBody, user: dict = Depends(get_current_user)
 ):
     me = _writer(user)
-    _visible(user, idea_id, published=True)
+    idea = _visible(user, idea_id, published=True)
     text = moderation.plain_text(body.text, COMMENT_MAX)
     if not text:
         raise ApiError(422, "text_invalid", "Write a comment first.")
@@ -289,6 +290,8 @@ def add_comment(
         idea_id, user["id"], text, "held" if verdict == "review" else "published"
     )
     c = db.get_comment(cid)
+    if verdict != "review":
+        social_notify.idea_commented(idea["author_id"], user["id"], idea_id)
     return _comment_out(
         {**c, "author_handle": me["handle"], "mine": True, "helpful": False}
     )

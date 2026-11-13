@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { discoverDestinations } from '../../services/api'
+import { useOptionalAuth } from '../../context/AuthContext'
+import { loadHomeAirport } from '../../utils/quizPreferences'
 
 const same = (a, b) => String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase()
 
@@ -13,6 +15,7 @@ function inDays(n) {
 /** "Where next?": asks the discovery agent only when tapped. */
 export default function WhereNext({ trip, onUse }) {
   const { t } = useTranslation('recap')
+  const { user, preferences } = useOptionalAuth()
   const [state, setState] = useState({ status: 'idle', items: [] })
   const current = [trip?.destination, ...(trip?.destinations || [])]
   const mounted = useRef(true)
@@ -22,7 +25,10 @@ export default function WhereNext({ trip, onUse }) {
     onUse?.()
     const sd = trip?.search_data || {}
     // Discovery needs a home airport; the trip's destination is no substitute.
-    const origin = sd.origin || trip?.origin
+    // Falls back to the saved home airport (preferences, else the one picked in
+    // onboarding on this device) when the trip itself has none.
+    const origin = sd.origin || trip?.origin || preferences?.home_airport ||
+      preferences?.origin || loadHomeAirport(user?.id)
     if (!origin) { setState({ status: 'error', items: [], reason: 'origin' }); return }
     setState({ status: 'loading', items: [] })
     try {

@@ -8,7 +8,9 @@ class DiscoveryAgent(BaseAgent):
     def __init__(self, agents_dir: str):
         super().__init__(load_agent_definition(agents_dir, "discovery"))
 
-    async def run(self, request: DiscoveryRequest) -> dict:
+    async def run(
+        self, request: DiscoveryRequest, taste_context: str | None = None
+    ) -> dict:
         trip_days = (
             (request.return_date - request.departure_date).days
             if request.return_date
@@ -28,7 +30,8 @@ class DiscoveryAgent(BaseAgent):
             + (f", {request.seniors} senior(s)" if request.seniors else "")
             + "\n"
             f"  Interests: {interest_str}\n\n"
-            "Suggest 5 destinations that best match this profile. Vary by region when possible."
+            + (f"{taste_context}\n" if taste_context else "")
+            + "Suggest 5 destinations that best match this profile. Vary by region when possible."
         )
         result = await self.execute(prompt, **locale_kw(request))
 
