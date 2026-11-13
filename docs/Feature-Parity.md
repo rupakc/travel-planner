@@ -127,5 +127,5 @@ Both are behind `SOCIAL_ENABLED` / `PLAY_ENABLED` (`features.social`, `features.
 ## Known gaps
 
 - Android: background geofence arrival notification (not built, by ruling), weather-change push (not built on any client), Deal-hunter track, bucket ring and passport stamp, scratch map is a country list.
-- Android: one-tap watch on a saved plan or chat, a watch offer on save and Recap "Where next" are in review and not counted as shipped here.
+- Android: one-tap watch on a saved plan or chat (when live prices and Alerts v2 are on), a dismissible watch offer right after a plan is saved, and Recap "Where next" (AI picks from `/api/discover`, on tap, seeded by the Taste Graph server-side) shipped in #121.
 - Android: follows, comments, head-to-head and the weekly challenge remain Phase 8.
