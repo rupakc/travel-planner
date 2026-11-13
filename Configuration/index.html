@@ -2025,7 +2025,7 @@
 <tr>
 <td><code>WEATHER_PUSH_ENABLED</code></td>
 <td><code>false</code></td>
-<td>Weather-change pushes (rain, heat &gt;= 35 C apparent, cold &lt;= 0 C) for today's outdoor itinerary slots of trips on the road. Needs <code>NOTIFICATIONS_V2_ENABLED</code>. Uses the free Open-Meteo API (no key, non-commercial use, under 10,000 calls a day; attribution: Weather data by Open-Meteo.com, CC BY 4.0, https://open-meteo.com/en/terms). One forecast call per trip city per pass, cached 3 h.</td>
+<td>Weather-change pushes (rain, heat &gt;= 35 C apparent, cold &lt;= 0 C) for today's outdoor itinerary slots of trips on the road. Needs <code>NOTIFICATIONS_V2_ENABLED</code>. Uses the free Open-Meteo API (no key, non-commercial use, under 10,000 calls a day; attribution: Weather data by Open-Meteo.com, CC BY 4.0, https://open-meteo.com/en/terms). One forecast call per trip city per pass (at most 30 per pass, pass limited to 60 s, run as its own task), cached 3 h. Open-Meteo's free API is for non-commercial use only and its data is CC BY 4.0: the web notification list shows "Weather data by Open-Meteo.com" on weather alerts; a commercial deployment needs an Open-Meteo subscription. Alerts are only sent for slots that have not started yet, and are dropped (<code>stale</code>) if quiet hours would delay them past the slot start.</td>
 </tr>
 <tr>
 <td><code>WEATHER_PUSH_INTERVAL_HOURS</code></td>
