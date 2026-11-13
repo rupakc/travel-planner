@@ -313,3 +313,16 @@ def test_plan_id_on_create_and_list(client):
     }
     assert rows[made["token"]]["plan_id"] == plan["id"]
     assert rows[sav["token"]]["plan_id"] is None
+
+
+def test_card_lang_param(client):
+    _, h = _user()
+    tok = _share(client, h, _plan(client, h)["id"])["token"]
+    en = client.get(f"/api/share/{tok}/card.png")
+    es = client.get(f"/api/share/{tok}/card.png?lang=es")
+    regional = client.get(f"/api/share/{tok}/card.png?lang=ES-mx")
+    junk = client.get(f"/api/share/{tok}/card.png?lang=klingon")
+    assert en.status_code == es.status_code == 200
+    assert es.content != en.content
+    assert regional.content == es.content
+    assert junk.content == en.content

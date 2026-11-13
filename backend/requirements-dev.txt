@@ -6,3 +6,4 @@ ruff==0.15.13
 bandit>=1.8
 pip-audit>=2.8
 cryptography>=42.0  # tests sign a fake FCM service-account key
+fonttools>=4.50  # share-card font tests read the bundled subsets' cmaps
