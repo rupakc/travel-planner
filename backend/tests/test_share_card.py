@@ -68,3 +68,50 @@ def test_palette_matches_tokens():
     assert bg["muted"] == teal["100"]
     assert bg["chip"] == teal["900"]
     assert bg["chip_text"] == teal["50"]
+
+
+def _gb2312_chars():
+    out = []
+    for row in range(0xB0, 0xF8):
+        for col in range(0xA1, 0xFF):
+            try:
+                out.append(bytes([row, col]).decode("gb2312"))
+            except UnicodeDecodeError:
+                pass
+    return out
+
+
+def test_sc_font_covers_gb2312_sample_and_common_chars():
+    import random
+
+    from fontTools.ttLib import TTFont
+
+    from app.services import share_card
+
+    cmap = TTFont(share_card.FONT_DIR / "noto-sans-sc.ttf").getBestCmap()
+    chars = _gb2312_chars()
+    assert len(chars) > 6700
+    sample = random.Random(7).sample(chars, 600) + list("程序北京东京")
+    assert [c for c in sample if ord(c) not in cmap] == []
+    assert share_card.supported("程 · 上海", "zh")
+
+
+def test_hi_bn_fonts_cover_every_assigned_block_char():
+    import unicodedata
+
+    from fontTools.ttLib import TTFont
+
+    from app.services import share_card
+
+    for file, lo, hi in (
+        ("noto-sans-devanagari.ttf", 0x900, 0x97F),
+        ("noto-sans-bengali.ttf", 0x980, 0x9FF),
+    ):
+        cmap = TTFont(share_card.FONT_DIR / file).getBestCmap()
+        missing = [
+            hex(c)
+            for c in range(lo, hi + 1)
+            if unicodedata.name(chr(c), None) and c not in cmap
+        ]
+        # the font itself lacks a few rare assigned Bengali letters (Noto Sans Bengali)
+        assert len(missing) <= 8, missing

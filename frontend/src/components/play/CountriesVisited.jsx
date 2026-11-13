@@ -33,7 +33,7 @@ export default function CountriesVisited({ countries = [], continents = [], goal
       {count === 0 ? (
         <p className="text-sm text-slate-500" data-tid="play.countries.empty">{t('countries.empty')}</p>
       ) : (
-        <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2" data-tid="play.countries.list">
+        <ul id="countries-visited-list" aria-labelledby="countries-title" className="grid grid-cols-1 gap-2 sm:grid-cols-2" data-tid="play.countries.list">
           {countries.map((c) => (
             <li key={c.code} data-tid={`play.country.${c.code}`}
               className="flex min-h-[44px] items-center gap-3 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800">
