@@ -87,6 +87,7 @@ function Confetti() {
 
 function Card({ note, via, onClose }) {
   const { t } = useTranslation('dropMoment')
+  const { t: tg } = useTranslation('game')
   const { settings } = useAccountSettings()
   const navigate = useNavigate()
   const drop = dropOf(note)
@@ -97,6 +98,8 @@ function Card({ note, via, onClose }) {
   const awards = Array.isArray(data.game?.awards) ? data.game.awards : []
   const xp = awards.reduce((sum, a) => sum + (Number(a?.points) || 0), 0)
   const showXp = xp > 0 && !settings?.hide_game
+  const badges = Array.isArray(data.game?.badges) ? data.game.badges.filter((b) => b?.id) : []
+  const showBadges = badges.length > 0 && !settings?.hide_game
   const book = safeUrl(data.links?.book)
   const watchKey = data.watch_id != null ? `${kind}:${data.watch_id}` : null
   const progress = useProgress(true, note.id)
@@ -174,6 +177,11 @@ function Card({ note, via, onClose }) {
             {t('xp', { xp })}
           </p>
         )}
+        {showBadges && badges.map((b) => (
+          <p key={b.id} data-tid="dropMoment.badge" className="mt-2 inline-block rounded-full bg-teal-100 px-3 py-1 text-sm font-semibold text-teal-800">
+            {t('badge', { name: tg(`badges.${b.id}.name`, { defaultValue: b.id }) })}
+          </p>
+        ))}
         <p className="mt-3 text-xs text-slate-500">{t('note')}</p>
         <div className="mt-5 flex flex-wrap justify-center gap-2">
           {watchKey && (

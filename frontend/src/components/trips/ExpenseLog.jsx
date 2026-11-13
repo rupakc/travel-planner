@@ -9,6 +9,7 @@ import { emit } from '../../telemetry/client'
 import { fmtCurrency, fmtDate } from '../../i18n/format'
 import { localToday } from '../../utils/tripPhase'
 import ExpenseForm from './ExpenseForm'
+import RejectedWrites, { useRejectedWrites } from '../offline/RejectedWrites'
 
 const num = (s) => Number(s)
 const card = 'rounded-xl border border-slate-200 bg-white p-4'
@@ -53,6 +54,7 @@ export default function ExpenseLog({ trip, token }) {
     setData(null)
     setEditing(null)
   }
+  const rejected = useRejectedWrites(uid, trip?.id == null ? null : `/trips/${trip.id}/expenses`)
   const keyRef = useRef(storeKey)
   keyRef.current = storeKey // in-flight work compares its captured key with this
   const tripId = trip?.id
@@ -77,6 +79,12 @@ export default function ExpenseLog({ trip, token }) {
   }, [enabled, tripId, online, load])
 
   useEffect(() => { writePending(storeKey, pending) }, [storeKey, pending])
+  // A write the server refused (trip cap) is no longer "waiting": the notice below replaces its row.
+  useEffect(() => {
+    if (!rejected.length) return
+    const gone = new Set(rejected.map((r) => r.body?.client_id))
+    setPending((p) => (p.some((e) => gone.has(e.client_id)) ? p.filter((e) => !gone.has(e.client_id)) : p))
+  }, [rejected])
 
   const defaultCurrency = data?.rate?.local || 'USD'
 
@@ -173,6 +181,9 @@ export default function ExpenseLog({ trip, token }) {
         <ExpenseForm defaultCurrency={defaultCurrency} today={today} busy={busy} onSubmit={add} />
         {formError && !editing && <p role="alert" className="mt-2 text-sm text-red-700">{formError}</p>}
       </div>
+
+      <RejectedWrites userId={uid} rows={rejected}
+        summary={(b) => (b ? `${money(b.amount, b.currency)} · ${t(`cat.${b.category}`, { defaultValue: '' })}` : '')} />
 
       {failed && !data && (
         <p className="text-sm text-slate-600">

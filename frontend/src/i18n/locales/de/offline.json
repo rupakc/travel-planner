@@ -3,5 +3,12 @@
     "offline": "Du bist offline. Gespeicherte Reisen funktionieren weiterhin.",
     "pending_one": "{{count}} Änderung wartet auf die Synchronisierung",
     "pending_other": "{{count}} Änderungen warten auf die Synchronisierung"
+  },
+  "rejected": {
+    "expense_limit": "Diese Ausgabe wurde nicht gespeichert: Die Reise hat ihr Ausgabenlimit erreicht.",
+    "journal_limit": "Dieser Tagebucheintrag wurde nicht gespeichert: Das Tagebuch ist voll.",
+    "places_limit": "Dieser Ort wurde nicht gespeichert: Die Reise hat zu viele Orte.",
+    "generic": "Diese Änderung wurde nicht gespeichert: Die Reise hat ein Limit erreicht.",
+    "dismiss": "Schließen"
   }
 }

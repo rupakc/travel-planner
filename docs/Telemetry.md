@@ -133,7 +133,7 @@ Emitted by the Phase 2 journey UI (behind the journey flag); accepted by the ser
 | `prep_complete` | `items` (int) | not yet | Every prep item is done. |
 | `today_action` | `action` (`checkin`, `next_up`, `directions`, `visited`, `status_share`, `nearby`) | not yet | An action on the Today screen. |
 | `offline_pack` | `action` (`save`, `refresh`, `open`, `remove`), `result` (`ok`, `error`, `unsupported`, `quota`), `kb` (int) | not yet | An offline pack operation and its size. |
-| `outbox_flush` | `sent` (int), `failed` (int), `dropped` (int) | not yet | The offline outbox was flushed after reconnecting. |
+| `outbox_flush` | `sent` (int), `failed` (int), `dropped` (int), `rejected` (int) | not yet | The offline outbox was flushed after reconnecting. |
 | `expense_action` | `action` (`add`, `edit`, `delete`), `category` (`flights`, `lodging`, `food`, `transport`, `activities`, `shopping`, `fees`, `other`), `queued` (bool) | not yet | An expense change; `queued` when made offline. No amount is sent. |
 | `journal_action` | `action` (`add`, `edit`, `delete`), `queued` (bool) | not yet | A journal entry change; no text is sent. |
 | `place_action` | `action` (`visited`, `unvisited`, `rate`, `unrate`), `kind` (`activity`, `place`, `food`, `hotel`, `event`, `tour`, `nearby`, `other`), `stars` (int) | not yet | A place was marked or rated. |

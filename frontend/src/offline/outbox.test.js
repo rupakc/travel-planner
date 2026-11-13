@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 const emitted = vi.hoisted(() => [])
 vi.mock('../telemetry/client', () => ({ emit: (event, props) => { emitted.push([event, props]) } }))
 
-import { enqueue, flush, pending, clearOutbox, startAutoFlush } from './outbox'
+import { enqueue, flush, pending, clearOutbox, startAutoFlush, listRejected, dismissRejected } from './outbox'
 import { _resetForTests } from './idb'
 
 const ok = (status = 201) => ({ ok: status >= 200 && status < 300, status, json: async () => ({}) })
@@ -12,6 +12,26 @@ beforeEach(() => { _resetForTests(); emitted.length = 0 })
 afterEach(() => { vi.useRealTimers() })
 
 describe('outbox', () => {
+  it('a 409 per-trip cap is rejected (kept, listed, not retried); other 409 is sent', async () => {
+    await enqueue(7, { method: 'POST', path: '/trips/1/expenses', body: { client_id: 'a' }, key: 'exp:a' })
+    await enqueue(7, { method: 'POST', path: '/trips/1/journal', body: { client_id: 'b' }, key: 'j:b' })
+    const fetchImpl = vi.fn(async (url) => (url.endsWith('expenses')
+      ? { status: 409, json: async () => ({ code: 'expense_limit' }) }
+      : { status: 409, json: async () => ({ code: 'conflict' }) }))
+    expect(await flush('tok', 7, fetchImpl)).toEqual({ sent: 1, failed: 0, dropped: 0, rejected: 1 })
+    expect(await pending(7)).toBe(0)
+    const rej = await listRejected(7, '/trips/1/expenses')
+    expect(rej).toHaveLength(1)
+    expect(rej[0].rejected).toBe('expense_limit')
+    expect(rej[0].body.client_id).toBe('a')
+    expect(await listRejected(7, '/trips/1/journal')).toHaveLength(0)
+    const again = vi.fn()
+    expect(await flush('tok', 7, again)).toEqual({ sent: 0, failed: 0, dropped: 0, rejected: 0 })
+    expect(again).not.toHaveBeenCalled()
+    await dismissRejected(7, 'exp:a')
+    expect(await listRejected(7)).toHaveLength(0)
+  })
+
   it('queues per user, and a repeated key replaces the entry', async () => {
     await enqueue(7, { method: 'POST', path: '/trips/12/expenses', body: { client_id: 'a', amount: '1.00' }, key: 'exp:a' })
     await enqueue(7, { method: 'POST', path: '/trips/12/expenses', body: { client_id: 'a', amount: '2.00' }, key: 'exp:a' })
@@ -20,7 +40,7 @@ describe('outbox', () => {
     expect(await pending(7)).toBe(2)
     expect(await pending(8)).toBe(1)
     const fetchImpl = vi.fn().mockResolvedValue(ok())
-    expect(await flush('tok', 7, fetchImpl)).toEqual({ sent: 2, failed: 0, dropped: 0 })
+    expect(await flush('tok', 7, fetchImpl)).toEqual({ sent: 2, failed: 0, dropped: 0, rejected: 0 })
     expect(fetchImpl).toHaveBeenCalledTimes(2)
     const [url, init] = fetchImpl.mock.calls[0]
     expect(url).toBe('/api/trips/12/expenses')
@@ -29,7 +49,7 @@ describe('outbox', () => {
     expect(JSON.parse(init.body).amount).toBe('2.00')
     expect(await pending(7)).toBe(0)
     expect(await pending(8)).toBe(1)
-    await vi.waitFor(() => expect(emitted).toEqual([['outbox_flush', { sent: 2, failed: 0, dropped: 0 }]]))
+    await vi.waitFor(() => expect(emitted).toEqual([['outbox_flush', { sent: 2, failed: 0, dropped: 0, rejected: 0 }]]))
   })
 
   it('concurrent flushes send each item once', async () => {
@@ -41,11 +61,11 @@ describe('outbox', () => {
     expect(fetchImpl).toHaveBeenCalledTimes(3)
     const ids = fetchImpl.mock.calls.map(([, init]) => JSON.parse(init.body).client_id).sort()
     expect(ids).toEqual(['c0', 'c1', 'c2'])
-    expect(a).toEqual({ sent: 3, failed: 0, dropped: 0 })
+    expect(a).toEqual({ sent: 3, failed: 0, dropped: 0, rejected: 0 })
     expect(b).toEqual(a)
     expect(c).toEqual(a)
     // a later flush finds nothing left
-    expect(await flush('tok', 7, fetchImpl)).toEqual({ sent: 0, failed: 0, dropped: 0 })
+    expect(await flush('tok', 7, fetchImpl)).toEqual({ sent: 0, failed: 0, dropped: 0, rejected: 0 })
     expect(fetchImpl).toHaveBeenCalledTimes(3)
   })
 
@@ -55,10 +75,10 @@ describe('outbox', () => {
       await enqueue(7, { method: 'POST', path: '/trips/1/expenses', body: { key }, key })
     }
     const fetchImpl = vi.fn(async (url, init) => ok(statuses[JSON.parse(init.body).key]))
-    expect(await flush('tok', 7, fetchImpl)).toEqual({ sent: 1, failed: 3, dropped: 2 })
+    expect(await flush('tok', 7, fetchImpl)).toEqual({ sent: 1, failed: 3, dropped: 2, rejected: 0 })
     expect(await pending(7)).toBe(3)
     const again = vi.fn(async () => ok(200))
-    expect(await flush('tok', 7, again)).toEqual({ sent: 3, failed: 0, dropped: 0 })
+    expect(await flush('tok', 7, again)).toEqual({ sent: 3, failed: 0, dropped: 0, rejected: 0 })
     const keys = again.mock.calls.map(([, init]) => JSON.parse(init.body).key).sort()
     expect(keys).toEqual(['k408', 'k429', 'k500'])
   })
@@ -67,7 +87,7 @@ describe('outbox', () => {
     await enqueue(7, { method: 'POST', path: '/trips/1/expenses', body: {}, key: 'a' })
     await enqueue(7, { method: 'POST', path: '/trips/1/expenses', body: {}, key: 'b' })
     const fetchImpl = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'))
-    expect(await flush('tok', 7, fetchImpl)).toEqual({ sent: 0, failed: 2, dropped: 0 })
+    expect(await flush('tok', 7, fetchImpl)).toEqual({ sent: 0, failed: 2, dropped: 0, rejected: 0 })
     expect(fetchImpl).toHaveBeenCalledTimes(1)
     expect(await pending(7)).toBe(2)
   })
@@ -76,7 +96,7 @@ describe('outbox', () => {
     await enqueue(7, { method: 'POST', path: '/trips/1/expenses', body: {}, key: 'a' })
     await enqueue(7, { method: 'POST', path: '/trips/1/expenses', body: {}, key: 'b' })
     const fetchImpl = vi.fn(async () => ({ ok: false, status: 401, json: async () => ({ detail: 'x' }) }))
-    expect(await flush('tok', 7, fetchImpl)).toEqual({ sent: 0, failed: 2, dropped: 0 })
+    expect(await flush('tok', 7, fetchImpl)).toEqual({ sent: 0, failed: 2, dropped: 0, rejected: 0 })
     expect(await pending(7)).toBe(2)
   })
 

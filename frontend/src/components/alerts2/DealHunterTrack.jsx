@@ -36,7 +36,7 @@ export default function DealHunterTrack() {
   if (!ids.length) return null
   const rows = ids.map((id) => {
     const target = mine[id]?.target ?? meta[id]?.target ?? 1
-    return { id, target, progress: mine[id]?.progress ?? 0, earned: !!mine[id]?.earned }
+    return { id, target, progress: mine[id]?.progress ?? 0, earned: !!(mine[id]?.earned_at || mine[id]?.earned) }
   })
   const open = rows.filter((r) => !r.earned)
   const next = open.sort((a, b) => (b.progress / b.target) - (a.progress / a.target))[0]

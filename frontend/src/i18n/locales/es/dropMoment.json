@@ -8,5 +8,6 @@
   "story": "Ver la historia del precio",
   "book": "Reservar",
   "share": "Compartir",
-  "close": "Cerrar"
+  "close": "Cerrar",
+  "badge": "Insignia obtenida: {{name}}"
 }

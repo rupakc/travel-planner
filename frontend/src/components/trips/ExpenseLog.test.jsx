@@ -7,7 +7,13 @@ let online = true
 vi.mock('../../hooks/useJourney', () => ({ useJourney: () => ({ enabled: journeyOn }) }))
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ user: { id: 7 } }) }))
 vi.mock('../../offline/useOnline', () => ({ useOnline: () => online }))
-vi.mock('../../offline/outbox', () => ({ enqueue: vi.fn(async () => {}) }))
+const rejectedRows = vi.hoisted(() => ({ list: [] }))
+vi.mock('../../offline/outbox', () => ({
+  enqueue: vi.fn(async () => {}),
+  listRejected: vi.fn(async () => rejectedRows.list),
+  dismissRejected: vi.fn(async () => {}),
+  OUTBOX_CHANGED_EVENT: 'voyager:outbox-changed',
+}))
 vi.mock('../../telemetry/client', () => ({ emit: vi.fn() }))
 vi.mock('../../services/tripsApi', () => ({
   listExpenses: vi.fn(), addExpense: vi.fn(), updateExpense: vi.fn(), deleteExpense: vi.fn(),
@@ -46,6 +52,7 @@ const type = async (tid, value) => {
 beforeEach(() => {
   online = true
   journeyOn = true
+  rejectedRows.list = []
   vi.clearAllMocks()
   sessionStorage.clear()
   api.listExpenses.mockResolvedValue(listing())
@@ -56,6 +63,15 @@ beforeEach(() => {
 afterEach(() => { act(() => root.unmount()); host.remove() })
 
 describe('ExpenseLog', () => {
+  it('shows a refused (cap) write as a visible notice, not as waiting', async () => {
+    const body = { client_id: 'r1', amount: '5.00', currency: 'EUR', category: 'food', spent_on: '2027-04-02' }
+    sessionStorage.setItem('tp_exp_pending:7:12', JSON.stringify([{ id: 'pending-r1', ...body, note: '', pending: true }]))
+    rejectedRows.list = [{ key: 'expense:12:r1', path: '/trips/12/expenses', body, rejected: 'expense_limit', order: 1 }]
+    await render()
+    expect(q('outbox-rejected').textContent).toContain('expense limit')
+    expect(q('expense-pending')).toBeNull()
+  })
+
   it('renders nothing when the journey is off', async () => {
     journeyOn = false
     await render()

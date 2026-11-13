@@ -4,5 +4,12 @@
     "pending_one": "{{count}} modification en attente de synchronisation",
     "pending_many": "{{count}} modifications en attente de synchronisation",
     "pending_other": "{{count}} modifications en attente de synchronisation"
+  },
+  "rejected": {
+    "expense_limit": "Cette dépense n'a pas été enregistrée : le voyage a atteint sa limite de dépenses.",
+    "journal_limit": "Cette entrée du journal n'a pas été enregistrée : le journal est plein.",
+    "places_limit": "Ce lieu n'a pas été enregistré : le voyage compte trop de lieux.",
+    "generic": "Cette modification n'a pas été enregistrée : le voyage a atteint une limite.",
+    "dismiss": "Ignorer"
   }
 }

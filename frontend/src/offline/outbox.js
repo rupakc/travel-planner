@@ -11,11 +11,14 @@
 // flush() is single-flight per user — concurrent calls in one tab share one
 // run, and Web Locks (where available) serialise runs across tabs.
 //
-// Outcomes per item: 2xx and 409 → sent (removed); 408, 429 and 5xx → kept;
+// Outcomes per item: 2xx and a 409 that is not a per-trip cap → sent
+// (removed); a 409 whose code ends in `_limit` (expense_limit, journal_limit,
+// places_limit) → rejected: kept, marked, skipped by later runs and shown to
+// the user until they dismiss it (the server will never take it); 408, 429 and 5xx → kept;
 // 401 → kept and the run stops (the session ended: the same user's next
 // sign-in sends them, a sign-out deletes them); any other 4xx → dropped
 // (it would never succeed); a network error → kept and the run stops.
-import { idbGet, idbPut, idbDelete, idbEntries, idbCount, idbDeletePrefix } from './idb'
+import { idbGet, idbPut, idbDelete, idbEntries, idbDeletePrefix } from './idb'
 
 const STORE = 'outbox'
 /** Window event fired when the queue changes (OfflineBanner recounts). */
@@ -23,7 +26,7 @@ export const OUTBOX_CHANGED_EVENT = 'voyager:outbox-changed'
 const AUTO_FLUSH_MS = 60_000
 
 const userPrefix = (userId) => `${userId}:`
-const none = () => ({ sent: 0, failed: 0, dropped: 0 })
+const none = () => ({ sent: 0, failed: 0, dropped: 0, rejected: 0 })
 let order = 0
 
 function uuid() {
@@ -63,10 +66,38 @@ export async function enqueue(userId, { method, path, body, key } = {}) {
   return entry
 }
 
-/** How many writes are waiting for this user. */
+/** How many writes are waiting for this user (rejected ones are not waiting). */
 export async function pending(userId) {
   if (userId === null || userId === undefined) return 0
-  return idbCount(STORE, userPrefix(userId))
+  const all = await idbEntries(STORE, userPrefix(userId))
+  return all.filter(([, v]) => !v.rejected).length
+}
+
+/** Writes the server refused for good (per-trip cap), whose path starts with `pathPrefix`. */
+export async function listRejected(userId, pathPrefix = '') {
+  if (userId === null || userId === undefined) return []
+  const all = await idbEntries(STORE, userPrefix(userId))
+  return all
+    .map(([, v]) => v)
+    .filter((v) => v.rejected && v.path.startsWith(pathPrefix))
+    .sort((a, b) => a.order - b.order)
+}
+
+/** Forgets a rejected write once the user has seen it. */
+export async function dismissRejected(userId, key) {
+  if (userId === null || userId === undefined) return
+  const id = `${userId}:${key}`
+  const cur = await idbGet(STORE, id)
+  if (cur?.rejected) await idbDelete(STORE, id)
+  notify()
+}
+
+async function capCode(res) {
+  try {
+    const body = await (res.clone ? res.clone() : res).json()
+    const code = body?.code || body?.detail?.code || body?.error?.code
+    return typeof code === 'string' && code.endsWith('_limit') ? code : null
+  } catch { return null }
 }
 
 /** Deletes this user's queue (sign-out, session_revoked). */
@@ -88,6 +119,7 @@ async function drain(token, userId, fetchImpl) {
   const out = none()
   for (let i = 0; i < items.length; i += 1) {
     const [id, item] = items[i]
+    if (item.rejected) continue
     const headers = { Authorization: `Bearer ${token}` }
     const init = { method: item.method, headers }
     if (item.body !== null && item.body !== undefined) {
@@ -102,7 +134,12 @@ async function drain(token, userId, fetchImpl) {
       break
     }
     const status = res?.status || 0
-    if ((status >= 200 && status < 300) || status === 409) {
+    const code = status === 409 ? await capCode(res) : null
+    if (code) {
+      const cur = await idbGet(STORE, id)
+      if (cur && cur.rev === item.rev) await idbPut(STORE, id, { ...cur, rejected: code })
+      out.rejected += 1
+    } else if ((status >= 200 && status < 300) || status === 409) {
       await removeIfUnchanged(id, item.rev)
       out.sent += 1
     } else if (status === 401) {
@@ -115,7 +152,7 @@ async function drain(token, userId, fetchImpl) {
       out.failed += 1
     }
   }
-  if (out.sent || out.failed || out.dropped) {
+  if (out.sent || out.failed || out.dropped || out.rejected) {
     emitFlush(out)
     notify()
   }
@@ -132,7 +169,7 @@ function withLock(name, fn) {
 const inflight = new Map()
 
 /**
- * Sends this user's queued writes in order -> {sent, failed, dropped}.
+ * Sends this user's queued writes in order -> {sent, failed, dropped, rejected}.
  * Single-flight: a call while a run is going returns that run.
  */
 export function flush(token, userId, fetchImpl) {

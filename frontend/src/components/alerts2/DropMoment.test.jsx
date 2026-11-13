@@ -91,6 +91,17 @@ describe('DropMoment', () => {
     vi.useRealTimers()
   })
 
+  it('shows an earned badge by name, and hides it with hide_game', async () => {
+    state.latestDrop = note({ data: { game: { awards: [{ rule: 'deal_hunter', points: 15 }], badges: [{ id: 'deal_hunter' }] } } })
+    await mount()
+    expect(container.querySelector('[data-tid="dropMoment.badge"]').textContent).toMatch(/Badge earned: \S+/)
+    await act(async () => root.unmount())
+    root = createRoot(container)
+    settings.hide_game = true
+    await mount()
+    expect(container.querySelector('[data-tid="dropMoment.badge"]')).toBeNull()
+  })
+
   it('xp hidden when hide_game', async () => {
     state.latestDrop = note()
     await mount()
