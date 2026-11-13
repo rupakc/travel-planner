@@ -520,6 +520,7 @@ async def _loop(interval: int) -> None:
     last_prune = 0.0
     last_trip = -TRIP_PUSH_INTERVAL_S
     last_quiz = -TRIP_PUSH_INTERVAL_S
+    last_weather = -1e9
     while True:
         try:
             await asyncio.to_thread(flush, datetime.now(UTC))
@@ -558,6 +559,18 @@ async def _loop(interval: int) -> None:
                 raise
             except Exception:  # noqa: BLE001
                 logger.warning("quiz push pass failed", exc_info=True)
+            if settings.weather_push_enabled:
+                try:
+                    from . import weather_push
+
+                    every = max(1, settings.weather_push_interval_hours) * 3600
+                    if time_mod.monotonic() - last_weather >= every:
+                        last_weather = time_mod.monotonic()
+                        await asyncio.to_thread(weather_push.run_due, datetime.now(UTC))
+                except asyncio.CancelledError:
+                    raise
+                except Exception:  # noqa: BLE001
+                    logger.warning("weather push pass failed", exc_info=True)
         if time_mod.monotonic() - last_prune >= PRUNE_INTERVAL_S:
             last_prune = time_mod.monotonic()
             try:

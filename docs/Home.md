@@ -62,4 +62,4 @@ Every specialist agent uses Gemini 3.5 Flash-Lite on Vertex AI through `BaseAgen
 - [Project homepage](https://rupakc.github.io/travel-planner/)
 - [Open an issue](https://github.com/rupakc/travel-planner/issues)
 
-Place data contains data from GeoNames (geonames.org), CC BY 4.0. Airport data comes from OurAirports (public domain). See [Place and Airport Data](Place-and-Airport-Data.md).
+Place data contains data from GeoNames (geonames.org), CC BY 4.0. Airport data comes from OurAirports (public domain). Weather alerts use data by Open-Meteo.com (CC BY 4.0). See [Place and Airport Data](Place-and-Airport-Data.md).
