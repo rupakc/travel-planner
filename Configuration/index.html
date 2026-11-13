@@ -2013,6 +2013,21 @@
 <td>Notifications 2.0: category checks on price pushes, trip pushes (T-30, T-7, T-1, morning brief) and iOS/Android push routing. Trip pushes run inside the alert loop, so they also need <code>PRICE_ALERTS_V2_ENABLED=true</code> (the loop does not start without it). With no FCM/APNs credentials only in-app rows are written. <code>false</code> restores the Phase 3 behaviour.</td>
 </tr>
 <tr>
+<td><code>WEATHER_PUSH_ENABLED</code></td>
+<td><code>false</code></td>
+<td>Weather-change pushes (rain, heat &gt;= 35 C apparent, cold &lt;= 0 C) for today's outdoor itinerary slots of trips on the road. Needs <code>NOTIFICATIONS_V2_ENABLED</code>. Uses the free Open-Meteo API (no key, non-commercial use, under 10,000 calls a day; attribution: Weather data by Open-Meteo.com, CC BY 4.0, https://open-meteo.com/en/terms). One forecast call per trip city per pass, cached 3 h.</td>
+</tr>
+<tr>
+<td><code>WEATHER_PUSH_INTERVAL_HOURS</code></td>
+<td><code>3</code></td>
+<td>Hours between weather passes.</td>
+</tr>
+<tr>
+<td><code>WEATHER_PUSH_MAX_CALLS_PER_HOUR</code></td>
+<td><code>300</code></td>
+<td>Hard cap on Open-Meteo calls per hour (their free limit is 5,000).</td>
+</tr>
+<tr>
 <td><code>APNS_TEAM_ID</code></td>
 <td><code>""</code></td>
 <td>Apple developer Team ID for iOS pushes (APNs token auth). Inert until <code>APNS_TEAM_ID</code>, <code>APNS_KEY_ID</code> and a key (<code>APNS_KEY_P8</code> or <code>APNS_KEY_FILE</code>) are all set; only used when <code>NOTIFICATIONS_V2_ENABLED=true</code>, which routes iOS devices to APNs and Android devices to FCM.</td>
