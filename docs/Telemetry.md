@@ -1,6 +1,6 @@
 # Telemetry
 
-Product telemetry answers "which features are used, where do people drop out, what is slow or broken" for all Voyager clients (web today; Android and iOS later). What users are told is in [Privacy](Privacy.md); this page is the developer contract. The closed schema lives in `backend/app/telemetry/registry.py` (`EVENTS`), and a test fails if an event there is missing from this page.
+Product telemetry answers "which features are used, where do people drop out, what is slow or broken" for all Voyager clients (web and Android today; iOS later). What users are told is in [Privacy](Privacy.md); this page is the developer contract. The closed schema lives in `backend/app/telemetry/registry.py` (`EVENTS`), and a test fails if an event there is missing from this page.
 
 It is separate from `POST /api/analytics/events` (signed-in only, writes log lines, endpoint unchanged), but the web client sends to that endpoint only while `telemetryAllowed()`, so one switch covers both.
 
