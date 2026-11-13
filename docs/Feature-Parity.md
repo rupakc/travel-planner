@@ -1,6 +1,6 @@
 # Feature Parity
 
-Which user-facing features each Voyager client has. The web column comes from this repository; the Android column from the [Android app's README](https://github.com/rupakc/travel-planner-android#features) (status "every feature module is merged and integrated on `main`") as of 2026-11-12 (Phase 1/2 merged on `main`); iOS does not exist yet. Phase numbers are from the [design spec](superpowers/specs/2026-11-10-voyager-reimagined-design.md) (section 11). Update this page in the same change that adds a client feature.
+Which user-facing features each Voyager client has. The web column comes from this repository; the Android column from the [Android app's README](https://github.com/rupakc/travel-planner-android#features) (status "every feature module is merged and integrated on `main`") as of 2026-11-13 (Phases 1 to 5 merged on `main`, plus the final-audit parity fixes); iOS does not exist yet. Phase numbers are from the [design spec](superpowers/specs/2026-11-10-voyager-reimagined-design.md) (section 11). Update this page in the same change that adds a client feature.
 
 Legend: ✅ shipped · ⏳ Phase N planned · — not offered · ? not stated in the Android README, so not confirmed.
 
@@ -9,29 +9,30 @@ Legend: ✅ shipped · ⏳ Phase N planned · — not offered · ? not stated in
 | Feature | Web | Android | iOS |
 |---|---|---|---|
 | Sign in with username and password, change password | ✅ | ✅ | ⏳ Phase 7 |
-| Create an account, verify email, reset password | ✅ | ✅ | ⏳ Phase 7 |
-| Sessions list and revoke one (mobile sign-ins; `GET/DELETE /auth/sessions`) | — | ✅ | ⏳ Phase 7 |
+| Create an account, verify email, reset password | ✅ | ✅ password strength meter (same rules as web); a verify link opened while signed in asks to sign out first (web swaps accounts) | ⏳ Phase 7 |
+| Sessions list and revoke one (`GET/DELETE /auth/sessions`) | ✅ (Account → Security; hidden on an older backend) | ✅ | ⏳ Phase 7 |
 | Sessions: sign out everywhere, refresh tokens on mobile | ✅ | ✅ | ⏳ Phase 7 |
-| Account area: profile, avatar, settings, linked sign-in methods | ✅ | ✅ | ⏳ Phase 7 |
+| Account area: profile, avatar, settings, linked sign-in methods | ✅ | ✅ including linking Google, GitHub and Facebook | ⏳ Phase 7 |
 | Export my data and delete my account | ✅ | ✅ | ⏳ Phase 7 |
-| Daily AI allowance and verified-email requirement | ✅ | ✅ | ⏳ Phase 7 |
-| XP, badges, levels and streaks (can be hidden) | ✅ | ✅ | ⏳ Phase 7 |
-| Social sign-in buttons (Apple, Google, Facebook, GitHub) | ✅ buttons always shown; sign-in works once the provider credentials are set, "coming soon" until then | ✅ system browser + PKCE; inert until provider credentials are set | ⏳ Phase 7 |
+| Daily AI allowance and verified-email requirement | ✅ | ✅ an `email_unverified` refusal raises a banner with a send-link action | ⏳ Phase 7 |
+| XP, badges, levels and streaks (can be hidden) | ✅ | ✅ |
+| Hide community (`hide_community`: hides Ideas, profile and social surfaces) | ✅ | ✅ Ideas entry, profile, publish launcher and social notification switch | ⏳ Phase 7 |
+| Social sign-in buttons (Apple, Google, Facebook, GitHub) | ✅ buttons always shown; sign-in works once the provider credentials are set, "coming soon" until then | ✅ same four buttons including Apple, "coming soon" note until the provider is configured; system browser + PKCE | ⏳ Phase 7 |
 | Admin: users and feedback | ✅ | — (README lists traveller-facing flows only) | ⏳ Phase 7 |
 | Admin: Analytics tab (telemetry summary) | ✅ | — | ⏳ Phase 7 |
 | Preferences, two-way bound to the search form; Taste Graph | ✅ | ? (Settings and per-feature visibility are device-local per the README) | ⏳ Phase 7 |
 | Light and dark theme (see [Theming](Theming.md)) | ✅ | ✅ | ⏳ Phase 7 |
 | Languages (see [Internationalization](Internationalization.md)) | ✅ en, es, de, fr, hi, zh, bn | ✅ en, es, de, fr, hi, zh, bn (hi, zh, bn awaiting native-speaker review) | ⏳ Phase 7 |
-| Telemetry and consent prompt (see [Telemetry](Telemetry.md)) | ✅ | ⏳ Phase 8 | ⏳ Phase 7 |
+| Telemetry and consent prompt (see [Telemetry](Telemetry.md)) | ✅ | ✅ every tap, toggle, change and submit reported through shared UI wrappers (tid and route only) and a region-gated consent prompt (EU/EEA/UK/CH by device time zone, reopenable from the sign-in screen's "Privacy choices" link) | ⏳ Phase 7 |
 | Feedback widget | ✅ | ? | ⏳ Phase 7 |
-| Onboarding | ✅ coach-mark tour | ✅ traveller-type onboarding (different flow) | ⏳ Phase 7 |
+| Onboarding | ✅ coach-mark tour; welcome and notifications copy shared with Android | ✅ traveller-type onboarding; same copy as web in all 7 languages, no first-run feature picker (feature toggles stay in Settings → Features, the Settings retake keeps the picker) | ⏳ Phase 7 |
 
 ## Search
 
 | Feature | Web | Android | iOS |
 |---|---|---|---|
 | Known destination search | ✅ | ✅ | ⏳ Phase 7 |
-| Surprise me (discover) | ✅ | ✅ | ⏳ Phase 7 |
+| Surprise me (discover) | ✅ uses the signed-in user's Taste Graph | ✅ | ⏳ Phase 7 |
 | Compare 2-3 destinations | ✅ | ✅ | ⏳ Phase 7 |
 | Plan from a link, text or screenshots | ✅ | ✅ | ⏳ Phase 7 |
 | Multi-city trips | ✅ | ? | ⏳ Phase 7 |
@@ -72,11 +73,11 @@ Legend: ✅ shipped · ⏳ Phase N planned · — not offered · ? not stated in
 |---|---|---|---|
 | Trips hub, trip phases and next-up card | ✅ | ✅ | ⏳ 7 |
 | Prep checklist and trip-ready meter | ✅ | ✅ | ⏳ 7 |
-| Offline pack (emergency card, currency, phrases, plan) | ✅ | ✅ | ⏳ 7 |
+| Offline pack (emergency card, currency, phrases, plan) | ✅ queued offline writes show a "rejected" state when the server refuses them (for example a per-trip cap) | ✅ | ⏳ 7 |
 | Today view and daily check-in | ✅ | ✅ | ⏳ 7 |
 | Expenses with currency converter | ✅ | ✅ | ⏳ 7 |
 | Journal and place ratings and visits | ✅ | ✅ | ⏳ 7 |
-| Recap, passport stamps and countries visited | ✅ | ✅ | ⏳ 7 |
+| Recap, passport stamps and countries visited | ✅ | ✅ (the scratch map is a country list; passport stamps are not built) | ⏳ 7 |
 | Explore, Play and You tabs | ✅ | ✅ | ⏳ 7 |
 
 ## Social and Play
@@ -93,7 +94,7 @@ Legend: ✅ shipped · ⏳ Phase N planned · — not offered · ? not stated in
 | Weekly leaderboards (global, friends) | ✅ | ✅ | ⏳ 7 |
 | Weekly "Know before you go" challenge | ✅ | ⏳ 8 | ⏳ 7 |
 | Quiz and trip-status share cards | ✅ | ✅ | ⏳ 7 |
-| Social and quiz notifications | ✅ | ✅ | ⏳ 7 |
+| Social and quiz notifications (daily quiz reminder, likes and comments on your ideas, head-to-head) | ✅ | ✅ | ⏳ 7 |
 
 Both are behind `SOCIAL_ENABLED` / `PLAY_ENABLED` (`features.social`, `features.play`). Contract: [Social and Play API](Social-API.md).
 
@@ -109,15 +110,22 @@ Both are behind `SOCIAL_ENABLED` / `PLAY_ENABLED` (`features.social`, `features.
 |---|---|---|---|
 | Fare watch and price watches (hotel, activity, trip) | ✅ | ✅ | ⏳ Phase 7 |
 | Notification inbox and unread bell | ✅ | ✅ | ⏳ Phase 7 |
-| Alert e-mail | ✅ | ? | ⏳ Phase 7 |
+| Alert e-mail | ✅ localised to the account language (server-side `data.i18n`) | ? | ⏳ Phase 7 |
 | Push notifications | — (a toast, or a native notification while the tab is open) | ✅ FCM, per-category channels (inert until configured) | ⏳ Phase 6 |
 | Price story (chart, lowest, typical range, verdict) | ✅ (behind `PRICE_ALERTS_V2_ENABLED`) | ✅ (needs `features.alerts_api` / `price_alerts_v2`) | ⏳ Phase 7 |
-| Drop moment, savings tally and Deal-hunter XP | ✅ (same flag) | ✅ ("caught a drop", never "saved") | ⏳ Phase 7 |
+| Drop moment, savings tally and Deal-hunter XP | ✅ (same flag; savings card follows the light/dark theme, drop-moment badge) | ✅ ("caught a drop", never "saved"); the Deal-hunter track, bucket ring and passport stamp are not built | ⏳ Phase 7 |
 | One-tap watch and suggestions | ✅ (same flag; needs `SERPAPI_KEY`) | ✅ (needs `live_prices`; Results cards only so far) | ⏳ Phase 7 |
-| Weekly digest, quiet hours, caps and grouping (preferences) | ✅ (same flag) | ✅ | ⏳ Phase 7 |
+| Weekly digest, quiet hours, caps and grouping (preferences) | ✅ (same flag; digest text localised) | ✅ | ⏳ Phase 7 |
 | Local trip reminders | — | ✅ | ⏳ Phase 7 |
 | Notification settings (categories, quiet hours, daily cap) | ✅ (Account → Notifications; shown when `features.notifications_api`) | ✅ (Settings → Notifications) | ⏳ Phase 7 |
 | Localized notification text catalog (`/notifications/catalog`) | — (server-side) | ✅ (used for on-device "near you" text) | ⏳ Phase 7 |
-| Trip-phase pushes (T-30, T-7, T-1, morning brief) | — | ✅ taps open the trip Today tab | ⏳ Phase 6 |
+| Trip-phase pushes (T-30, T-7, T-1, morning brief) | — | ✅ taps open the trip Today tab; the morning-brief switch now also turns the local trip switch on | ⏳ Phase 6 |
 | "Search the web now" on a watch | ✅ | ✅ | ⏳ Phase 7 |
-| Near me | ✅ | ✅ | ⏳ Phase 7 |
+| Near me | ✅ | ✅ (a background geofence arrival notification is not built, by ruling) |
+| Weather-change push | — | — (not built) | ⏳ Phase 7 |
+
+## Known gaps
+
+- Android: background geofence arrival notification (not built, by ruling), weather-change push (not built on any client), Deal-hunter track, bucket ring and passport stamp, scratch map is a country list.
+- Android: one-tap watch on a saved plan or chat (when live prices and Alerts v2 are on), a dismissible watch offer right after a plan is saved, and Recap "Where next" (AI picks from `/api/discover`, on tap, seeded by the Taste Graph server-side) shipped in #121.
+- Android: follows, comments, head-to-head and the weekly challenge remain Phase 8.
