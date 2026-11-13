@@ -186,8 +186,8 @@ describe('SharePage kinds', () => {
     const emit = vi.fn()
     vi.doMock('../telemetry/client', () => ({ emit }))
     await show({ name: 'T', kind: 'savings', search_data: {}, selections: {}, card: { headline: 'h', stats: [] } })
-    await flush()
-    expect(emit).toHaveBeenCalledWith('share_view', { kind: 'savings' })
+    // the emit goes through a dynamic import, whose cold-transform time varies on CI
+    await vi.waitFor(() => expect(emit).toHaveBeenCalledWith('share_view', { kind: 'savings' }), { timeout: 5000, interval: 10 })
     vi.doUnmock('../telemetry/client')
   })
 
