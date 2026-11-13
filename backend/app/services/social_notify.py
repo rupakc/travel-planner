@@ -10,7 +10,7 @@ import logging
 from datetime import UTC, datetime
 
 from ..core.config import settings
-from ..db import game_db, social_db
+from ..db import game_db, social_db, user_settings_db
 from . import notify_center, notify_text
 
 logger = logging.getLogger(__name__)
@@ -32,6 +32,10 @@ def _enqueue(
             game_db.hide_game(user_id)
             or not settings.play_enabled
             or not settings.game_enabled
+        ):
+            return
+        if category == "social" and user_settings_db.get_settings(user_id).get(
+            "hide_community"
         ):
             return
         body = notify_text.render(kind, notify_center.user_locale(user_id))

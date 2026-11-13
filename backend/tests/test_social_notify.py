@@ -178,3 +178,12 @@ def test_failures_never_raise(client, monkeypatch, caplog):
         client.put(f"/api/social/follow/{b['handle']}", headers=a["h"]).status_code
         == 200
     )
+
+
+def test_hide_community_suppresses_social_pushes(client):
+    from app.db import user_settings_db
+
+    a, b = _mk(client), _mk(client)
+    user_settings_db.patch_settings(b["id"], {"hide_community": True})
+    client.put(f"/api/social/follow/{b['handle']}", headers=a["h"])
+    assert _log(b, "social_new_follower") == []
