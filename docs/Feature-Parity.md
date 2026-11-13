@@ -59,9 +59,9 @@ Legend: ✅ shipped · ⏳ Phase N planned · — not offered · ? not stated in
 |---|---|---|---|
 | Select items into My Plan, save and load plans | ✅ | ✅ | ⏳ Phase 7 |
 | Share link | ✅ | ✅ | ⏳ Phase 7 |
-| Public share viewer | ✅ | ✅ deep link | ⏳ Phase 7 |
-| Share links 2.0: choose what is revealed (dates, origin, name), share card (link and story sizes), list and revoke links | ✅ | ⏳ planned ([Sharing API](Sharing-API.md)) | ⏳ planned ([Sharing API](Sharing-API.md)) |
-| Share a trip recap or savings card as a link | ✅ | ⏳ planned | ⏳ planned |
+| Public share viewer | ✅ | ✅ deep link, plus paste-a-link; recap, savings, quiz and status kinds | ⏳ Phase 7 |
+| Share links 2.0: choose what is revealed (dates, origin, name), share card (link and story sizes), list and revoke links | ✅ | ✅ share sheet with the card PNG, My shares with revoke ([Sharing API](Sharing-API.md)) | ⏳ planned ([Sharing API](Sharing-API.md)) |
+| Share a trip recap or savings card as a link | ✅ | ✅ | ⏳ planned |
 | Link previews (Open Graph page and card.png for crawlers) | ✅ server-side, all clients | ✅ same links | ✅ same links |
 | Export to calendar (.ics) and print/PDF | ✅ | ✅ | ⏳ Phase 7 |
 | Cost breakdown | ✅ | ? | ⏳ Phase 7 |
@@ -83,17 +83,17 @@ Legend: ✅ shipped · ⏳ Phase N planned · — not offered · ? not stated in
 
 | Feature | Web | Android | iOS |
 |---|---|---|---|
-| Social profile (handle, privacy, opt-in fields) | ✅ | ⏳ 8 | ⏳ 7 |
+| Social profile (handle, privacy, opt-in fields) | ✅ | ✅ | ⏳ 7 |
 | Follows, follow requests and blocks | ✅ | ⏳ 8 | ⏳ 7 |
-| Ideas feed, publish from a plan or recap, like, save (remix) | ✅ | ⏳ 8 | ⏳ 7 |
+| Ideas feed, publish from a plan or recap, like, save (remix) | ✅ | ✅ | ⏳ 7 |
 | Comments and helpful marks | ✅ | ⏳ 8 | ⏳ 7 |
 | Reports and admin moderation queue | ✅ | ⏳ 8 (reports) | ⏳ 7 (reports) |
-| Daily quiz and topic packs | ✅ | ⏳ 8 | ⏳ 7 |
+| Daily quiz and topic packs | ✅ | ✅ | ⏳ 7 |
 | Head-to-head challenges | ✅ | ⏳ 8 | ⏳ 7 |
-| Weekly leaderboards (global, friends) | ✅ | ⏳ 8 | ⏳ 7 |
+| Weekly leaderboards (global, friends) | ✅ | ✅ | ⏳ 7 |
 | Weekly "Know before you go" challenge | ✅ | ⏳ 8 | ⏳ 7 |
-| Quiz and trip-status share cards | ✅ | ⏳ 8 | ⏳ 7 |
-| Social and quiz notifications | ✅ | ⏳ 8 | ⏳ 7 |
+| Quiz and trip-status share cards | ✅ | ✅ | ⏳ 7 |
+| Social and quiz notifications | ✅ | ✅ | ⏳ 7 |
 
 Both are behind `SOCIAL_ENABLED` / `PLAY_ENABLED` (`features.social`, `features.play`). Contract: [Social and Play API](Social-API.md).
 
@@ -110,14 +110,14 @@ Both are behind `SOCIAL_ENABLED` / `PLAY_ENABLED` (`features.social`, `features.
 | Fare watch and price watches (hotel, activity, trip) | ✅ | ✅ | ⏳ Phase 7 |
 | Notification inbox and unread bell | ✅ | ✅ | ⏳ Phase 7 |
 | Alert e-mail | ✅ | ? | ⏳ Phase 7 |
-| Push notifications | — (a toast, or a native notification while the tab is open) | ⏳ Phase 6 (FCM wired, inert until configured) | ⏳ Phase 6 |
-| Price story (chart, lowest, typical range, verdict) | ✅ (behind `PRICE_ALERTS_V2_ENABLED`) | ⏳ | ⏳ Phase 7 |
-| Drop moment, savings tally and Deal-hunter XP | ✅ (same flag) | ⏳ | ⏳ Phase 7 |
-| One-tap watch and suggestions | ✅ (same flag; needs `SERPAPI_KEY`) | ⏳ | ⏳ Phase 7 |
-| Weekly digest, quiet hours, caps and grouping (preferences) | ✅ (same flag) | ⏳ | ⏳ Phase 7 |
+| Push notifications | — (a toast, or a native notification while the tab is open) | ✅ FCM, per-category channels (inert until configured) | ⏳ Phase 6 |
+| Price story (chart, lowest, typical range, verdict) | ✅ (behind `PRICE_ALERTS_V2_ENABLED`) | ✅ (needs `features.alerts_api` / `price_alerts_v2`) | ⏳ Phase 7 |
+| Drop moment, savings tally and Deal-hunter XP | ✅ (same flag) | ✅ ("caught a drop", never "saved") | ⏳ Phase 7 |
+| One-tap watch and suggestions | ✅ (same flag; needs `SERPAPI_KEY`) | ✅ (needs `live_prices`; Results cards only so far) | ⏳ Phase 7 |
+| Weekly digest, quiet hours, caps and grouping (preferences) | ✅ (same flag) | ✅ | ⏳ Phase 7 |
 | Local trip reminders | — | ✅ | ⏳ Phase 7 |
-| Notification settings (categories, quiet hours, daily cap) | ✅ (Account → Notifications; shown when `features.notifications_api`) | ⏳ | ⏳ Phase 7 |
-| Localized notification text catalog (`/notifications/catalog`) | — (server-side) | ⏳ | ⏳ Phase 7 |
-| Trip-phase pushes (T-30, T-7, T-1, morning brief) | — | ⏳ Phase 6 | ⏳ Phase 6 |
+| Notification settings (categories, quiet hours, daily cap) | ✅ (Account → Notifications; shown when `features.notifications_api`) | ✅ (Settings → Notifications) | ⏳ Phase 7 |
+| Localized notification text catalog (`/notifications/catalog`) | — (server-side) | ✅ (used for on-device "near you" text) | ⏳ Phase 7 |
+| Trip-phase pushes (T-30, T-7, T-1, morning brief) | — | ✅ taps open the trip Today tab | ⏳ Phase 6 |
 | "Search the web now" on a watch | ✅ | ✅ | ⏳ Phase 7 |
 | Near me | ✅ | ✅ | ⏳ Phase 7 |
