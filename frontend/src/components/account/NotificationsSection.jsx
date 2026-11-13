@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
-import { useClientConfig } from '../../hooks/useClientConfig'
+import { useClientConfig, featureOn } from '../../hooks/useClientConfig'
+import { useAccountSettings } from './SettingsSync'
 import { getNotificationSettings, putNotificationSettings } from '../../services/notificationsApi'
 import { emit } from '../../telemetry/client'
 
-// social and quiz have no sender yet: stored by the server, not shown here.
-const CATEGORIES = ['price_drops', 'trip_reminders', 'morning_brief', 'weather', 'nearby']
+// social and quiz are sent by the server; shown only when the server lists them
+// (older backends do not) and the matching feature is not hidden or off.
+const CATEGORIES = ['price_drops', 'trip_reminders', 'morning_brief', 'weather', 'nearby', 'social', 'quiz']
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/
 const DEFAULT_QUIET = { enabled: false, start: '22:00', end: '07:00' }
 
@@ -42,6 +44,7 @@ export default function NotificationsSection() {
   const [settings, setSettings] = useState(null)
   const [loadFailed, setLoadFailed] = useState(false)
   const [error, setError] = useState('')
+  const { settings: account } = useAccountSettings()
   const alive = useRef(true)
   const inflight = useRef(0)
   useEffect(() => { alive.current = true; return () => { alive.current = false } }, [])
@@ -84,6 +87,11 @@ export default function NotificationsSection() {
   if (!settings) return null
 
   const cats = settings.categories || {}
+  const visible = CATEGORIES.filter((c) => {
+    if (c === 'social') return c in cats && !account?.hide_community
+    if (c === 'quiz') return c in cats && !account?.hide_game && featureOn(config, 'play')
+    return true
+  })
   const qh = settings.quiet_hours || DEFAULT_QUIET
   const cap = Number(settings.daily_cap ?? 3)
 
@@ -111,7 +119,7 @@ export default function NotificationsSection() {
       {error && <p role="alert" className="mt-2 text-sm text-red-700" data-tid="notif.error">{error}</p>}
 
       <div className="mt-2 divide-y divide-slate-100">
-        {CATEGORIES.map((c) => (
+        {visible.map((c) => (
           <div key={c} className={ROW}>
             <span className="min-w-0 max-w-[75%] text-sm font-semibold text-slate-800">
               {t(`categories.${c}.label`)}

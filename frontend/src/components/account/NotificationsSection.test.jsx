@@ -5,7 +5,12 @@ import { createRoot } from 'react-dom/client'
 
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ token: 'tok' }) }))
 const cfg = vi.hoisted(() => ({ value: { config: { features: { notifications_api: 1 } }, loaded: true } }))
-vi.mock('../../hooks/useClientConfig', () => ({ useClientConfig: () => cfg.value }))
+vi.mock('../../hooks/useClientConfig', () => ({
+  useClientConfig: () => cfg.value,
+  featureOn: (c, n) => c?.features?.[n] === true || c?.features?.[n] === 1,
+}))
+const acct = vi.hoisted(() => ({ value: { hide_game: false, hide_community: false } }))
+vi.mock('./SettingsSync', () => ({ useAccountSettings: () => ({ settings: acct.value }) }))
 vi.mock('../../services/notificationsApi', () => ({ getNotificationSettings: vi.fn(), putNotificationSettings: vi.fn() }))
 vi.mock('../../telemetry/client', () => ({ emit: vi.fn() }))
 
@@ -36,7 +41,8 @@ beforeEach(async () => {
   await initI18n({ lng: 'en' })
   host = document.createElement('div'); document.body.appendChild(host); root = createRoot(host)
   vi.clearAllMocks()
-  cfg.value = { config: { features: { notifications_api: 1 } }, loaded: true }
+  cfg.value = { config: { features: { notifications_api: 1, play: 1 } }, loaded: true }
+  acct.value = { hide_game: false, hide_community: false }
   server = JSON.parse(JSON.stringify(BASE))
   api.getNotificationSettings.mockImplementation(() => Promise.resolve(server))
   api.putNotificationSettings.mockImplementation((_t, patch) => {
@@ -56,12 +62,48 @@ describe('NotificationsSection', () => {
     expect(api.getNotificationSettings).not.toHaveBeenCalled()
   })
 
-  it('shows five categories (no social/quiz) and emits the view event', async () => {
+  it('shows all seven categories and emits the view event', async () => {
     await render()
-    expect(host.querySelectorAll('[data-tid^="notif.category."]').length).toBe(5)
-    expect(q('notif.category.social')).toBeNull()
+    expect(host.querySelectorAll('[data-tid^="notif.category."]').length).toBe(7)
+    expect(q('notif.category.social')).not.toBeNull()
+    expect(q('notif.category.quiz')).not.toBeNull()
     expect(emit).toHaveBeenCalledWith('notif_settings_view', {})
     expect(q('notif.no_devices')).toBeNull()
+  })
+
+  it('hides social and quiz when an older backend does not list them', async () => {
+    delete server.categories.social
+    delete server.categories.quiz
+    await render()
+    expect(host.querySelectorAll('[data-tid^="notif.category."]').length).toBe(5)
+  })
+
+  it('hides social with hide_community', async () => {
+    acct.value = { hide_game: false, hide_community: true }
+    await render()
+    expect(q('notif.category.social')).toBeNull()
+    expect(q('notif.category.quiz')).not.toBeNull()
+  })
+
+  it('hides quiz with hide_game or the Play flag off', async () => {
+    acct.value = { hide_game: true, hide_community: false }
+    await render()
+    expect(q('notif.category.quiz')).toBeNull()
+    expect(q('notif.category.social')).not.toBeNull()
+    act(() => root.unmount()); root = createRoot(host)
+    acct.value = { hide_game: false, hide_community: false }
+    cfg.value = { config: { features: { notifications_api: 1, play: 0 } }, loaded: true }
+    await render()
+    expect(q('notif.category.quiz')).toBeNull()
+  })
+
+  it('toggles social and quiz through the same save and event', async () => {
+    await render()
+    await click(q('notif.category.quiz'))
+    expect(api.putNotificationSettings).toHaveBeenLastCalledWith('tok', { categories: { quiz: { enabled: false } } })
+    expect(emit).toHaveBeenCalledWith('notif_category_toggle', { category: 'quiz', on: false })
+    await click(q('notif.category.social'))
+    expect(emit).toHaveBeenCalledWith('notif_category_toggle', { category: 'social', on: false })
   })
 
   it('toggles a category, saving and emitting', async () => {
