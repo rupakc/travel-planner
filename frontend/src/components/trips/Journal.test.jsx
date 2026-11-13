@@ -109,6 +109,19 @@ describe('Journal', () => {
     expect(all).not.toMatch(/Bel/)
   })
 
+  it('drops the optimistic rating when the queued place write is refused (places_limit)', async () => {
+    online.value = false
+    await mount()
+    await act(async () => { radio('4 of 5 stars').click() })
+    await flush()
+    expect(radio('4 of 5 stars').getAttribute('aria-checked')).toBe('true')
+    const key = placeKey('activity', 'Belém Tower')
+    rejectedRows.list = [{ key: `place:12:${key}`, path: `/trips/12/places/${encodeURIComponent(key)}`, body: {}, rejected: 'places_limit', order: 1 }]
+    await act(async () => { window.dispatchEvent(new Event('voyager:outbox-changed')) })
+    await flush()
+    expect(radio('4 of 5 stars').getAttribute('aria-checked')).not.toBe('true')
+  })
+
   const write = async (text) => {
     setText(container.querySelector('textarea'), text)
     await act(async () => { button('Add entry').click() })

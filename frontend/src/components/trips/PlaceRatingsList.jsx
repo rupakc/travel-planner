@@ -44,6 +44,13 @@ export default function PlaceRatingsList({ trip, token, userId, itinerary, layou
     return () => { live = false }
   }, [token, trip.id])
 
+  // A queued write the server refused (places cap) must not stay shown as saved.
+  useEffect(() => {
+    if (!rejected.length) return
+    const gone = new Set(rejected.map((r) => decodeURIComponent(r.path.split('/places/')[1] || '')))
+    setSaved((s) => (Object.keys(s).some((k) => gone.has(k)) ? Object.fromEntries(Object.entries(s).filter(([k]) => !gone.has(k))) : s))
+  }, [rejected])
+
   const rows = useMemo(() => {
     const planned = itineraryPlaces(itinerary, layout, edits)
     const keys = new Set(planned.map((p) => p.place_key))
