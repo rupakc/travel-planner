@@ -1425,14 +1425,14 @@
 <h2 id="parked-by-ruling">Parked by ruling</h2>
 <ul>
 <li>Android on-device arrival (geofence) recommendations: needs background location; Play data-safety and battery cost; the opt-in Near-me-seeded local notification stays.</li>
-<li>Weather-change push for today's outdoor slots: needs a polling weather source outside the free-tier budget.</li>
-<li>Android Deal hunter progress track, Trips-hub bucket ring, passport-stamp animation and confetti (cosmetic).</li>
-<li>Scratch map is a country/flag list on both clients (no drawn map); home-tab section customisation not built.</li>
+<li>~~Weather-change push for today's outdoor slots: needs a polling weather source outside the free-tier budget.~~ DONE in wave 2 (web #215-#221, Android #124-#128)</li>
+<li>~~Android Deal hunter progress track, Trips-hub bucket ring, passport-stamp animation and confetti (cosmetic).~~ DONE in wave 2 (web #215-#221, Android #124-#128)</li>
+<li>~~Scratch map is a country/flag list on both clients (no drawn map); home-tab section customisation not built.~~ DONE in wave 2 (web #215-#221, Android #124-#128)</li>
 </ul>
 <h2 id="backend-items-skipped-w6-triage-see-pr-207">Backend items skipped (W6 triage, see PR #207)</h2>
 <ul>
 <li>Grouped push <code>data.kind</code> for mixed groups (needs to know how Android uses it).</li>
-<li>Claim-before-send message loss (needs a retry/ack protocol).</li>
+<li>~~Claim-before-send message loss (needs a retry/ack protocol).~~ DONE in wave 2 (web #215-#221, Android #124-#128)</li>
 <li>Save/unsave/save plan cap (unsave semantics are in the frozen Social-API).</li>
 <li>Restricted users can like/follow/report (product ruling).</li>
 <li><code>for_you</code> cursor (keyset over a time-dependent score), <code>quiz_sessions</code> pruning (retention decision plus migration).</li>
@@ -1440,12 +1440,12 @@
 </ul>
 <h2 id="other">Other</h2>
 <ul>
-<li>Share card images are English-only and non-Latin headlines fall back (bundle a Noto subset in <code>services/share_card.py</code>).</li>
+<li>~~Share card images are English-only and non-Latin headlines fall back (bundle a Noto subset in <code>services/share_card.py</code>).~~ DONE in wave 2 (web #215-#221, Android #124-#128)</li>
 <li>Native-speaker review of hi / bn / zh and of the alert-text catalogue (<code>alert_text_catalog.py</code>).</li>
-<li>Quiz reminder candidate query is <code>LIMIT 1000</code> ordered by id with no rotation; add rotation past 1000 active players.</li>
-<li>Android: <code>TpTab</code> / <code>TpDropdownMenuItem</code> lack an <code>interactionSource</code> parameter; about 125 tids use a file-name fallback and shared row composables give every caller the same tid (route tells them apart).</li>
+<li>~~Quiz reminder candidate query is <code>LIMIT 1000</code> ordered by id with no rotation; add rotation past 1000 active players.~~ DONE in wave 2 (web #215-#221, Android #124-#128)</li>
+<li>~~Android: <code>TpTab</code> / <code>TpDropdownMenuItem</code> lack an <code>interactionSource</code> parameter; about 125 tids use a file-name fallback and shared row composables give every caller the same tid (route tells them apart).~~ DONE in wave 2 (web #215-#221, Android #124-#128)</li>
 <li>Android registry snapshot is a hand-synced copy of the web registry (regenerate when the registry changes).</li>
-<li>Android tests missing for the <code>playGraph</code> nav deep link and the <code>TravelApp</code> <code>onOpenPlay</code> wiring.</li>
+<li>~~Android tests missing for the <code>playGraph</code> nav deep link and the <code>TravelApp</code> <code>onOpenPlay</code> wiring.~~ DONE in wave 2 (web #215-#221, Android #124-#128)</li>
 <li>Web: <code>docs/Feature-Parity.md</code> iOS cells for two rows are left to the iOS controller.</li>
 <li>Web has no Android-style refresh-token families, so the sessions list mostly shows mobile sign-ins.</li>
 </ul>

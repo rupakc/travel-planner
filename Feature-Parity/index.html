@@ -1932,7 +1932,7 @@
 <tr>
 <td>Recap, passport stamps and countries visited</td>
 <td>✅ (web also draws a scratch map: visited countries filled on a world map, lazy chunk)</td>
-<td>✅ (the scratch map is a country list; passport stamps are not built)</td>
+<td>✅ (offline drawn scratch map from a bundled Natural Earth asset, passport stamp animation on a new country)</td>
 <td>⏳ 7</td>
 </tr>
 <tr>
@@ -2086,7 +2086,7 @@
 <tr>
 <td>Drop moment, savings tally and Deal-hunter XP</td>
 <td>✅ (same flag; savings card follows the light/dark theme, drop-moment badge)</td>
-<td>✅ ("caught a drop", never "saved"); the Deal-hunter track, bucket ring and passport stamp are not built</td>
+<td>✅ ("caught a drop", never "saved"); Deal-hunter progress track, Trips-hub bucket ring and confetti on drops and badges (reduced motion and <code>hide_game</code> respected)</td>
 <td>⏳ Phase 7</td>
 </tr>
 <tr>
@@ -2138,16 +2138,16 @@
 <td></td>
 </tr>
 <tr>
-<td>Weather-change push</td>
-<td>—</td>
-<td>— (not built)</td>
+<td>Weather-change push (Open-Meteo, outdoor slots today, <code>WEATHER_PUSH_ENABLED</code> default on, <code>weather</code> category switch)</td>
+<td>✅ (notification list shows the Open-Meteo credit)</td>
+<td>✅ (push, <code>weather</code> switch, credit)</td>
 <td>⏳ Phase 7</td>
 </tr>
 </tbody>
 </table>
 <h2 id="known-gaps">Known gaps</h2>
 <ul>
-<li>Android: background geofence arrival notification (not built, by ruling), weather-change push (not built on any client), Deal-hunter track, bucket ring and passport stamp, scratch map is a country list.</li>
+<li>Android: background geofence arrival notification (not built, by ruling), (weather push, Deal-hunter track, bucket ring, passport stamp and drawn scratch map are now built.)</li>
 <li>Android: one-tap watch on a saved plan or chat (when live prices and Alerts v2 are on), a dismissible watch offer right after a plan is saved, and Recap "Where next" (AI picks from <code>/api/discover</code>, on tap, seeded by the Taste Graph server-side) shipped in #121.</li>
 <li>Android: follows, comments, head-to-head and the weekly challenge remain Phase 8.</li>
 </ul>
