@@ -8,7 +8,10 @@
     "count_one": "{{count}} Land besucht",
     "count_other": "{{count}} Länder besucht",
     "countOfGoal_one": "{{count}} von {{goal}} Ländern besucht",
-    "countOfGoal_other": "{{count}} von {{goal}} Ländern besucht"
+    "countOfGoal_other": "{{count}} von {{goal}} Ländern besucht",
+    "mapLabel": "Weltkarte, {{count}} besucht (hervorgehoben)",
+    "mapHint": "Tippe auf ein Land, um seinen Namen zu sehen.",
+    "mapLoading": "Karte wird geladen…"
   },
   "continents": {
     "title_one": "Kontinente ({{count}})",

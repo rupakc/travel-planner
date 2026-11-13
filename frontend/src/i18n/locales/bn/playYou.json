@@ -8,7 +8,10 @@
     "count_one": "{{count}}টি দেশ ঘোরা হয়েছে",
     "count_other": "{{count}}টি দেশ ঘোরা হয়েছে",
     "countOfGoal_one": "{{goal}}টির মধ্যে {{count}}টি দেশ ঘোরা হয়েছে",
-    "countOfGoal_other": "{{goal}}টির মধ্যে {{count}}টি দেশ ঘোরা হয়েছে"
+    "countOfGoal_other": "{{goal}}টির মধ্যে {{count}}টি দেশ ঘোরা হয়েছে",
+    "mapLabel": "বিশ্ব মানচিত্র, {{count}}টি ঘোরা হয়েছে (হাইলাইট করা)",
+    "mapHint": "কোনো দেশের নাম দেখতে সেটিতে ট্যাপ করুন।",
+    "mapLoading": "মানচিত্র লোড হচ্ছে…"
   },
   "continents": {
     "title_one": "মহাদেশ ({{count}})",

@@ -8,7 +8,10 @@
     "count_one": "{{count}} country visited",
     "count_other": "{{count}} countries visited",
     "countOfGoal_one": "{{count}} of {{goal}} countries visited",
-    "countOfGoal_other": "{{count}} of {{goal}} countries visited"
+    "countOfGoal_other": "{{count}} of {{goal}} countries visited",
+    "mapLabel": "World map, {{count}} visited (highlighted)",
+    "mapHint": "Tap a country to see its name.",
+    "mapLoading": "Loading map…"
   },
   "continents": {
     "title_one": "Continents ({{count}})",

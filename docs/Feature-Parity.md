@@ -77,7 +77,7 @@ Legend: ✅ shipped · ⏳ Phase N planned · — not offered · ? not stated in
 | Today view and daily check-in | ✅ | ✅ | ⏳ 7 |
 | Expenses with currency converter | ✅ | ✅ | ⏳ 7 |
 | Journal and place ratings and visits | ✅ | ✅ | ⏳ 7 |
-| Recap, passport stamps and countries visited | ✅ | ✅ (the scratch map is a country list; passport stamps are not built) | ⏳ 7 |
+| Recap, passport stamps and countries visited | ✅ (web also draws a scratch map: visited countries filled on a world map, lazy chunk) | ✅ (the scratch map is a country list; passport stamps are not built) | ⏳ 7 |
 | Explore, Play and You tabs | ✅ | ✅ | ⏳ 7 |
 
 ## Social and Play

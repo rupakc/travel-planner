@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import ScratchMap from './ScratchMap'
 
 const CONTINENTS = ['AF', 'AN', 'AS', 'EU', 'NA', 'OC', 'SA']
 
@@ -28,6 +29,7 @@ export default function CountriesVisited({ countries = [], continents = [], goal
       <p className="mb-4 text-sm text-slate-600" data-tid="play.countries.count">
         {goal ? t('countries.countOfGoal', { count, goal }) : t('countries.count', { count })}
       </p>
+      {count > 0 && <ScratchMap countries={countries} />}
       {count === 0 ? (
         <p className="text-sm text-slate-500" data-tid="play.countries.empty">{t('countries.empty')}</p>
       ) : (
