@@ -220,6 +220,7 @@ def _result(s: dict, row: dict, *, with_summary: bool) -> dict:
 def answer(user_id: str, sid: str, index: int, choice: str) -> dict:
     now = _now_ms()
     expired = False
+    retry = False
     with get_connection() as conn:
         conn.execute("BEGIN IMMEDIATE")
         s = quiz_db.get_session(conn, sid)
@@ -232,40 +233,48 @@ def answer(user_id: str, sid: str, index: int, choice: str) -> dict:
             raise ApiError(422, "invalid_index", "No such question.")
         first = by_idx.get(index)
         if first is not None and first["answered_ms"] is not None:
-            return _result(s, first, with_summary=True)  # first result stands
-        if s["finished_ms"] is not None:
-            raise ApiError(410, "session_expired", "This quiz timed out.")
-        if _expired(s, rows, now):
-            expired = True
-        else:
-            if choice not in [o["id"] for o in qs[index]["options"]]:
-                raise ApiError(422, "invalid_choice", "Not one of the options.")
-            if first is None:
-                raise ApiError(422, "out_of_order", "Answer the questions in order.")
-            elapsed = max(0, now - first["served_ms"])
-            correct = choice == qs[index]["answer"]
-            points = quiz_engine.points_for(correct, elapsed)
-            quiz_db.record_answer(
-                conn, sid, index, choice, correct, points, elapsed, now
-            )
-            row = {
-                "idx": index,
-                "correct": correct,
-                "points": points,
-                "elapsed_ms": elapsed,
-            }
-            if index + 1 < len(qs):
-                quiz_db.serve_next(conn, sid, index + 1, now)
+            if s["finished_ms"] is not None and s["xp"] is None and s["mode"] != "h2h":
+                # a transient error left the finished session unrewarded; the
+                # award keys are idempotent, so retry (outside this transaction)
+                retry, row = True, first
             else:
-                done_rows = [
-                    r
-                    for r in rows
-                    if r["answered_ms"] is not None and r["idx"] != index
-                ]
-                score = sum(r["points"] or 0 for r in done_rows) + points
-                n_ok = sum(1 for r in done_rows if r["correct"]) + int(correct)
-                quiz_db.finish(conn, sid, score, n_ok, now)
-            s = quiz_db.get_session(conn, sid)
+                return _result(s, first, with_summary=True)  # first result stands
+        if not retry:
+            if s["finished_ms"] is not None:
+                raise ApiError(410, "session_expired", "This quiz timed out.")
+            if _expired(s, rows, now):
+                expired = True
+            else:
+                if choice not in [o["id"] for o in qs[index]["options"]]:
+                    raise ApiError(422, "invalid_choice", "Not one of the options.")
+                if first is None:
+                    raise ApiError(
+                        422, "out_of_order", "Answer the questions in order."
+                    )
+                elapsed = max(0, now - first["served_ms"])
+                correct = choice == qs[index]["answer"]
+                points = quiz_engine.points_for(correct, elapsed)
+                quiz_db.record_answer(
+                    conn, sid, index, choice, correct, points, elapsed, now
+                )
+                row = {
+                    "idx": index,
+                    "correct": correct,
+                    "points": points,
+                    "elapsed_ms": elapsed,
+                }
+                if index + 1 < len(qs):
+                    quiz_db.serve_next(conn, sid, index + 1, now)
+                else:
+                    done_rows = [
+                        r
+                        for r in rows
+                        if r["answered_ms"] is not None and r["idx"] != index
+                    ]
+                    score = sum(r["points"] or 0 for r in done_rows) + points
+                    n_ok = sum(1 for r in done_rows if r["correct"]) + int(correct)
+                    quiz_db.finish(conn, sid, score, n_ok, now)
+                s = quiz_db.get_session(conn, sid)
     if expired:
         _finalize_expired(sid, now)
         raise ApiError(410, "session_expired", "This quiz timed out.")
