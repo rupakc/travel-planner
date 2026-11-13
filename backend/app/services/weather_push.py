@@ -2,7 +2,7 @@
 ``weather``, kinds ``weather_rain`` / ``weather_heat`` / ``weather_cold``).
 
 ``run_due(now)`` runs from the alert loop (flags ``notifications_v2_enabled``
-and ``weather_push_enabled``, default off) every ``weather_push_interval_hours``.
+and ``weather_push_enabled``, default on; set false to disable) every ``weather_push_interval_hours``.
 Only trips ``on_the_road`` today are considered, with one forecast call per
 trip city per pass (further cached by the client and capped per hour). Delivery,
 quiet hours, caps and the user's ``weather`` switch are applied by

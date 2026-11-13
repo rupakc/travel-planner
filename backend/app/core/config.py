@@ -198,7 +198,7 @@ class Settings(BaseSettings):
     # The settings routes always exist; off = the Phase 3 behaviour unchanged.
     notifications_v2_enabled: bool = True
     # Weather-change pushes for today's outdoor itinerary slots (Open-Meteo, no key)
-    weather_push_enabled: bool = False
+    weather_push_enabled: bool = True
     weather_push_interval_hours: int = 3
     weather_push_max_calls_per_hour: int = 300
     apns_team_id: str = ""
