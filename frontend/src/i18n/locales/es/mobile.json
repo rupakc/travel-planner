@@ -35,7 +35,9 @@
     "dayTitle": "Día {{day}} en {{destination}}",
     "dayBody": "Consulta el plan de hoy en Voyager.",
     "lastDayTitle": "Último día en {{destination}}",
-    "lastDayBody": "Revisa los horarios de salida, los vuelos y lo que aún quieras ver."
+    "lastDayBody": "Revisa los horarios de salida, los vuelos y lo que aún quieras ver.",
+    "t30Title": "{{destination}} está a 30 días",
+    "t30Body": "Buen momento para revisar tus documentos, vuelos y hotel."
   },
   "shortcuts": {
     "newSearch": "Nueva búsqueda",
@@ -48,5 +50,34 @@
   },
   "maps": {
     "open": "Abrir en Mapas"
+  },
+  "story": {
+    "scrubHint": "Desliza a izquierda o derecha en el gráfico para recorrer las comprobaciones de precio."
+  },
+  "share": {
+    "image": "Compartir imagen",
+    "openInBrowser": "Abrir en el navegador",
+    "openLinkLabel": "Abrir un enlace compartido",
+    "openLinkPlaceholder": "Pega un enlace de Voyager",
+    "openLinkInvalid": "Eso no parece un enlace compartido de Voyager."
+  },
+  "unsupported": {
+    "update": "Actualiza la app para ver esta pregunta."
+  },
+  "notifSettings": {
+    "permissionDenied": "Las notificaciones de Voyager están desactivadas. Actívalas en Ajustes para recibir recordatorios y alertas de precio.",
+    "pushUnavailable": "Las notificaciones push aún no están disponibles desde el servidor. Las notificaciones dentro de la app siguen funcionando."
+  },
+  "nearYou": {
+    "fallbackTitle": "Algo que ver cerca",
+    "fallbackBody": "Abre Voyager cerca de un lugar de tu viaje para ver sugerencias."
+  },
+  "rules": {
+    "title": "Normas de la comunidad",
+    "body": "Sé amable y habla de viajes. Nada de spam, acoso ni datos personales. Siempre puedes denunciar y bloquear, y las publicaciones pueden revisarse.",
+    "accept": "Acepto"
+  },
+  "support": {
+    "contact": "Contactar con soporte"
   }
 }

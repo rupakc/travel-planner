@@ -35,7 +35,9 @@
     "dayTitle": "Day {{day}} in {{destination}}",
     "dayBody": "See today's plan in Voyager.",
     "lastDayTitle": "Last day in {{destination}}",
-    "lastDayBody": "Check out times, flights and anything you still want to see."
+    "lastDayBody": "Check out times, flights and anything you still want to see.",
+    "t30Title": "{{destination}} is 30 days away",
+    "t30Body": "A good moment to check your documents, flights and hotel."
   },
   "shortcuts": {
     "newSearch": "New search",
@@ -48,5 +50,34 @@
   },
   "maps": {
     "open": "Open in Maps"
+  },
+  "story": {
+    "scrubHint": "Swipe left or right on the chart to step through the price checks."
+  },
+  "share": {
+    "image": "Share image",
+    "openInBrowser": "Open in browser",
+    "openLinkLabel": "Open a shared link",
+    "openLinkPlaceholder": "Paste a Voyager link",
+    "openLinkInvalid": "That doesn't look like a Voyager share link."
+  },
+  "unsupported": {
+    "update": "Update the app to see this question."
+  },
+  "notifSettings": {
+    "permissionDenied": "Notifications are turned off for Voyager. Turn them on in Settings to get reminders and price alerts.",
+    "pushUnavailable": "Push notifications are not available from the server yet. In-app notifications still work."
+  },
+  "nearYou": {
+    "fallbackTitle": "Something worth seeing nearby",
+    "fallbackBody": "Open Voyager near a place on your trip to see suggestions."
+  },
+  "rules": {
+    "title": "Community rules",
+    "body": "Be kind and keep it about travel. No spam, harassment or personal details. Reports and blocks are always available, and posts may be reviewed.",
+    "accept": "I agree"
+  },
+  "support": {
+    "contact": "Contact support"
   }
 }
