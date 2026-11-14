@@ -35,7 +35,9 @@
     "dayTitle": "{{destination}}第 {{day}} 天",
     "dayBody": "在 Voyager 中查看今天的计划。",
     "lastDayTitle": "{{destination}}的最后一天",
-    "lastDayBody": "查看退房时间、航班，以及你还想去看的地方。"
+    "lastDayBody": "查看退房时间、航班，以及你还想去看的地方。",
+    "t30Title": "距离 {{destination}} 还有 30 天",
+    "t30Body": "正是检查证件、航班和酒店的好时机。"
   },
   "shortcuts": {
     "newSearch": "新建搜索",
@@ -48,5 +50,34 @@
   },
   "maps": {
     "open": "在地图中打开"
+  },
+  "story": {
+    "scrubHint": "在图表上左右滑动，逐次查看价格检查记录。"
+  },
+  "share": {
+    "image": "分享图片",
+    "openInBrowser": "在浏览器中打开",
+    "openLinkLabel": "打开分享链接",
+    "openLinkPlaceholder": "粘贴 Voyager 链接",
+    "openLinkInvalid": "这看起来不是 Voyager 分享链接。"
+  },
+  "unsupported": {
+    "update": "请更新应用以查看此问题。"
+  },
+  "notifSettings": {
+    "permissionDenied": "Voyager 的通知已关闭。请在设置中开启，以接收提醒和价格提醒。",
+    "pushUnavailable": "服务器暂不支持推送通知。应用内通知仍可使用。"
+  },
+  "nearYou": {
+    "fallbackTitle": "附近值得一看的地方",
+    "fallbackBody": "在旅行地点附近打开 Voyager 即可查看推荐。"
+  },
+  "rules": {
+    "title": "社区规则",
+    "body": "请友善，内容请围绕旅行。禁止垃圾信息、骚扰和个人信息。你随时可以举报和屏蔽，帖子可能会被审核。",
+    "accept": "我同意"
+  },
+  "support": {
+    "contact": "联系支持"
   }
 }

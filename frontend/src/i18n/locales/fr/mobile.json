@@ -35,7 +35,9 @@
     "dayTitle": "Jour {{day}} à {{destination}}",
     "dayBody": "Consultez le programme du jour dans Voyager.",
     "lastDayTitle": "Dernier jour à {{destination}}",
-    "lastDayBody": "Vérifiez les heures de départ, les vols et tout ce que vous voulez encore voir."
+    "lastDayBody": "Vérifiez les heures de départ, les vols et tout ce que vous voulez encore voir.",
+    "t30Title": "{{destination}} est dans 30 jours",
+    "t30Body": "Le bon moment pour vérifier vos documents, vos vols et votre hôtel."
   },
   "shortcuts": {
     "newSearch": "Nouvelle recherche",
@@ -48,5 +50,34 @@
   },
   "maps": {
     "open": "Ouvrir dans Plans"
+  },
+  "story": {
+    "scrubHint": "Faites glisser le doigt vers la gauche ou la droite sur le graphique pour parcourir les relevés de prix."
+  },
+  "share": {
+    "image": "Partager l'image",
+    "openInBrowser": "Ouvrir dans le navigateur",
+    "openLinkLabel": "Ouvrir un lien partagé",
+    "openLinkPlaceholder": "Collez un lien Voyager",
+    "openLinkInvalid": "Ce lien ne ressemble pas à un lien de partage Voyager."
+  },
+  "unsupported": {
+    "update": "Mettez l'app à jour pour voir cette question."
+  },
+  "notifSettings": {
+    "permissionDenied": "Les notifications sont désactivées pour Voyager. Activez-les dans les Réglages pour recevoir des rappels et des alertes de prix.",
+    "pushUnavailable": "Les notifications push ne sont pas encore disponibles côté serveur. Les notifications dans l'app fonctionnent toujours."
+  },
+  "nearYou": {
+    "fallbackTitle": "Quelque chose à voir près de vous",
+    "fallbackBody": "Ouvrez Voyager près d'un lieu de votre voyage pour voir des suggestions."
+  },
+  "rules": {
+    "title": "Règles de la communauté",
+    "body": "Soyez bienveillant et restez dans le thème du voyage. Pas de spam, de harcèlement ni de données personnelles. Vous pouvez toujours signaler et bloquer, et les publications peuvent être examinées.",
+    "accept": "J'accepte"
+  },
+  "support": {
+    "contact": "Contacter l'assistance"
   }
 }
