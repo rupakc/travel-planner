@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-import npm_audit_gate as g  # noqa: E402
+import npm_audit_gate as g
 
 PICO = "GHSA-fc5q-39xc-vjpf"
 
@@ -23,7 +23,10 @@ def report(*extra):
     vulns = {
         "picomatch": {"severity": "high", "via": [adv(PICO, "high")]},
         "vite": {"severity": "high", "via": ["picomatch", "fdir"]},
-        "react-router": {"severity": "moderate", "via": [adv("GHSA-wrjc-x8rr-h8h6", "moderate")]},
+        "react-router": {
+            "severity": "moderate",
+            "via": [adv("GHSA-wrjc-x8rr-h8h6", "moderate")],
+        },
     }
     for name, gid, sev in extra:
         vulns[name] = {"severity": sev, "via": [adv(gid, sev)]}
@@ -55,7 +58,15 @@ def test_without_allowlist_it_fails(monkeypatch, tmp_path):
 
 
 def test_expired_entry_fails_again(monkeypatch, tmp_path, capsys):
-    assert run(monkeypatch, report(), allowlist(tmp_path, expires="2026-12-17"), today="2026-12-18") == 1
+    assert (
+        run(
+            monkeypatch,
+            report(),
+            allowlist(tmp_path, expires="2026-12-17"),
+            today="2026-12-18",
+        )
+        == 1
+    )
     assert "EXPIRED" in capsys.readouterr().out
 
 
