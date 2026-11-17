@@ -55,6 +55,20 @@ class Settings(BaseSettings):
 
     # Third-party API keys
     serpapi_key: str = ""  # SerpAPI key; empty = AI agent fallback for flights
+    # Tripadvisor Terra (Discover) ratings, fetched live on demand only
+    # (services/tripadvisor.py, docs/Tripadvisor.md). On only when
+    # TRIPADVISOR_ENABLED=true AND a key is set. The budget is a hard cap on
+    # billable entities (the first 1,000 per account lifetime are free).
+    tripadvisor_enabled: bool = False
+    tripadvisor_api_key: str = ""
+    tripadvisor_base_url: str = "https://terra.tripadvisor.com/api"
+    tripadvisor_budget_cap: int = 1000
+    tripadvisor_page_size: int = 5  # locations per lookup (1-20; each one bills)
+    tripadvisor_radius_km: float = 8.0  # around the destination (Terra max 8)
+    tripadvisor_logo_url: str = (
+        "https://static.tacdn.com/img2/brand_refresh/"
+        "Tripadvisor_lockup_horizontal_secondary.svg"
+    )
     # Max concurrent LLM calls across all specialist agents — a
     # 12-agent burst with large outputs trips org rate limits and every
     # section fails at once
@@ -94,6 +108,7 @@ class Settings(BaseSettings):
     rate_limit_share_manage: int = 30  # /shares create, list, revoke (per user)
     rate_limit_play: int = 60  # /play/* (per user)
     rate_limit_telemetry: int = 120  # POST /telemetry (batches, not events)
+    rate_limit_tripadvisor: int = 10  # /tripadvisor/attractions (per user)
     # Phase 5 (Social + Play), per user: writes, reads, Play, admin moderation
     rate_limit_social_write: int = 30
     rate_limit_social_read: int = 120

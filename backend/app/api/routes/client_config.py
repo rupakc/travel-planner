@@ -6,6 +6,7 @@ from ...core.config import settings
 from ...core.passwords import MIN_PASSWORD_LENGTH_V2
 from ...core.urls import public_base_url
 from ...db.telemetry_db import telemetry_active
+from ...services import tripadvisor
 from ...services.account_email import email_delivery_available
 from ...services.notify_settings import apns_configured
 
@@ -47,5 +48,7 @@ def client_config(response: Response) -> dict:
             "notifications_v2": bool(settings.notifications_v2_enabled),
             "apns": apns_configured(),
             "live_prices": bool(settings.serpapi_key),
+            # On-demand Tripadvisor ratings (flag + key; docs/Tripadvisor.md)
+            "tripadvisor": tripadvisor.enabled(),
         },
     }

@@ -14,5 +14,12 @@
   "colViews": "Vues",
   "empty": "Pas encore de données.",
   "loading": "Chargement des statistiques…",
-  "error": "Impossible de charger les statistiques. Réessayez plus tard."
+  "error": "Impossible de charger les statistiques. Réessayez plus tard.",
+  "tripadvisor": {
+    "title": "Budget de l'API Tripadvisor",
+    "used": "{{used}} sur {{cap}} entités facturables utilisées",
+    "paused": "En pause à la limite. Ajoutez un moyen de paiement dans le tableau de bord Tripadvisor Terra, puis augmentez TRIPADVISOR_BUDGET_CAP.",
+    "warn": "Plus de 80 % du budget est utilisé.",
+    "off": "Les notes Tripadvisor sont désactivées (TRIPADVISOR_ENABLED ou la clé d'API n'est pas défini)."
+  }
 }

@@ -22,6 +22,7 @@ Endpoints that call the AI agents are rate-limited per caller (the signed-in use
 | compare | `POST /api/compare/destination` | 30 |
 | discover | `POST /api/discover` | 10 |
 | import | `POST /api/import/extract`, `POST /api/import/resolve-place` | 20 |
+| tripadvisor | `POST /api/tripadvisor/attractions` (signed-in only; not an AI route) | 10 |
 | light_ai | `POST /api/flights`, `/hotels`, `/activities` and their `/filtered` variants, `/flights/fare-calendar`, `/visa`, `/sim`, `/tips`, `/getting-around`, `/forex`, `/itinerary`, `/events`, `/walking-tours`, `/layover`, `/stress-test`, `/nearby`, `/live-check`, `/fare-watches` (create), `/fare-watches/{id}/check`, `/price-watches` (create), `/price-watches/{id}/check`, `PUT /auth/email` | 60 |
 
 Each bucket is counted separately, with one exception: a chat turn that starts a full trip plan (including a refinement that rebuilds the itinerary) also takes one token from the caller's **search** bucket, so searches and chat-planned trips share one budget; over it, the already-open chat stream answers with a friendly `delta` saying roughly how many minutes to wait, then `done` (no `429`, no `error`). Over the limit the API answers `429 Too Many Requests` with a `Retry-After` header (seconds) and:
@@ -131,6 +132,8 @@ Limits are configurable (see [Configuration](Configuration.md#rate-limits)). The
 | DELETE | `/api/devices/{id}` | user | Remove one of own devices by id (`204`, or `404`) |
 | POST | `/api/devices/unregister` | user | Sign-out: forget a token sent in the body (`204`, idempotent) |
 | POST | `/api/nearby` | user | Near me: nearest known place to a coordinate and things to do there (v1), or places to see / eat / shop / stay from Google Maps grounding (`sections: true`) |
+| POST | `/api/tripadvisor/attractions` | user | Live Tripadvisor ratings for the top attractions near a destination, on demand (`features.tripadvisor`; never stored; see [Tripadvisor Ratings](Tripadvisor.md)) |
+| GET | `/api/admin/tripadvisor/budget` | admin | Tripadvisor billable entities used / cap |
 | POST | `/api/live-check` | user | "Search the web now" for one of the caller's watches (Google Search grounding; never stored) |
 | GET | `/health` | none | Liveness and capability flags |
 | GET | `/health/agents` | none | Deep check with one tiny call to the configured LLM provider (cached 5 min) |
@@ -949,7 +952,7 @@ Nationality typeahead over 202 seeded rows.
 
 ### GET /health
 
-`{"status": "ok", "service": "travel-planner-backend", "serpapi_configured": true|false, "fare_watch_available": true|false, "email_alerts_available": true|false, "push_configured": true|false}`. No auth. The frontend reads it once per page load: `serpapi_configured` offers the fare calendar, `fare_watch_available` (SerpAPI set and `FARE_WATCH_ENABLED`) offers "Watch fare", `email_alerts_available` (`SMTP_HOST` set) offers "Also email me". `push_configured` (`FCM_SERVICE_ACCOUNT_FILE` names an existing file) tells the Android app that alerts are pushed, so it can poll less. Docker Compose uses this endpoint as the backend healthcheck.
+`{"status": "ok", "service": "travel-planner-backend", "serpapi_configured": true|false, "fare_watch_available": true|false, "email_alerts_available": true|false, "push_configured": true|false}`. No auth. The frontend reads it once per page load: `serpapi_configured` offers the fare calendar, `fare_watch_available` (SerpAPI set and `FARE_WATCH_ENABLED`) offers "Watch fare", `email_alerts_available` (`SMTP_HOST` set) offers "Also email me". `push_configured` (`FCM_SERVICE_ACCOUNT_FILE` names an existing file) tells the Android app that alerts are pushed, so it can poll less. `tripadvisor` is `{configured, enabled, used, cap, paused}` (billable Tripadvisor entities against `TRIPADVISOR_BUDGET_CAP`) and `tripadvisor_budget_ok` is false from 80 % of the cap on, for an uptime-check content match ([Tripadvisor Ratings](Tripadvisor.md#budget)). Docker Compose uses this endpoint as the backend healthcheck.
 
 ### GET /health/agents
 

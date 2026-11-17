@@ -14,5 +14,12 @@
   "colViews": "Aufrufe",
   "empty": "Noch keine Daten.",
   "loading": "Analytics werden geladen…",
-  "error": "Analytics konnten nicht geladen werden. Versuche es später erneut."
+  "error": "Analytics konnten nicht geladen werden. Versuche es später erneut.",
+  "tripadvisor": {
+    "title": "Tripadvisor-API-Budget",
+    "used": "{{used}} von {{cap}} abrechenbaren Einheiten verbraucht",
+    "paused": "Am Limit pausiert. Zahlungsdaten im Tripadvisor-Terra-Dashboard hinterlegen, dann TRIPADVISOR_BUDGET_CAP erhöhen.",
+    "warn": "Über 80 % des Budgets sind verbraucht.",
+    "off": "Tripadvisor-Bewertungen sind aus (TRIPADVISOR_ENABLED oder der API-Schlüssel fehlt)."
+  }
 }

@@ -392,5 +392,21 @@
     "verify": "Prüfe alle Angaben vor der Reise – Informationen können veraltet sein.",
     "disclaimer": "Die Angaben dienen nur der allgemeinen Orientierung. Prüfe aktuelle Details immer bei offiziellen Stellen. Öffnungszeiten von Botschaften und Leistungen von Krankenhäusern können sich ändern.",
     "printThis": "Karte drucken"
+  },
+  "tripadvisor": {
+    "title": "Bewertungen von Tripadvisor",
+    "show": "Tripadvisor-Bewertungen anzeigen",
+    "showFor": "Tripadvisor-Bewertungen für {{city}} anzeigen",
+    "hide": "Ausblenden",
+    "loading": "Tripadvisor-Bewertungen werden geladen…",
+    "paused": "Tripadvisor-Bewertungen sind gerade pausiert.",
+    "empty": "Tripadvisor hat für diese Gegend keine Bewertungen.",
+    "error": "Tripadvisor-Bewertungen konnten nicht geladen werden. Bitte erneut versuchen.",
+    "retry": "Erneut versuchen",
+    "ratingAlt": "Tripadvisor-Bewertung: {{rating}} von 5",
+    "note": "Live von Tripadvisor, unverändert angezeigt und nicht von uns gespeichert.",
+    "logoAlt": "Tripadvisor",
+    "reviews_one": "{{n}} Bewertung",
+    "reviews_other": "{{n}} Bewertungen"
   }
 }

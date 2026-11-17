@@ -392,5 +392,21 @@
     "verify": "ভ্রমণের আগে সব তথ্য যাচাই করে নিন — তথ্য পুরোনো হতে পারে।",
     "disclaimer": "এই তথ্য শুধু সাধারণ নির্দেশনার জন্য। সবসময় অফিসিয়াল সূত্রে বর্তমান তথ্য যাচাই করুন। দূতাবাসের সময় ও হাসপাতালের সেবা বদলাতে পারে।",
     "printThis": "এই কার্ড প্রিন্ট করুন"
+  },
+  "tripadvisor": {
+    "title": "Tripadvisor-এর রেটিং",
+    "show": "Tripadvisor রেটিং দেখান",
+    "showFor": "{{city}}-এর জন্য Tripadvisor রেটিং দেখান",
+    "hide": "লুকান",
+    "loading": "Tripadvisor রেটিং লোড হচ্ছে…",
+    "paused": "Tripadvisor রেটিং এখন বিরতিতে আছে।",
+    "empty": "এই এলাকার জন্য Tripadvisor-এ কোনো রেটিং নেই।",
+    "error": "Tripadvisor রেটিং লোড করা যায়নি। আবার চেষ্টা করুন।",
+    "retry": "আবার চেষ্টা করুন",
+    "ratingAlt": "Tripadvisor রেটিং: ৫-এর মধ্যে {{rating}}",
+    "note": "Tripadvisor থেকে সরাসরি, যেমন পাওয়া গেছে তেমন দেখানো, আমরা সংরক্ষণ করি না।",
+    "logoAlt": "Tripadvisor",
+    "reviews_one": "{{n}}টি রিভিউ",
+    "reviews_other": "{{n}}টি রিভিউ"
   }
 }

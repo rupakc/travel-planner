@@ -399,5 +399,22 @@
     "verify": "Verifica todos los datos antes de viajar: la información puede estar desactualizada.",
     "disclaimer": "Información solo orientativa. Verifica siempre los datos actuales en fuentes oficiales. Los horarios de las embajadas y los servicios hospitalarios pueden cambiar.",
     "printThis": "Imprimir esta tarjeta"
+  },
+  "tripadvisor": {
+    "title": "Valoraciones de Tripadvisor",
+    "show": "Ver valoraciones de Tripadvisor",
+    "showFor": "Ver valoraciones de Tripadvisor para {{city}}",
+    "hide": "Ocultar",
+    "loading": "Cargando valoraciones de Tripadvisor…",
+    "paused": "Las valoraciones de Tripadvisor están en pausa ahora mismo.",
+    "empty": "Tripadvisor no tiene valoraciones para esta zona.",
+    "error": "No se pudieron cargar las valoraciones de Tripadvisor. Inténtalo de nuevo.",
+    "retry": "Reintentar",
+    "ratingAlt": "Valoración de Tripadvisor: {{rating}} de 5",
+    "note": "En directo desde Tripadvisor, tal como lo ofrece y sin guardarlo.",
+    "logoAlt": "Tripadvisor",
+    "reviews_one": "{{n}} opinión",
+    "reviews_many": "{{n}} opiniones",
+    "reviews_other": "{{n}} opiniones"
   }
 }

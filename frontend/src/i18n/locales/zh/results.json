@@ -385,5 +385,20 @@
     "verify": "出发前请核实所有信息，内容可能已过时。",
     "disclaimer": "以上信息仅供参考，请务必通过官方渠道核实最新情况。大使馆办公时间和医院服务可能会有变动。",
     "printThis": "打印此卡片"
+  },
+  "tripadvisor": {
+    "title": "Tripadvisor 评分",
+    "show": "显示 Tripadvisor 评分",
+    "showFor": "显示 {{city}} 的 Tripadvisor 评分",
+    "hide": "隐藏",
+    "loading": "正在加载 Tripadvisor 评分…",
+    "paused": "Tripadvisor 评分目前已暂停。",
+    "empty": "Tripadvisor 暂无此地区的评分。",
+    "error": "无法加载 Tripadvisor 评分，请重试。",
+    "retry": "重试",
+    "ratingAlt": "Tripadvisor 评分：{{rating}} / 5",
+    "note": "实时来自 Tripadvisor，按原样显示，我们不保存。",
+    "logoAlt": "Tripadvisor",
+    "reviews_other": "{{n}} 条点评"
   }
 }

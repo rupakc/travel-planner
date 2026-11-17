@@ -14,5 +14,12 @@
   "colViews": "Vistas",
   "empty": "Aún no hay datos.",
   "loading": "Cargando analítica…",
-  "error": "No se pudo cargar la analítica. Inténtalo más tarde."
+  "error": "No se pudo cargar la analítica. Inténtalo más tarde.",
+  "tripadvisor": {
+    "title": "Presupuesto de la API de Tripadvisor",
+    "used": "{{used}} de {{cap}} entidades facturables usadas",
+    "paused": "En pausa al llegar al límite. Añade un método de pago en el panel de Tripadvisor Terra y sube TRIPADVISOR_BUDGET_CAP.",
+    "warn": "Se ha usado más del 80% del presupuesto.",
+    "off": "Las valoraciones de Tripadvisor están desactivadas (TRIPADVISOR_ENABLED o la clave de la API no están configuradas)."
+  }
 }
