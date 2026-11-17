@@ -60,9 +60,9 @@ Legend: ✅ shipped · ⏳ Phase N planned · — not offered · ? not stated in
 |---|---|---|---|
 | Select items into My Plan, save and load plans | ✅ | ✅ | ⏳ Phase 7 |
 | Share link | ✅ | ✅ | ⏳ Phase 7 |
-| Public share viewer | ✅ | ✅ deep link, plus paste-a-link; recap, savings, quiz and status kinds | ⏳ Phase 7 |
-| Share links 2.0: choose what is revealed (dates, origin, name), share card (link and story sizes), list and revoke links | ✅ | ✅ share sheet with the card PNG, My shares with revoke ([Sharing API](Sharing-API.md)) | ⏳ planned ([Sharing API](Sharing-API.md)) |
-| Share a trip recap or savings card as a link | ✅ | ✅ | ⏳ planned |
+| Public share viewer | ✅ | ✅ deep link, plus paste-a-link; recap, savings, quiz and status kinds | ✅ universal link plus paste-a-link; plan, recap, savings and unknown-kind views |
+| Share links 2.0: choose what is revealed (dates, origin, name), share card (link and story sizes), list and revoke links | ✅ | ✅ share sheet with the card PNG, My shares with revoke ([Sharing API](Sharing-API.md)) | ✅ share sheet with reveal options and the card PNG, My shares with revoke |
+| Share a trip recap or savings card as a link | ✅ | ✅ | ✅ savings and plan entries; ⏳ recap entry not yet (no Recap screen on iOS) |
 | Link previews (Open Graph page and card.png for crawlers) | ✅ server-side, all clients | ✅ same links | ✅ same links |
 | Export to calendar (.ics) and print/PDF | ✅ | ✅ | ⏳ Phase 7 |
 | Cost breakdown | ✅ | ? | ⏳ Phase 7 |
@@ -84,17 +84,17 @@ Legend: ✅ shipped · ⏳ Phase N planned · — not offered · ? not stated in
 
 | Feature | Web | Android | iOS |
 |---|---|---|---|
-| Social profile (handle, privacy, opt-in fields) | ✅ | ✅ | ⏳ 7 |
-| Follows, follow requests and blocks | ✅ | ⏳ 8 | ⏳ 7 |
-| Ideas feed, publish from a plan or recap, like, save (remix) | ✅ | ✅ | ⏳ 7 |
-| Comments and helpful marks | ✅ | ⏳ 8 | ⏳ 7 |
-| Reports and admin moderation queue | ✅ | ⏳ 8 (reports) | ⏳ 7 (reports) |
-| Daily quiz and topic packs | ✅ | ✅ | ⏳ 7 |
-| Head-to-head challenges | ✅ | ⏳ 8 | ⏳ 7 |
-| Weekly leaderboards (global, friends) | ✅ | ✅ | ⏳ 7 |
-| Weekly "Know before you go" challenge | ✅ | ⏳ 8 | ⏳ 7 |
-| Quiz and trip-status share cards | ✅ | ✅ | ⏳ 7 |
-| Social and quiz notifications (daily quiz reminder, likes and comments on your ideas, head-to-head) | ✅ | ✅ | ⏳ 7 |
+| Social profile (handle, privacy, opt-in fields) | ✅ | ✅ | ✅ handle, privacy, opt-in fields; ⏳ no avatars, home country cannot be cleared |
+| Follows, follow requests and blocks | ✅ | ⏳ 8 | ✅ follows, requests, blocks, lists |
+| Ideas feed, publish from a plan or recap, like, save (remix) | ✅ | ✅ | ✅ feed, publish, like, save; ⏳ forget-save UI not yet |
+| Comments and helpful marks | ✅ | ⏳ 8 | ✅ comments and helpful marks, community-rules gate |
+| Reports and admin moderation queue | ✅ | ⏳ 8 (reports) | ✅ reports (ideas, comments, profiles); — no moderation queue (admin is web) |
+| Daily quiz and topic packs | ✅ | ✅ | ✅ Play hub, quiz screens, packs |
+| Head-to-head challenges | ✅ | ⏳ 8 | ✅ typed-handle opponent picker only |
+| Weekly leaderboards (global, friends) | ✅ | ✅ | ✅ global and friends |
+| Weekly "Know before you go" challenge | ✅ | ⏳ 8 | ✅ start and card |
+| Quiz and trip-status share cards | ✅ | ✅ | ✅ share entries for quiz scores and trip status |
+| Social and quiz notifications (daily quiz reminder, likes and comments on your ideas, head-to-head) | ✅ | ✅ | ⏳ local daily quiz reminder gate only; push inert until APNs (owner-blocked) |
 
 Both are behind `SOCIAL_ENABLED` / `PLAY_ENABLED` (`features.social`, `features.play`). Contract: [Social and Play API](Social-API.md).
 
@@ -108,20 +108,20 @@ Both are behind `SOCIAL_ENABLED` / `PLAY_ENABLED` (`features.social`, `features.
 
 | Feature | Web | Android | iOS |
 |---|---|---|---|
-| Fare watch and price watches (hotel, activity, trip) | ✅ | ✅ | ⏳ Phase 7 |
-| Notification inbox and unread bell | ✅ | ✅ | ⏳ Phase 7 |
+| Fare watch and price watches (hotel, activity, trip) | ✅ | ✅ | ✅ watches list, editor, cards |
+| Notification inbox and unread bell | ✅ | ✅ | ✅ inbox and unread badge |
 | Alert e-mail | ✅ localised to the account language (server-side `data.i18n`) | ? | ⏳ Phase 7 |
-| Push notifications | — (a toast, or a native notification while the tab is open) | ✅ FCM, per-category channels (inert until configured) | ⏳ Phase 6 |
-| Price story (chart, lowest, typical range, verdict) | ✅ (behind `PRICE_ALERTS_V2_ENABLED`) | ✅ (needs `features.alerts_api` / `price_alerts_v2`) | ⏳ Phase 7 |
-| Drop moment, savings tally and Deal-hunter XP | ✅ (same flag; savings card follows the light/dark theme, drop-moment badge) | ✅ ("caught a drop", never "saved"); Deal-hunter progress track, Trips-hub bucket ring and confetti on drops and badges (reduced motion and `hide_game` respected) | ⏳ Phase 7 |
-| One-tap watch and suggestions | ✅ (same flag; needs `SERPAPI_KEY`) | ✅ (needs `live_prices`; Results cards only so far) | ⏳ Phase 7 |
-| Weekly digest, quiet hours, caps and grouping (preferences) | ✅ (same flag; digest text localised) | ✅ | ⏳ Phase 7 |
-| Local trip reminders | — | ✅ | ⏳ Phase 7 |
-| Notification settings (categories, quiet hours, daily cap) | ✅ (Account → Notifications; shown when `features.notifications_api`) | ✅ (Settings → Notifications) | ⏳ Phase 7 |
-| Localized notification text catalog (`/notifications/catalog`) | — (server-side) | ✅ (used for on-device "near you" text) | ⏳ Phase 7 |
-| Trip-phase pushes (T-30, T-7, T-1, morning brief) | — | ✅ taps open the trip Today tab; the morning-brief switch now also turns the local trip switch on | ⏳ Phase 6 |
-| "Search the web now" on a watch | ✅ | ✅ | ⏳ Phase 7 |
-| Near me | ✅ | ✅ (a background geofence arrival notification is not built, by ruling) |
+| Push notifications | — (a toast, or a native notification while the tab is open) | ✅ FCM, per-category channels (inert until configured) | ⏳ registration, routing and payload handling built; inert until the owner provides an APNs key |
+| Price story (chart, lowest, typical range, verdict) | ✅ (behind `PRICE_ALERTS_V2_ENABLED`) | ✅ (needs `features.alerts_api` / `price_alerts_v2`) | ✅ chart, range, verdict, AI timing tip (flights) |
+| Drop moment, savings tally and Deal-hunter XP | ✅ (same flag; savings card follows the light/dark theme, drop-moment badge) | ✅ ("caught a drop", never "saved"); Deal-hunter progress track, Trips-hub bucket ring and confetti on drops and badges (reduced motion and `hide_game` respected) | ✅ savings header, drop-moment card, "caught a drop" wording; ⏳ Deal-hunter progress track not stated |
+| One-tap watch and suggestions | ✅ (same flag; needs `SERPAPI_KEY`) | ✅ (needs `live_prices`; Results cards only so far) | ⏳ data layer, quick-watch and Suggestions sheet built; the sheet has no entry point yet, no alerts-tab create path |
+| Weekly digest, quiet hours, caps and grouping (preferences) | ✅ (same flag; digest text localised) | ✅ | ✅ digest row, quiet hours, caps, grouping, paused banner |
+| Local trip reminders | — | ✅ | ✅ device-local time |
+| Notification settings (categories, quiet hours, daily cap) | ✅ (Account → Notifications; shown when `features.notifications_api`) | ✅ (Settings → Notifications) | ✅ categories, quiet hours, daily cap, permission status card |
+| Localized notification text catalog (`/notifications/catalog`) | — (server-side) | ✅ (used for on-device "near you" text) | ✅ used for near-you text |
+| Trip-phase pushes (T-30, T-7, T-1, morning brief) | — | ✅ taps open the trip Today tab; the morning-brief switch now also turns the local trip switch on | ⏳ local trip reminders only; remote push inert until APNs |
+| "Search the web now" on a watch | ✅ | ✅ | ✅ live-check sheet |
+| Near me | ✅ | ✅ (a background geofence arrival notification is not built, by ruling) | ✅ v1 nearest place and activities; ⏳ personalized near-you text and the device switch UI unconfirmed; near-you notifier built |
 | Weather-change push (Open-Meteo, outdoor slots today, `WEATHER_PUSH_ENABLED` default on, `weather` category switch) | ✅ (notification list shows the Open-Meteo credit) | ✅ (push, `weather` switch, credit) | ⏳ Phase 7 |
 
 ## Known gaps
