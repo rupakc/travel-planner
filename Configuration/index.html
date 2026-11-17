@@ -571,6 +571,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Live data (optional)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tripadvisor-ratings-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tripadvisor ratings (optional)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -811,6 +828,34 @@
     
   
     Trip Planning Features
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Tripadvisor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tripadvisor Ratings
   
 
     
@@ -1853,6 +1898,54 @@
 </tr>
 </tbody>
 </table>
+<h3 id="tripadvisor-ratings-optional">Tripadvisor ratings (optional)</h3>
+<p>Live, on-demand Tripadvisor ratings (Terra Discover API). On only when <code>TRIPADVISOR_ENABLED=true</code> and <code>TRIPADVISOR_API_KEY</code> is set (<code>features.tripadvisor</code> in <code>/api/config</code>). See <a href="../Tripadvisor/">Tripadvisor Ratings</a> for the terms and the budget.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TRIPADVISOR_ENABLED</code></td>
+<td><code>false</code></td>
+<td>Feature flag. Off: <code>POST /api/tripadvisor/attractions</code> answers <code>404</code> and the web app hides the card.</td>
+</tr>
+<tr>
+<td><code>TRIPADVISOR_API_KEY</code></td>
+<td><code>""</code></td>
+<td>Terra API key, sent as <code>X-API-Key</code>; never logged or returned. In production it comes from the Secret Manager secret <code>crawler-src-tripadvisor-content-key</code> (<code>SECRET_MANAGER_SECRETS=…,TRIPADVISOR_API_KEY=crawler-src-tripadvisor-content-key</code>).</td>
+</tr>
+<tr>
+<td><code>TRIPADVISOR_BUDGET_CAP</code></td>
+<td><code>1000</code></td>
+<td>Hard cap on billable entities, counted in SQLite (<code>api_budget</code>). At the cap the feature pauses. The first 1,000 per Tripadvisor account lifetime are free: raise it only after adding payment details in the Terra dashboard.</td>
+</tr>
+<tr>
+<td><code>TRIPADVISOR_PAGE_SIZE</code></td>
+<td><code>5</code></td>
+<td>Attractions per lookup (1-20). Each one returned is a billable entity, on every view.</td>
+</tr>
+<tr>
+<td><code>TRIPADVISOR_RADIUS_KM</code></td>
+<td><code>8</code></td>
+<td>Search radius around the destination (Terra's maximum is 8 km).</td>
+</tr>
+<tr>
+<td><code>TRIPADVISOR_BASE_URL</code></td>
+<td><code>https://terra.tripadvisor.com/api</code></td>
+<td>Terra base URL.</td>
+</tr>
+<tr>
+<td><code>TRIPADVISOR_LOGO_URL</code></td>
+<td>Tripadvisor's hosted horizontal lockup (<code>static.tacdn.com</code>)</td>
+<td>Logo shown on the card.</td>
+</tr>
+</tbody>
+</table>
 <p>Other web lookups (link enrichment for hotels and activities, the forex agent's rate searches, walking-tour city-page discovery, and identifying an unknown airport code) go through DuckDuckGo via the <code>ddgs</code> package and need no key.</p>
 <h2 id="fare-watch-and-email-alerts-optional">Fare watch and email alerts (optional)</h2>
 <p>Fare watch re-checks watched fares in the background and needs <code>SERPAPI_KEY</code>. Price watches for hotels, activities and whole trips use the <strong>same</strong> settings, scheduler and SerpAPI budget: there is no separate price-watch configuration, and the daily budget, the per-user share and the active limit count all kinds of watch together. Email alerts need an SMTP server; without one, alerts still appear in the app.</p>
@@ -2368,6 +2461,11 @@
 <td><code>RATE_LIMIT_TELEMETRY</code></td>
 <td><code>120</code></td>
 <td><code>POST /api/telemetry</code> (batches per caller; a real web client sends about 40 per 10 minutes; not an AI route, so never behind <code>ALLOW_ANONYMOUS_AI</code>). The total across callers is bounded by <code>TELEMETRY_MAX_DB_MB</code> and <code>TELEMETRY_MAX_EVENTS_PER_DAY</code>.</td>
+</tr>
+<tr>
+<td><code>RATE_LIMIT_TRIPADVISOR</code></td>
+<td><code>10</code></td>
+<td><code>POST /api/tripadvisor/attractions</code> per signed-in user (each lookup is billed by Tripadvisor; not an AI route).</td>
 </tr>
 <tr>
 <td><code>RATE_LIMIT_LIGHT_AI</code></td>

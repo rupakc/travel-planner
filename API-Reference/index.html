@@ -580,6 +580,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../Tripadvisor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tripadvisor Ratings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../Multi-City-Trips/" class="md-nav__link">
         
   
@@ -2421,6 +2449,11 @@
 <td>20</td>
 </tr>
 <tr>
+<td>tripadvisor</td>
+<td><code>POST /api/tripadvisor/attractions</code> (signed-in only; not an AI route)</td>
+<td>10</td>
+</tr>
+<tr>
 <td>light_ai</td>
 <td><code>POST /api/flights</code>, <code>/hotels</code>, <code>/activities</code> and their <code>/filtered</code> variants, <code>/flights/fare-calendar</code>, <code>/visa</code>, <code>/sim</code>, <code>/tips</code>, <code>/getting-around</code>, <code>/forex</code>, <code>/itinerary</code>, <code>/events</code>, <code>/walking-tours</code>, <code>/layover</code>, <code>/stress-test</code>, <code>/nearby</code>, <code>/live-check</code>, <code>/fare-watches</code> (create), <code>/fare-watches/{id}/check</code>, <code>/price-watches</code> (create), <code>/price-watches/{id}/check</code>, <code>PUT /auth/email</code></td>
 <td>60</td>
@@ -3000,6 +3033,18 @@
 <td><code>/api/nearby</code></td>
 <td>user</td>
 <td>Near me: nearest known place to a coordinate and things to do there (v1), or places to see / eat / shop / stay from Google Maps grounding (<code>sections: true</code>)</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/tripadvisor/attractions</code></td>
+<td>user</td>
+<td>Live Tripadvisor ratings for the top attractions near a destination, on demand (<code>features.tripadvisor</code>; never stored; see <a href="../Tripadvisor/">Tripadvisor Ratings</a>)</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/admin/tripadvisor/budget</code></td>
+<td>admin</td>
+<td>Tripadvisor billable entities used / cap</td>
 </tr>
 <tr>
 <td>POST</td>
@@ -3715,7 +3760,7 @@
 <hr />
 <h2 id="health">Health</h2>
 <h3 id="get-health">GET /health</h3>
-<p><code>{"status": "ok", "service": "travel-planner-backend", "serpapi_configured": true|false, "fare_watch_available": true|false, "email_alerts_available": true|false, "push_configured": true|false}</code>. No auth. The frontend reads it once per page load: <code>serpapi_configured</code> offers the fare calendar, <code>fare_watch_available</code> (SerpAPI set and <code>FARE_WATCH_ENABLED</code>) offers "Watch fare", <code>email_alerts_available</code> (<code>SMTP_HOST</code> set) offers "Also email me". <code>push_configured</code> (<code>FCM_SERVICE_ACCOUNT_FILE</code> names an existing file) tells the Android app that alerts are pushed, so it can poll less. Docker Compose uses this endpoint as the backend healthcheck.</p>
+<p><code>{"status": "ok", "service": "travel-planner-backend", "serpapi_configured": true|false, "fare_watch_available": true|false, "email_alerts_available": true|false, "push_configured": true|false}</code>. No auth. The frontend reads it once per page load: <code>serpapi_configured</code> offers the fare calendar, <code>fare_watch_available</code> (SerpAPI set and <code>FARE_WATCH_ENABLED</code>) offers "Watch fare", <code>email_alerts_available</code> (<code>SMTP_HOST</code> set) offers "Also email me". <code>push_configured</code> (<code>FCM_SERVICE_ACCOUNT_FILE</code> names an existing file) tells the Android app that alerts are pushed, so it can poll less. <code>tripadvisor</code> is <code>{configured, enabled, used, cap, paused}</code> (billable Tripadvisor entities against <code>TRIPADVISOR_BUDGET_CAP</code>) and <code>tripadvisor_budget_ok</code> is false from 80 % of the cap on, for an uptime-check content match (<a href="../Tripadvisor/#budget">Tripadvisor Ratings</a>). Docker Compose uses this endpoint as the backend healthcheck.</p>
 <h3 id="get-healthagents">GET /health/agents</h3>
 <p>A deep check: one tiny call (15 s timeout, no retries) to the configured provider, cached for 5 minutes. Reports <code>llm</code> (<code>ok</code>, <code>empty-response</code>, <code>spend-cap</code>, <code>billing-disabled</code> or <code>error: &lt;ExceptionType&gt;</code>), <code>llm_provider</code> (<code>gemini</code> or <code>anthropic</code>), <code>llm_provider_reason</code> (how <code>LLM_PROVIDER</code> resolved, e.g. <code>auto: GCP_PROJECT set</code>), <code>serpapi_configured</code> and <code>backup_configured</code>.</p>
 

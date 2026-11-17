@@ -580,6 +580,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../Tripadvisor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tripadvisor Ratings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../Multi-City-Trips/" class="md-nav__link">
         
   
@@ -1456,6 +1484,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#tripadvisor-ratings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tripadvisor ratings
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#offline-pack-and-the-journey-flag" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1885,6 +1924,14 @@ cat /tmp/voyager-migration/migration-report.md     # per-table counts must match
 <li><strong>Host scripts changed</strong> (<code>deploy/gcp/**</code>): re-run <code>infrastructure/gcp/bootstrap.sh --update-host …</code>, then on the VM run <code>sudo google_metadata_script_runner startup</code>. It returns as soon as the bundle is unpacked and <code>compose up -d</code> has applied the changes; units are started with <code>--no-block</code>, so it never waits on itself. <strong>Afterwards check IPv4 forwarding:</strong> <code>cat /proc/sys/net/ipv4/ip_forward</code> must print <code>1</code>, and <code>curl -m 10 https://&lt;host&gt;/health</code> must answer. If it prints <code>0</code>, see <a href="#11-troubleshooting">Troubleshooting</a>.</li>
 <li><strong>Schema changes stay additive.</strong> A rollback must never meet a DB it can't read.</li>
 </ul>
+<h2 id="tripadvisor-ratings">Tripadvisor ratings</h2>
+<p>Off by default (<code>TRIPADVISOR_ENABLED=false</code>). The Terra key lives in the existing secret <code>crawler-src-tripadvisor-content-key</code> (bootstrap.sh grants the VM's service account <code>secretAccessor</code> on it). To turn it on:</p>
+<ol>
+<li>Grant access <strong>first</strong>: a secret the VM can't read (403) stops the app from starting. <code>gcloud secrets add-iam-policy-binding crawler-src-tripadvisor-content-key --member=serviceAccount:vm-runtime@voyager-prod-ohzkl.iam.gserviceaccount.com --role=roles/secretmanager.secretAccessor --project=voyager-prod-ohzkl</code> (or re-run <code>bootstrap.sh</code>).</li>
+<li>In <code>/opt/voyager/app.env</code>: append <code>,TRIPADVISOR_API_KEY=crawler-src-tripadvisor-content-key</code> to <code>SECRET_MANAGER_SECRETS</code>, and set <code>TRIPADVISOR_ENABLED=true</code> and <code>TRIPADVISOR_BUDGET_CAP=1000</code>.</li>
+<li>Restart the app. <code>/health</code> then shows <code>tripadvisor.enabled: true</code>.</li>
+</ol>
+<p><strong>Budget alerts.</strong> The VM has no logging agent, so the <code>tripadvisor_budget</code> WARNING lines stay in Docker's local logs (<code>sudo docker compose -f /opt/voyager/compose.yaml --project-directory /opt/voyager logs app | grep tripadvisor_budget</code>) and a log-based alert would never fire. Use an uptime check on <code>/health</code> matching <code>"tripadvisor_budget_ok":true</code> (false from 80 % of the cap on) with the existing email channel; with <code>SMTP_HOST</code> and <code>ADMIN_EMAIL</code> set, the app also emails the owner at 80 % and at the cap. After adding payment details in the Terra dashboard, raise <code>TRIPADVISOR_BUDGET_CAP</code> and restart.</p>
 <h2 id="offline-pack-and-the-journey-flag">Offline pack and the journey flag</h2>
 <ul>
 <li><strong>Service worker.</strong> The offline pack's service worker is <code>/sw.js</code>, served by Caddy with <code>Cache-Control: no-cache</code> so a new deploy is picked up on the next load. It is registered only when a user saves an offline pack, caches the app shell and the hashed <code>/assets/*</code> files listed in <code>/sw-assets.json</code>, and never intercepts <code>/api/*</code>. Trip data lives in the browser's IndexedDB, not on the VM.</li>
