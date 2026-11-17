@@ -29,6 +29,7 @@ import BudgetPlanner from '../components/BudgetPlanner'
 import { defaultAllocation, reallocate, withTotal, fitResults, capsFromFit, flightKey } from '../utils/budgetPlanner'
 import { buildEmergencyCardHtml } from '../utils/emergencyCardPrint'
 import WalkingToursSection, { WalkingTourPlanRow } from '../components/WalkingToursSection'
+import TripadvisorBlock from '../components/TripadvisorBlock'
 import { orderSectionByCity } from '../utils/orderSectionByCity'
 import AirportSearch from '../components/ui/AirportSearch'
 import NationalitySearch from '../components/ui/NationalitySearch'
@@ -4286,7 +4287,13 @@ export default function ResultsPage() {
         {view === 'cards' ? (
           <div className="space-y-5">
             <ConfidenceBanner data={confidenceData} />
-            {AGENT_ORDER.map(agent => renderSectionCard(agent, { animationDelay: `${AGENT_ORDER.indexOf(agent) * 80}ms` }))}
+            {AGENT_ORDER.map(agent => {
+              const card = renderSectionCard(agent, { animationDelay: `${AGENT_ORDER.indexOf(agent) * 80}ms` })
+              // Tripadvisor ratings: their own labelled card after Places to see, never merged into it
+              if (agent !== 'places_to_see') return card
+              return [card, <TripadvisorBlock key="tripadvisor" token={token}
+                destinations={searchData?.destinations?.length > 1 ? searchData.destinations : [searchData?.destination]} />]
+            })}
           </div>
         ) : (
           <TimelineView

@@ -14,5 +14,12 @@
   "colViews": "浏览量",
   "empty": "暂无数据。",
   "loading": "正在加载数据分析…",
-  "error": "无法加载数据分析，请稍后重试。"
+  "error": "无法加载数据分析，请稍后重试。",
+  "tripadvisor": {
+    "title": "Tripadvisor API 预算",
+    "used": "已使用 {{used}} / {{cap}} 个计费实体",
+    "paused": "已达上限并暂停。请在 Tripadvisor Terra 控制台添加付款信息，然后调高 TRIPADVISOR_BUDGET_CAP。",
+    "warn": "预算已使用超过 80%。",
+    "off": "Tripadvisor 评分已关闭（未设置 TRIPADVISOR_ENABLED 或 API 密钥）。"
+  }
 }

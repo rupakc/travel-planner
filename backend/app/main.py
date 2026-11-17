@@ -68,6 +68,7 @@ from .api.routes.trip_offline import router as trip_offline_router
 from .api.routes.trip_prep import router as trip_prep_router
 from .api.routes.trip_recap import router as trip_recap_router
 from .api.routes.trip_today import router as trip_today_router
+from .api.routes.tripadvisor import router as tripadvisor_router
 from .api.routes.trips import router as trips_router
 from .api.routes.walking_tours import router as walking_tours_router
 from .core import sse as _sse
@@ -152,6 +153,9 @@ async def lifespan(app: FastAPI):
     create_play_tables()
     create_notifications_table()
     create_devices_table()
+    from .db.api_budget_db import create_api_budget_tables
+
+    create_api_budget_tables()
     # telemetry.db is disposable (not backed up): if it can't be opened, log
     # and run with telemetry off rather than refuse to start
     try:
@@ -300,6 +304,8 @@ app.include_router(
     dependencies=[Depends(rate_limit("telemetry"))],
 )
 app.include_router(client_config_router, prefix="/api", tags=["config"])
+# Tripadvisor ratings: not an AI route (no LLM); auth + its own bucket per route
+app.include_router(tripadvisor_router, prefix="/api", tags=["tripadvisor"])
 app.include_router(
     chat_router, prefix="/api", tags=["chat"], dependencies=_limited("chat")
 )
@@ -459,6 +465,25 @@ async def health_agents():
     return result
 
 
+def _tripadvisor_health() -> dict:
+    from .services import tripadvisor
+
+    try:
+        s = tripadvisor.budget_status()
+    except Exception:  # health must answer even if the table is missing
+        return {"configured": tripadvisor.configured(), "enabled": False}
+    return {k: s[k] for k in ("configured", "enabled", "used", "cap", "paused")}
+
+
+def _tripadvisor_budget_ok() -> bool:
+    from .services import tripadvisor
+
+    try:
+        return tripadvisor.budget_ok()
+    except Exception:
+        return True
+
+
 @app.get("/health")
 async def health():
     body = {
@@ -473,6 +498,10 @@ async def health():
         "email_alerts_available": bool(_settings.smtp_host),
         # Alerts also go to registered phones (FCM) only when set
         "push_configured": push.configured(),
+        # Billable Tripadvisor entities used / cap; an uptime check can
+        # content-match "tripadvisor_budget_ok":true (false from 80 % on)
+        "tripadvisor": _tripadvisor_health(),
+        "tripadvisor_budget_ok": _tripadvisor_budget_ok(),
     }
     # VM backups: the uptime check content-matches "backup_ok":true
     backup = vm_backup.status()

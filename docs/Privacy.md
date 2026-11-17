@@ -93,6 +93,10 @@ Beyond the watches and notifications above, price alerts 2.0 stores, per account
 
 A share link is public: anyone who has the URL can read it, without signing in, until you revoke it. A new link reveals only the trip's title, destination(s), number of days and the items you put in the plan. Exact dates, your departure place and your name are hidden unless you tick them (`dates`: hidden, month or exact; "show origin"; "show my name"). Link previews and share cards show at most the month and year, even with exact dates. Your email, nationality, visas, residence permits and accessibility needs are never included, and neither is anything from your search besides the whitelisted trip fields. The server stores the link's token, its kind, the plan it points at and your choices; it does not count or record who opens a link. Link previews are made by the chat app or network that fetches the page, which then sees the same public text and image. Search engines are told not to index share pages and cards. Revoking a link makes it stop working within minutes (browsers, proxies and the apps that made a preview may keep a copy for a while). Details: [Sharing API](Sharing-API.md).
 
+## Tripadvisor ratings
+
+When the Tripadvisor ratings feature is on and you press **Show Tripadvisor ratings**, the server sends Tripadvisor only the destination's coordinates (or the IDs of attractions it looked up before) with the app's API key; nothing about you. The ratings go straight to your browser and are not stored, cached or logged by the app (only Tripadvisor's location IDs are kept, per destination). Your browser then loads Tripadvisor's logo and rating images from Tripadvisor's servers, which see your IP address as for any image, and the links open Tripadvisor's site. Details: [Tripadvisor Ratings](Tripadvisor.md).
+
 ## What is never collected
 
 The schema has no field for any of these, and the server drops unknown fields:

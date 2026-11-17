@@ -357,6 +357,21 @@ export async function liveCheckWatch(kind, watchId, token) {
   return (await api.post('/live-check', { kind, watch_id: watchId }, authHeaders(token))).data
 }
 
+// ── Tripadvisor ratings (live, on demand) ───────────────────────────────────
+// Tripadvisor's terms forbid storing or caching its content: callers keep the
+// answer in component state only (never in plans, shares, storage, telemetry
+// or anything sent to the AI).
+
+/** Top-rated attractions near `destination`: {status, items, attribution}. */
+export async function fetchTripadvisorAttractions(destination, token) {
+  return (await api.post('/tripadvisor/attractions', { destination }, authHeaders(token))).data
+}
+
+/** Admin: Tripadvisor billable entities used / cap (404 on an older backend). */
+export async function getTripadvisorBudget(token) {
+  return (await api.get('/admin/tripadvisor/budget', authHeaders(token))).data
+}
+
 // Sign-in providers the backend has configured. Any failure (404 on an older
 // backend, network, 5xx) means "none configured": never throws to the UI.
 export async function getAuthProviders() {

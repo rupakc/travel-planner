@@ -20,8 +20,36 @@ class JSONFormatter(logging.Formatter):
         return json.dumps(payload)
 
 
+class RedactSecrets(logging.Filter):
+    """Masks third-party API keys sent in request headers (Tripadvisor's
+    ``X-API-Key``) should one ever reach a log line, e.g. via an exception
+    that echoes request headers."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        from .config import settings
+
+        secrets = [s for s in (settings.tripadvisor_api_key,) if s and len(s) >= 8]
+        if not secrets:
+            return True
+        msg = record.getMessage()
+        exc = ""
+        if record.exc_info:
+            exc = logging.Formatter().formatException(record.exc_info)
+        if not any(s in msg or s in exc for s in secrets):
+            return True
+        for s in secrets:
+            msg = msg.replace(s, "[redacted]")
+            exc = exc.replace(s, "[redacted]")
+        record.msg = msg + (f"\n{exc}" if exc else "")
+        record.args = None
+        record.exc_info = None
+        record.exc_text = None
+        return True
+
+
 def configure_logging(json_logs: bool = True) -> None:
     handler = logging.StreamHandler(sys.stdout)
+    handler.addFilter(RedactSecrets())
     if json_logs:
         handler.setFormatter(JSONFormatter())
     logging.basicConfig(

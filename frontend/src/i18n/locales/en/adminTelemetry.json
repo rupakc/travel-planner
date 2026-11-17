@@ -14,5 +14,12 @@
   "colViews": "Views",
   "empty": "No data yet.",
   "loading": "Loading analytics…",
-  "error": "Couldn't load analytics. Try again later."
+  "error": "Couldn't load analytics. Try again later.",
+  "tripadvisor": {
+    "title": "Tripadvisor API budget",
+    "used": "{{used}} of {{cap}} billable entities used",
+    "paused": "Paused at the cap. Add payment details in the Tripadvisor Terra dashboard, then raise TRIPADVISOR_BUDGET_CAP.",
+    "warn": "Over 80% of the budget is used.",
+    "off": "Tripadvisor ratings are off (TRIPADVISOR_ENABLED or the API key is not set)."
+  }
 }

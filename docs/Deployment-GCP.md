@@ -210,6 +210,16 @@ gcloud compute ssh voyager-vm --zone=us-east1-b --tunnel-through-iap --project=v
 - **Host scripts changed** (`deploy/gcp/**`): re-run `infrastructure/gcp/bootstrap.sh --update-host …`, then on the VM run `sudo google_metadata_script_runner startup`. It returns as soon as the bundle is unpacked and `compose up -d` has applied the changes; units are started with `--no-block`, so it never waits on itself. **Afterwards check IPv4 forwarding:** `cat /proc/sys/net/ipv4/ip_forward` must print `1`, and `curl -m 10 https://<host>/health` must answer. If it prints `0`, see [Troubleshooting](#11-troubleshooting).
 - **Schema changes stay additive.** A rollback must never meet a DB it can't read.
 
+## Tripadvisor ratings
+
+Off by default (`TRIPADVISOR_ENABLED=false`). The Terra key lives in the existing secret `crawler-src-tripadvisor-content-key` (bootstrap.sh grants the VM's service account `secretAccessor` on it). To turn it on:
+
+1. Grant access **first**: a secret the VM can't read (403) stops the app from starting. `gcloud secrets add-iam-policy-binding crawler-src-tripadvisor-content-key --member=serviceAccount:vm-runtime@voyager-prod-ohzkl.iam.gserviceaccount.com --role=roles/secretmanager.secretAccessor --project=voyager-prod-ohzkl` (or re-run `bootstrap.sh`).
+2. In `/opt/voyager/app.env`: append `,TRIPADVISOR_API_KEY=crawler-src-tripadvisor-content-key` to `SECRET_MANAGER_SECRETS`, and set `TRIPADVISOR_ENABLED=true` and `TRIPADVISOR_BUDGET_CAP=1000`.
+3. Restart the app. `/health` then shows `tripadvisor.enabled: true`.
+
+**Budget alerts.** The VM has no logging agent, so the `tripadvisor_budget` WARNING lines stay in Docker's local logs (`sudo docker compose -f /opt/voyager/compose.yaml --project-directory /opt/voyager logs app | grep tripadvisor_budget`) and a log-based alert would never fire. Use an uptime check on `/health` matching `"tripadvisor_budget_ok":true` (false from 80 % of the cap on) with the existing email channel; with `SMTP_HOST` and `ADMIN_EMAIL` set, the app also emails the owner at 80 % and at the cap. After adding payment details in the Terra dashboard, raise `TRIPADVISOR_BUDGET_CAP` and restart.
+
 ## Offline pack and the journey flag
 
 - **Service worker.** The offline pack's service worker is `/sw.js`, served by Caddy with `Cache-Control: no-cache` so a new deploy is picked up on the next load. It is registered only when a user saves an offline pack, caches the app shell and the hashed `/assets/*` files listed in `/sw-assets.json`, and never intercepts `/api/*`. Trip data lives in the browser's IndexedDB, not on the VM.

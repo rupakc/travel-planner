@@ -399,5 +399,22 @@
     "verify": "Vérifiez tous les détails avant de partir — les informations peuvent être périmées.",
     "disclaimer": "Informations données à titre indicatif uniquement. Vérifiez toujours les détails actuels auprès de sources officielles. Les horaires des ambassades et les services hospitaliers peuvent changer.",
     "printThis": "Imprimer cette carte"
+  },
+  "tripadvisor": {
+    "title": "Notes Tripadvisor",
+    "show": "Afficher les notes Tripadvisor",
+    "showFor": "Afficher les notes Tripadvisor pour {{city}}",
+    "hide": "Masquer",
+    "loading": "Chargement des notes Tripadvisor…",
+    "paused": "Les notes Tripadvisor sont en pause pour le moment.",
+    "empty": "Tripadvisor n'a pas de notes pour ce secteur.",
+    "error": "Impossible de charger les notes Tripadvisor. Réessayez.",
+    "retry": "Réessayer",
+    "ratingAlt": "Note Tripadvisor : {{rating}} sur 5",
+    "note": "En direct de Tripadvisor, affiché tel quel et non conservé par nous.",
+    "logoAlt": "Tripadvisor",
+    "reviews_one": "{{n}} avis",
+    "reviews_many": "{{n}} avis",
+    "reviews_other": "{{n}} avis"
   }
 }

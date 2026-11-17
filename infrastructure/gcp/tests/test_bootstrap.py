@@ -150,8 +150,10 @@ def test_dry_run_creates_oauth_secrets(tmp_path):
 def test_app_env_example_names_only_bootstrapped_secrets():
     text = (ROOT / "deploy" / "gcp" / "app.env.example").read_text()
     line = next(x for x in text.splitlines() if x.startswith("SECRET_MANAGER_SECRETS="))
+    # ENV_VAR (secret id = lower-case, dashes) or ENV_VAR=secret-id
     ids = {
-        v.strip().lower().replace("_", "-") for v in line.split("=", 1)[1].split(",")
+        v.split("=", 1)[1].strip() if "=" in v else v.strip().lower().replace("_", "-")
+        for v in line.split("=", 1)[1].split(",")
     }
     script = SCRIPT.read_text()
     arr = script.split("SECRETS=(", 1)[1].split(")", 1)[0].split()
