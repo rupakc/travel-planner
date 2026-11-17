@@ -82,8 +82,15 @@ jobs:
         working-directory: frontend
       # Only HIGH/CRITICAL fails CI. Moderate vulns in dev-only chains (esbuild/vitest)
       # are accepted — they are never present in the production Caddy image (static SPA).
-      - run: npm audit --audit-level=high
+      # A HIGH/CRITICAL advisory with no fix can be allowlisted only with the owner's approval
+      # and an expiry (deploy/ci/npm-audit-allowlist.json); expired entries fail again.
+      - name: npm audit (HIGH/CRITICAL, owner-approved expiring allowlist)
         working-directory: frontend
+        run: |
+          set +e
+          npm audit --json > "$RUNNER_TEMP/npm-audit.json"
+          set -e
+          python3 ../deploy/ci/npm_audit_gate.py < "$RUNNER_TEMP/npm-audit.json"
 
   test-backend:
     runs-on: ubuntu-latest
