@@ -220,6 +220,23 @@ Off by default (`TRIPADVISOR_ENABLED=false`). The Terra key lives in the existin
 
 **Budget alerts.** The VM has no logging agent, so the `tripadvisor_budget` WARNING lines stay in Docker's local logs (`sudo docker compose -f /opt/voyager/compose.yaml --project-directory /opt/voyager logs app | grep tripadvisor_budget`) and a log-based alert would never fire. Use an uptime check on `/health` matching `"tripadvisor_budget_ok":true` (false from 80 % of the cap on) with the existing email channel; with `SMTP_HOST` and `ADMIN_EMAIL` set, the app also emails the owner at 80 % and at the cap. After adding payment details in the Terra dashboard, raise `TRIPADVISOR_BUDGET_CAP` and restart.
 
+## Crawler data
+
+Off by default (`CRAWLER_ENABLED=false`). The app reads official facts from the crawler VM's private read API ([Crawler Data](Crawler-Data.md)). Both VMs are in `voyager-prod-ohzkl`, on the default VPC. The crawler's `infrastructure/bootstrap.sh` creates everything the app needs:
+
+- the secrets `crawler-api-token-voyager` (`voyager.<secret>`, registered with `vcadm client add --name voyager`) and `crawler-api-tls-cert` (a self-signed certificate for the crawler's static internal IP), with `secretAccessor` for `vm-runtime@voyager-prod-ohzkl.iam.gserviceaccount.com` on both;
+- the firewall rule `allow-crawler-api`: TCP 8443 from source service account `vm-runtime` to target service account `crawler-runtime`, priority 900, ahead of `deny-crawler-ingress` (1000). The app's container egress is NATed to the VM, so it matches. The app VM's egress governor only shapes replies from ports 80/443, so outbound 8443 is not affected.
+
+To turn it on:
+
+1. Check access **first**: a secret the VM can't read (403) stops the app from starting. `gcloud secrets get-iam-policy crawler-api-token-voyager --project=voyager-prod-ohzkl` and the same for `crawler-api-tls-cert` must list `vm-runtime` with `roles/secretmanager.secretAccessor`. Check the rule with `gcloud compute firewall-rules describe allow-crawler-api --project=voyager-prod-ohzkl`. Check reachability from the app VM: `curl -sk https://10.142.0.3:8443/healthz` should return `{"status":"ok"}`. Use the crawler's actual reserved IP, `gcloud compute addresses describe crawler-internal-ip --region=us-east1 --format='value(address)'`.
+2. In `/opt/voyager/app.env`: append `,CRAWLER_API_TOKEN=crawler-api-token-voyager,CRAWLER_CA_PEM=crawler-api-tls-cert` to `SECRET_MANAGER_SECRETS`, and set `CRAWLER_ENABLED=true` and `CRAWLER_API_URL=https://<crawler internal IP>:8443`.
+3. Restart the app. `/health` then shows `"crawler":{"configured":true,"ok":true}`, and `/api/config` shows `features.crawler_data: true`. If `ok` is false, check the app's logs: `crawler_unavailable` lines name the path and the error type. The sections keep working without the crawler.
+
+**Certificate rotation** (`bootstrap.sh --rotate-tls` in the crawler repo): the app reads the certificate at start, and the crawler installs the new pair within an hour. Restart the app after the rotation. Until then, crawler calls fail the pin and the sections fall back to their behaviour without crawler data. For a seamless rotation, add a version of `crawler-api-tls-cert` that holds both PEMs (current + next) and restart the app before the crawler switches.
+
+To turn it off, set `CRAWLER_ENABLED=false` and restart.
+
 ## Offline pack and the journey flag
 
 - **Service worker.** The offline pack's service worker is `/sw.js`, served by Caddy with `Cache-Control: no-cache` so a new deploy is picked up on the next load. It is registered only when a user saves an offline pack, caches the app shell and the hashed `/assets/*` files listed in `/sw-assets.json`, and never intercepts `/api/*`. Trip data lives in the browser's IndexedDB, not on the VM.

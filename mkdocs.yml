@@ -31,6 +31,7 @@ nav:
   - Using the app:
       - Trip Planning Features: Trip-Planning-Features.md
       - Tripadvisor Ratings: Tripadvisor.md
+      - Crawler Data: Crawler-Data.md
       - Multi-City Trips: Multi-City-Trips.md
       - Chat Assistant: Chat-Assistant.md
       - Personalization: Personalization.md
