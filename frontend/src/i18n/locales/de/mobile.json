@@ -131,7 +131,7 @@
     "version": "Version {{version}}"
   },
   "plan": {
-    "export": "Exportieren",
+    "export": "Export",
     "signInToSave": "Melde dich an, um diesen Plan zu speichern und zu teilen."
   }
 }
