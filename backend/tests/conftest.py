@@ -71,6 +71,38 @@ def _no_model_network(monkeypatch):
     llm._resolved = None
 
 
+@pytest.fixture(autouse=True)
+def _no_tripadvisor_network(monkeypatch):
+    """Terra is never called from tests: a test that needs it installs an
+    httpx.MockTransport on ``tripadvisor._transport`` (test_tripadvisor.py)."""
+    import httpx
+
+    from app.services import tripadvisor
+
+    def refuse(request):
+        raise AssertionError(f"Tripadvisor network call in a test: {request.url.path}")
+
+    monkeypatch.setattr(tripadvisor, "_transport", httpx.MockTransport(refuse))
+
+
+@pytest.fixture(autouse=True)
+def _no_crawler_network(monkeypatch):
+    """The crawler read API is never called from tests: a test that needs it
+    turns the flag on and installs an httpx.MockTransport on
+    ``crawler_client._transport`` (test_crawler_data.py)."""
+    import httpx
+
+    from app.services import crawler_client
+
+    def refuse(request):
+        raise AssertionError(f"crawler network call in a test: {request.url.path}")
+
+    monkeypatch.setattr(crawler_client, "_transport", httpx.MockTransport(refuse))
+    crawler_client.reset()
+    yield
+    crawler_client.reset()
+
+
 @pytest.fixture(scope="session", autouse=True)
 def place_data():
     """Seed the place data once, before any test: lookups (airports, static

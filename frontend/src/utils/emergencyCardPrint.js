@@ -38,6 +38,20 @@ function emergencyCardBodyHtml(card) {
     const href = safeUrl(v)
     return href ? `<a href="${esc(href)}">${esc(v)}</a>` : esc(v)
   }
+  // A phone the backend removed (crawler answered, no official entry) is never
+  // left blank and never shows a number: the label, linked to the official
+  // list when the backend sent one (docs/Crawler-Data.md).
+  const unverified = (url) => {
+    const href = safeUrl(url)
+    const text = tr('official.phoneUnverified')
+    return `<span class="unverified">${href ? `<a href="${esc(href)}">${text}</a>` : text}</span>`
+  }
+  const medical = Array.isArray(card?.medical_facilities) ? card.medical_facilities : []
+  const officialListUrl = medical.map(m => m?.source?.url).find(u => safeUrl(u)) || null
+  const embassyContact = (e) => e.phone_unverified
+    ? `📞 ${unverified(null)}`
+    : `📞 ${phone(e.phone)} | ${tr('emergency.afterHours', { value: e.emergency_after_hours || '—' })}`
+  const hospitalPhone = (h) => h.phone_unverified ? unverified(officialListUrl) : `📞 ${phone(h.phone)}`
 
   return `
     <h2>${tr('emergency.numbers')}</h2>
@@ -47,9 +61,9 @@ function emergencyCardBodyHtml(card) {
       <div class="num-box"><strong>${esc(numbers.fire || '—')}</strong>${tr('emergency.fire')}</div>
       <div class="num-box"><strong>${esc(numbers.tourist_police || '—')}</strong>${tr('emergency.touristPolice')}</div>
     </div>
-    ${embassy ? `<h2>${tr('emergency.embassy')}</h2><p><strong>${esc(embassy.name)}</strong><br/>${esc(embassy.address)}<br/>📞 ${phone(embassy.phone)} | ${tr('emergency.afterHours', { value: embassy.emergency_after_hours || '—' })}<br/>🌐 ${site(embassy.website)} | ${esc(embassy.hours)}</p>` : ''}
+    ${embassy ? `<h2>${tr('emergency.embassy')}</h2><p><strong>${esc(embassy.name)}</strong><br/>${esc(embassy.address)}<br/>${embassyContact(embassy)}<br/>🌐 ${site(embassy.website)} | ${esc(embassy.hours)}</p>` : ''}
     ${!embassy && card?.home_country_note ? `<p><em>${esc(card.home_country_note)}</em></p>` : ''}
-    ${hospitals.length ? `<h2>${tr('emergency.hospitals')}</h2>${hospitals.map(h => `<p><strong>${esc(h.name)}</strong> — 📞 ${phone(h.phone)}<br/>${esc(h.address)}<br/><em>${esc(h.notes || '')}</em></p>`).join('')}` : ''}
+    ${hospitals.length ? `<h2>${tr('emergency.hospitals')}</h2>${hospitals.map(h => `<p><strong>${esc(h.name)}</strong> — ${hospitalPhone(h)}<br/>${esc(h.address)}<br/><em>${esc(h.notes || '')}</em></p>`).join('')}` : ''}
     ${phrases.length ? `<h2>${tr('emergency.phrases')}</h2><table><tr><th>${tr('emergency.english')}</th><th>${tr('emergency.local')}</th><th>${tr('emergency.phonetic')}</th></tr>${phrasesHtml}</table>` : ''}
     ${laws.length ? `<h2>${tr('emergency.laws')}</h2>${lawsHtml}` : ''}`
 }
@@ -75,6 +89,7 @@ export function buildEmergencyCardHtml({ data, destination }) {
       table{width:100%;border-collapse:collapse}
       td,th{border:1px solid #ddd;padding:4px 6px;font-size:12px}
       th{background:#f3f4f6;font-weight:600}
+      .unverified{color:#92400e;font-style:italic}
       .disclaimer{font-size:10px;color:#666;margin-top:16px;border-top:1px solid #ddd;padding-top:8px}
       @media print{button{display:none}}
     </style></head><body>

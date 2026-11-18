@@ -2,6 +2,7 @@ import asyncio
 import logging
 
 from ..schemas.request import TravelSearchRequest
+from ..services import crawler_client, crawler_facts
 from .base_agent import ToolAgent, _URLSearchMixin, locale_kw
 from .loader import load_agent_definition
 from .static_results import _match_table_key, _normalise_nationality
@@ -121,6 +122,10 @@ _DESTINATION_CURRENCY = {
 }
 
 
+async def _no_rates() -> dict:
+    return {}
+
+
 def _get_home_currency(nationality: str) -> tuple[str, str, str] | None:
     return _NATIONALITY_CURRENCY.get(_normalise_nationality(nationality))
 
@@ -168,8 +173,26 @@ class ForexAgent(ToolAgent, _URLSearchMixin):
                 {"query": f"1 {home[0]} to {local_code} exchange rate today"},
             )
 
+        # Published reference rates from the crawler (ECB / Bank of Canada /
+        # Frankfurter), fetched alongside the searches; when present they
+        # replace the model's snippet-read numbers (docs/Crawler-Data.md)
+        rate_pairs = []
+        if local and crawler_client.configured():
+            rate_pairs = [("USD", local[0]), ("EUR", local[0])]
+            if home and home[0] not in ("USD", "EUR") and home[0] != local[0]:
+                rate_pairs.append((home[0], local[0]))
+
+        async def crawler_rates() -> dict:
+            got = await asyncio.gather(
+                *(crawler_facts.fx_rate(b, q) for b, q in rate_pairs)
+            )
+            return {p: r for p, r in zip(rate_pairs, got) if r}
+
         keys = list(searches.keys())
-        raw_results = await asyncio.gather(*searches.values(), return_exceptions=True)
+        raw_results, rates = await asyncio.gather(
+            asyncio.gather(*searches.values(), return_exceptions=True),
+            crawler_rates() if rate_pairs else _no_rates(),
+        )
         search_data = {}
         for key, result in zip(keys, raw_results):
             if isinstance(result, Exception):
@@ -220,8 +243,13 @@ class ForexAgent(ToolAgent, _URLSearchMixin):
             f"Provide comprehensive advice on exchange locations, card acceptance, cash advice, ATMs, "
             f"tipping customs, and money tips specific to {dest_name}."
         )
+        if rates:
+            prompt += crawler_facts.forex_prompt(rates)
 
-        return await self.execute(prompt, **locale_kw(request))
+        result = await self.execute(prompt, **locale_kw(request))
+        if rates:
+            result = crawler_facts.apply_forex(result, rates)
+        return result
 
     async def _enrich_urls(self, data: dict) -> dict:
         source_urls = data.get("source_urls", [])

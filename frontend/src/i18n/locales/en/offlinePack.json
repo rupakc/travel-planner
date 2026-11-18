@@ -48,6 +48,7 @@
     "checked": "Checked {{date}}",
     "embassy": "Embassy",
     "hospital": "Hospital",
+    "phoneUnverified": "Phone number not verified — check the official website.",
     "kinds": {
       "police": "Police",
       "ambulance": "Ambulance",

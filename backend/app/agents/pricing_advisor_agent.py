@@ -1,6 +1,7 @@
 from datetime import date
 
 from ..schemas.request import TravelSearchRequest
+from ..services import crawler_client, crawler_facts
 from .base_agent import BaseAgent, locale_kw
 from .loader import load_agent_definition
 
@@ -32,4 +33,19 @@ class PricingAdvisorAgent(BaseAgent):
             f"{price_context}"
             "Provide flight booking timing advice based on historical pricing patterns for this route."
         )
-        return await self.execute(prompt, **locale_kw(request))
+        if not crawler_client.configured():
+            return await self.execute(prompt, **locale_kw(request))
+        # Typical cached fares for the route and month (a fare cache's view,
+        # never a live price), as context and a labelled line in the banner
+        fares = await crawler_facts.typical_fares(
+            request.origin_iata,
+            request.destination_iata,
+            request.departure_date.strftime("%Y-%m"),
+        )
+        if fares:
+            prompt += crawler_facts.fares_prompt(fares)
+        result = await self.execute(prompt, **locale_kw(request))
+        if fares and isinstance(result, dict) and not result.get("error"):
+            result["typical_fares"] = fares
+            result["crawler_sources"] = [fares["source"]]
+        return result

@@ -122,6 +122,8 @@ Both are behind `SOCIAL_ENABLED` / `PLAY_ENABLED` (`features.social`, `features.
 | Trip-phase pushes (T-30, T-7, T-1, morning brief) | — | ✅ taps open the trip Today tab; the morning-brief switch now also turns the local trip switch on | ⏳ Phase 6 |
 | "Search the web now" on a watch | ✅ | ✅ | ⏳ Phase 7 |
 | Near me | ✅ | ✅ (a background geofence arrival notification is not built, by ruling) |
+| Official crawler data with sources: published FX rates, official emergency numbers, embassies and medical lists, entry rules and travel advice, public holidays, typical cached fares (`features.crawler_data`, off by default; [Crawler Data](Crawler-Data.md)) | ✅ source chips and official blocks in Forex, Emergency card, Visa, Events, Itinerary and the pricing banner | — (replaced values in existing fields show; source chips not yet) | — (same) |
+| Tripadvisor ratings on demand (`features.tripadvisor`, off by default; [Tripadvisor Ratings](Tripadvisor.md)) | ✅ own card after Places to see; admin budget panel | — | — |
 | Weather-change push (Open-Meteo, outdoor slots today, `WEATHER_PUSH_ENABLED` default on, `weather` category switch) | ✅ (notification list shows the Open-Meteo credit) | ✅ (push, `weather` switch, credit) | ⏳ Phase 7 |
 
 ## Known gaps

@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { fmtDate } from '../i18n/format'
 import { getTelemetrySummary } from '../services/api'
 import TelemetrySummary from '../components/admin/TelemetrySummary'
+import TripadvisorBudget from '../components/admin/TripadvisorBudget'
 import InvitesPanel from '../components/admin/InvitesPanel'
 import { listInvites } from '../services/adminInvitesApi'
 import ModerationQueue from '../components/admin/ModerationQueue'
@@ -92,7 +93,7 @@ export default function AdminPage() {
       {tab === 'Feedback' && <FeedbackTab token={token} />}
       {tab === 'Invites'   && <InvitesPanel token={token} initial={invites.rows} />}
       {tab === 'Moderation' && <ModerationQueue token={token} />}
-      {tab === 'Analytics' && <TelemetrySummary summary={analytics.summary} error={analytics.error} />}
+      {tab === 'Analytics' && <><TelemetrySummary summary={analytics.summary} error={analytics.error} /><TripadvisorBudget token={token} /></>}
     </div>
   )
 }

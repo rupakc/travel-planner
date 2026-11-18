@@ -48,6 +48,7 @@
     "checked": "{{date}} को जाँचा गया",
     "embassy": "दूतावास",
     "hospital": "अस्पताल",
+    "phoneUnverified": "फ़ोन नंबर सत्यापित नहीं — आधिकारिक वेबसाइट देखें।",
     "kinds": {
       "police": "पुलिस",
       "ambulance": "एम्बुलेंस",
