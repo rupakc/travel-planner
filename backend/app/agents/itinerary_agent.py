@@ -1,6 +1,7 @@
 import json
 
 from ..schemas.request import TravelSearchRequest
+from ..services import crawler_client, crawler_facts
 from ..services.must_include import ensure_must_include, itinerary_prompt_block
 from .base_agent import BaseAgent, locale_kw
 from .loader import load_agent_definition
@@ -120,7 +121,16 @@ class ItineraryAgent(BaseAgent):
                 "Lean the day plans toward this profile where it fits the destination."
             )
         prompt += itinerary_prompt_block(request)
+        holidays = None
+        if crawler_client.configured():
+            # Public holidays (closures) from the crawler: open-licence ones
+            # as context, all of them as an attributed notice
+            holidays = await crawler_facts.trip_holidays(request)
+            if holidays:
+                prompt += crawler_facts.holidays_prompt(holidays)
         result = await self.execute(prompt, **locale_kw(request))
         if isinstance(result, dict) and result.get("days") and not result.get("error"):
             result = ensure_must_include(result, request)
+        if holidays:
+            result = crawler_facts.apply_holidays(result, holidays)
         return result

@@ -70,6 +70,21 @@ Live, on-demand Tripadvisor ratings (Terra Discover API). On only when `TRIPADVI
 | `TRIPADVISOR_BASE_URL` | `https://terra.tripadvisor.com/api` | Terra base URL. |
 | `TRIPADVISOR_LOGO_URL` | Tripadvisor's hosted horizontal lockup (`static.tacdn.com`) | Logo shown on the card. |
 
+### Crawler data (optional)
+
+Official facts from the Voyager crawler's private read API: published FX rates, emergency numbers, embassies, official medical lists, travel advice, entry rules, public holidays and cached fares, always shown with their source and "as of" date. On only when `CRAWLER_ENABLED=true` and both `CRAWLER_API_URL` and `CRAWLER_API_TOKEN` are set (`features.crawler_data` in `/api/config`, `crawler` in `/health`). Off, or with the crawler down, every section behaves exactly as before. See [Crawler Data](Crawler-Data.md).
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `CRAWLER_ENABLED` | `false` | Feature flag. |
+| `CRAWLER_API_URL` | `""` | Base URL of the read API, e.g. `https://10.142.0.3:8443` (the crawler VM's static internal IP). |
+| `CRAWLER_API_TOKEN` | `""` | Bearer token `<client_id>.<secret>`; never logged. In production: the secret `crawler-api-token-voyager` (`SECRET_MANAGER_SECRETS=…,CRAWLER_API_TOKEN=crawler-api-token-voyager`). |
+| `CRAWLER_CA_PEM` | `""` | The pinned self-signed certificate as PEM text; the client trusts only it. In production: the secret `crawler-api-tls-cert` (`…,CRAWLER_CA_PEM=crawler-api-tls-cert`). Two concatenated certificates (current + next) are accepted. |
+| `CRAWLER_CA_FILE` | `""` | The same, as a file path (local dev). With neither set, the system CAs are used. |
+| `CRAWLER_TIMEOUT_S` | `1.5` | Per-request timeout (connect + read). |
+| `CRAWLER_CACHE_TTL_S` | `900` | In-process cache of answers, empty ones included. |
+| `CRAWLER_BREAKER_S` | `60` | After a timeout, connection/TLS error, 401 or 5xx, skip the crawler for this long. |
+
 Other web lookups (link enrichment for hotels and activities, the forex agent's rate searches, walking-tour city-page discovery, and identifying an unknown airport code) go through DuckDuckGo via the `ddgs` package and need no key.
 
 ## Fare watch and email alerts (optional)

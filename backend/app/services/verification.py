@@ -304,9 +304,87 @@ def _events(data: dict) -> dict:
     return _result("unverified", _DEFAULT_SUMMARY, checks)
 
 
+def _official_visa(data: dict, ai_type) -> dict | None:
+    """Compare with an official entry rule from the crawler (single-country
+    trips only), or None when there is nothing to compare."""
+    from .crawler_facts import visa_family
+
+    entries = data.get("official_entry")
+    if not isinstance(entries, list) or len(entries) != 1:
+        return None
+    rules = [r for r in entries[0].get("rules") or [] if isinstance(r, dict)]
+    ours = visa_family(ai_type)
+    for rule in rules:
+        src = rule.get("source") if isinstance(rule.get("source"), dict) else {}
+        theirs = visa_family(rule.get("visa_type"))
+        if not ours or not theirs or src.get("conflict"):
+            continue
+        name = src.get("name") or src.get("source_id") or "official source"
+        url = _str_url(src.get("url"))
+        if ours == theirs:
+            return _result(
+                "verified",
+                f"Visa type matches the official source ({name}).",
+                [
+                    _check(
+                        "Official entry rules",
+                        "pass",
+                        f"Visa type: {rule.get('visa_type')}",
+                        url,
+                    )
+                ],
+            )
+        return _result(
+            "conflict",
+            f"AI says {ai_type}; the official source ({name}) says "
+            f"{rule.get('visa_type')}. Check the official site.",
+            [
+                _check(
+                    "Official entry rules",
+                    "fail",
+                    f"AI says {ai_type}; {name} says {rule.get('visa_type')}",
+                    url,
+                )
+            ],
+        )
+    return None
+
+
+def _forex(data: dict) -> dict | None:
+    rates = [
+        r
+        for r in data.get("exchange_rates") or []
+        if isinstance(r, dict) and isinstance(r.get("rate_source"), dict)
+    ]
+    if not rates:
+        return None
+    checks = [
+        _check(
+            f"{r.get('from_currency')} → {r.get('to_currency')}",
+            "pass",
+            f"Published by {r['rate_source'].get('name') or r['rate_source'].get('source_id')}"
+            + (
+                f" (as of {r['rate_source']['as_of']})"
+                if r["rate_source"].get("as_of")
+                else ""
+            ),
+            _str_url(r["rate_source"].get("url")),
+        )
+        for r in rates
+    ]
+    return _result(
+        "partial",
+        "Exchange rates are published reference rates; the money tips are AI-generated.",
+        checks,
+    )
+
+
 def _visa(data: dict, request: TravelSearchRequest) -> dict:
     req = data.get("requirement") if isinstance(data.get("requirement"), dict) else {}
     ai_type = req.get("visa_type")
+    official = _official_visa(data, ai_type)
+    if official is not None:
+        return official
     table = get_static_visa(request)
     if not table:
         return _result(
@@ -404,6 +482,22 @@ def _emergency(data: dict, request: TravelSearchRequest) -> dict:
         )
         ref = get_static_emergency_numbers(city) if city else None
         where = f" in {city}" if multi else ""
+        official = entry.get("emergency_numbers_source")
+        if isinstance(official, dict):
+            # Numbers taken from an official list (crawler): nothing to compare
+            matched += 1
+            checks.append(
+                _check(
+                    f"Emergency numbers{where}",
+                    "pass",
+                    f"From an official source: {official.get('name') or official.get('source_id')}"
+                    + (
+                        f" (as of {official['as_of']})" if official.get("as_of") else ""
+                    ),
+                    _str_url(official.get("url")),
+                )
+            )
+            continue
         if not ref:
             checks.append(
                 _check(
@@ -494,6 +588,10 @@ def verify_section(
         return _visa(data, request)
     if name == "emergency_card":
         return _emergency(data, request)
+    if name == "forex" and source != "static":
+        forex = _forex(data)
+        if forex is not None:
+            return forex
     if name in _REFERENCE_SECTIONS and source == "static":
         return _result(
             "verified",

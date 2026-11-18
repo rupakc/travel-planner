@@ -1,6 +1,8 @@
+import asyncio
 import logging
 
 from ..schemas.request import TravelSearchRequest
+from ..services import crawler_client, crawler_facts
 from .base_agent import ToolAgent, _URLSearchMixin, locale_kw
 from .loader import load_agent_definition
 
@@ -48,7 +50,16 @@ class VisaAgent(ToolAgent, _URLSearchMixin):
             )
         self._destination = request.destination
         self._nationality = request.nationality
-        return await self.execute(prompt, **locale_kw(request))
+        if not crawler_client.configured():
+            return await self.execute(prompt, **locale_kw(request))
+        # Official entry rules and travel advice from the crawler: context for
+        # the model and an attributed block beside its answer; Wikipedia's
+        # visa tables only as a labelled cross-check (docs/Crawler-Data.md)
+        facts = await visa_facts_for(request)
+        if facts:
+            prompt += crawler_facts.visa_prompt(facts)
+        result = await self.execute(prompt, **locale_kw(request))
+        return crawler_facts.apply_visa(result, facts) if facts else result
 
     async def _enrich_urls(self, data: dict) -> dict:
         dest_country = (
@@ -96,3 +107,12 @@ class VisaAgent(ToolAgent, _URLSearchMixin):
                 data["official_url"] = req["official_url"]
 
         return data
+
+
+async def visa_facts_for(request: TravelSearchRequest) -> dict[str, dict]:
+    """Crawler entry facts per destination country (only countries the
+    crawler answered for)."""
+    nat = crawler_facts.country_for_nationality(request.nationality)
+    codes = [c for c in crawler_facts.trip_countries(request) if c != nat]
+    got = await asyncio.gather(*(crawler_facts.visa_facts(c, nat) for c in codes))
+    return {c: f for c, f in zip(codes, got) if f}

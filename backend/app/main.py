@@ -88,7 +88,7 @@ from .db.seed_airports import seed as seed_airports
 from .db.seed_nationalities import seed as seed_nationalities
 from .middleware.analytics import AnalyticsMiddleware
 from .middleware.request_id import RequestIdMiddleware
-from .services import alert_delivery, fare_watch, price_watch, push
+from .services import alert_delivery, crawler_client, fare_watch, price_watch, push
 from .services.account_maintenance import account_maintenance
 from .services.activity_url_resolver import close_client as _close_activity_client
 from .services.serp_flights import close_client as _close_serp_client
@@ -502,6 +502,8 @@ async def health():
         # content-match "tripadvisor_budget_ok":true (false from 80 % on)
         "tripadvisor": _tripadvisor_health(),
         "tripadvisor_budget_ok": _tripadvisor_budget_ok(),
+        # Crawler read API (docs/Crawler-Data.md): configured + answering
+        "crawler": await crawler_client.health(),
     }
     # VM backups: the uptime check content-matches "backup_ok":true
     backup = vm_backup.status()

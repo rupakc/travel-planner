@@ -69,6 +69,21 @@ class Settings(BaseSettings):
         "https://static.tacdn.com/img2/brand_refresh/"
         "Tripadvisor_lockup_horizontal_secondary.svg"
     )
+    # Voyager crawler read API (services/crawler_client.py, docs/Crawler-Data.md):
+    # official facts (FX rates, emergency numbers, embassies, medical lists,
+    # advisories, visa rules, public holidays, cached fares) with attribution.
+    # On only when CRAWLER_ENABLED=true AND a URL and a token are set; any
+    # error, timeout or 5xx means "behave exactly as without it".
+    crawler_enabled: bool = False
+    crawler_api_url: str = ""  # e.g. https://10.142.0.3:8443
+    crawler_api_token: str = ""  # <client_id>.<secret> (crawler-api-token-voyager)
+    # The pinned self-signed certificate: PEM text (secret crawler-api-tls-cert
+    # via SECRET_MANAGER_SECRETS) or a file path; neither = system CAs
+    crawler_ca_pem: str = ""
+    crawler_ca_file: str = ""
+    crawler_timeout_s: float = 1.5  # per request (connect + read)
+    crawler_cache_ttl_s: int = 900  # answers (also empty ones) reused this long
+    crawler_breaker_s: int = 60  # fail fast this long after an error
     # Max concurrent LLM calls across all specialist agents — a
     # 12-agent burst with large outputs trips org rate limits and every
     # section fails at once

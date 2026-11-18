@@ -508,7 +508,7 @@ Body `{"client": {anon_id, session_id, platform, app_version, locale}, "events":
 
 ### GET /api/config
 
-Public, `Cache-Control: max-age=300`. Returns `{"public_base_url", "telemetry": {"enabled", "flush_interval_s", "max_batch"}, "features": {"telemetry"}}`. Clients treat a `404` as "telemetry off".
+Public, `Cache-Control: max-age=300`. Returns `{"public_base_url", "telemetry": {"enabled", "flush_interval_s", "max_batch"}, "features": {"telemetry", …}}`. Clients treat a `404` as "telemetry off". `features.crawler_data` is true when the crawler read API is configured ([Crawler Data](Crawler-Data.md)): sections may then carry the optional fields `crawler_sources`, `exchange_rates[].rate_source`, `emergency_numbers_source`, `official_numbers`, `embassy.verified` / `embassy.source` / `embassy.phone_unverified`, `embassies`, `hospitals[].phone_unverified`, `medical_facilities`, `official_entry` (visa), `public_holidays` (events, itinerary) and `typical_fares` (pricing advisor).
 
 ### GET /api/admin/telemetry/summary?days=30
 
@@ -952,7 +952,7 @@ Nationality typeahead over 202 seeded rows.
 
 ### GET /health
 
-`{"status": "ok", "service": "travel-planner-backend", "serpapi_configured": true|false, "fare_watch_available": true|false, "email_alerts_available": true|false, "push_configured": true|false}`. No auth. The frontend reads it once per page load: `serpapi_configured` offers the fare calendar, `fare_watch_available` (SerpAPI set and `FARE_WATCH_ENABLED`) offers "Watch fare", `email_alerts_available` (`SMTP_HOST` set) offers "Also email me". `push_configured` (`FCM_SERVICE_ACCOUNT_FILE` names an existing file) tells the Android app that alerts are pushed, so it can poll less. `tripadvisor` is `{configured, enabled, used, cap, paused}` (billable Tripadvisor entities against `TRIPADVISOR_BUDGET_CAP`) and `tripadvisor_budget_ok` is false from 80 % of the cap on, for an uptime-check content match ([Tripadvisor Ratings](Tripadvisor.md#budget)). Docker Compose uses this endpoint as the backend healthcheck.
+`{"status": "ok", "service": "travel-planner-backend", "serpapi_configured": true|false, "fare_watch_available": true|false, "email_alerts_available": true|false, "push_configured": true|false}`. No auth. The frontend reads it once per page load: `serpapi_configured` offers the fare calendar, `fare_watch_available` (SerpAPI set and `FARE_WATCH_ENABLED`) offers "Watch fare", `email_alerts_available` (`SMTP_HOST` set) offers "Also email me". `push_configured` (`FCM_SERVICE_ACCOUNT_FILE` names an existing file) tells the Android app that alerts are pushed, so it can poll less. `tripadvisor` is `{configured, enabled, used, cap, paused}` (billable Tripadvisor entities against `TRIPADVISOR_BUDGET_CAP`) and `tripadvisor_budget_ok` is false from 80 % of the cap on, for an uptime-check content match ([Tripadvisor Ratings](Tripadvisor.md#budget)). `crawler` is `{configured, ok}`: the crawler read API is configured and answered a cached `/v1/stats` call ([Crawler Data](Crawler-Data.md)). Docker Compose uses this endpoint as the backend healthcheck.
 
 ### GET /health/agents
 
