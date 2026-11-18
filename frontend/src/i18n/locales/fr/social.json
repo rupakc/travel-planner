@@ -99,7 +99,11 @@
     "requested": "Demandé",
     "notFound": "Ce profil n'est pas disponible.",
     "noIdeas": "Aucune idée à afficher.",
-    "edit": "Modifier le profil"
+    "edit": "Modifier le profil",
+    "cancelRequest": "Annuler la demande d'abonnement",
+    "createFirst": "Créez votre profil pour suivre d'autres personnes.",
+    "stopFollowing": "Ne plus suivre",
+    "viewOwn": "Voir comment les autres voient votre profil"
   },
   "editor": {
     "title": "Modifier votre profil",
@@ -165,5 +169,11 @@
     "cannot_follow_self": "Vous ne pouvez pas vous suivre vous-même.",
     "cannot_block_self": "Vous ne pouvez pas vous bloquer vous-même.",
     "not_found": "Cela n'est pas disponible."
+  },
+  "lists": {
+    "noBlocked": "Vous n'avez bloqué personne.",
+    "noFollowers": "Aucun abonné pour l'instant.",
+    "noFollowing": "Vous ne suivez encore personne.",
+    "noRequests": "Aucune demande d'abonnement."
   }
 }

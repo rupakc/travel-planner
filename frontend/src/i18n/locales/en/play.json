@@ -43,7 +43,9 @@
     "correctPoints_other": "Correct! +{{count}} points",
     "wrongNote": "Not this time. The right answer is marked.",
     "next": "Next question",
-    "finish": "See result"
+    "finish": "See result",
+    "alreadyDone": "You already played today's quiz. Come back tomorrow.",
+    "expired": "This quiz timed out. Start a new one from Play."
   },
   "result": {
     "title": "Your result",
@@ -75,7 +77,8 @@
     "winner_them": "They won this one.",
     "winner_draw": "A draw.",
     "accept": "Accept and play",
-    "decline": "Decline"
+    "decline": "Decline",
+    "resume": "Continue your quiz"
   },
   "board": {
     "title": "Leaderboard",
@@ -95,5 +98,12 @@
     "mine_one": "You are #{{rank}} with {{count}} point",
     "mine_other": "You are #{{rank}} with {{count}} points",
     "unranked": "You are not ranked yet. Play the daily quiz to get on the board."
+  },
+  "home": {
+    "freeze": "A streak freeze is ready. One missed day will not break your streak.",
+    "history": "Recent games",
+    "openH2H_one": "{{count}} head-to-head match is waiting for you",
+    "openH2H_other": "{{count}} head-to-head matches are waiting for you",
+    "unavailable": "Play is not available right now."
   }
 }

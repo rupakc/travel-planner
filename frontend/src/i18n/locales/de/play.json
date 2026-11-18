@@ -43,7 +43,9 @@
     "correctPoints_other": "Richtig! +{{count}} Punkte",
     "wrongNote": "Diesmal nicht. Die richtige Antwort ist markiert.",
     "next": "Nächste Frage",
-    "finish": "Ergebnis ansehen"
+    "finish": "Ergebnis ansehen",
+    "alreadyDone": "Du hast das heutige Quiz schon gespielt. Komm morgen wieder.",
+    "expired": "Dieses Quiz ist abgelaufen. Starte ein neues über Play."
   },
   "result": {
     "title": "Dein Ergebnis",
@@ -75,7 +77,8 @@
     "winner_them": "Diesmal hat die andere Person gewonnen.",
     "winner_draw": "Unentschieden.",
     "accept": "Annehmen und spielen",
-    "decline": "Ablehnen"
+    "decline": "Ablehnen",
+    "resume": "Quiz fortsetzen"
   },
   "board": {
     "title": "Bestenliste",
@@ -95,5 +98,12 @@
     "mine_one": "Du bist auf Platz {{rank}} mit {{count}} Punkt",
     "mine_other": "Du bist auf Platz {{rank}} mit {{count}} Punkten",
     "unranked": "Du hast noch keinen Rang. Spiele das Tagesquiz, um in die Rangliste zu kommen."
+  },
+  "home": {
+    "freeze": "Ein Serien-Schutz ist bereit. Ein verpasster Tag unterbricht deine Serie nicht.",
+    "history": "Letzte Spiele",
+    "openH2H_one": "{{count}} Duell wartet auf dich",
+    "openH2H_other": "{{count}} Duelle warten auf dich",
+    "unavailable": "Play ist gerade nicht verfügbar."
   }
 }

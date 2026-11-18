@@ -99,7 +99,11 @@
     "requested": "已申请",
     "notFound": "此主页不可用。",
     "noIdeas": "没有可显示的灵感。",
-    "edit": "编辑主页"
+    "edit": "编辑主页",
+    "cancelRequest": "取消关注请求",
+    "createFirst": "创建你的个人资料后即可关注他人。",
+    "stopFollowing": "取消关注",
+    "viewOwn": "查看他人眼中的你的个人资料"
   },
   "editor": {
     "title": "编辑你的主页",
@@ -165,5 +169,11 @@
     "cannot_follow_self": "你不能关注自己。",
     "cannot_block_self": "你不能屏蔽自己。",
     "not_found": "该内容不可用。"
+  },
+  "lists": {
+    "noBlocked": "你还没有屏蔽任何人。",
+    "noFollowers": "还没有关注者。",
+    "noFollowing": "你还没有关注任何人。",
+    "noRequests": "没有关注请求。"
   }
 }

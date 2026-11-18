@@ -246,5 +246,9 @@
     },
     "staleNote": "Your plan changed since this check — re-check again",
     "unavailable": "Health check unavailable for this plan — try re-running the search."
+  },
+  "card": {
+    "collapsed": "Collapsed",
+    "expanded": "Expanded"
   }
 }

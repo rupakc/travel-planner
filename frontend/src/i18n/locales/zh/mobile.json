@@ -59,7 +59,13 @@
     "openInBrowser": "在浏览器中打开",
     "openLinkLabel": "打开分享链接",
     "openLinkPlaceholder": "粘贴 Voyager 链接",
-    "openLinkInvalid": "这看起来不是 Voyager 分享链接。"
+    "openLinkInvalid": "这看起来不是 Voyager 分享链接。",
+    "byline": "由 {{name}} 分享",
+    "recapTag": "旅行回顾",
+    "remix": "改编到我的行程",
+    "savingsTag": "捕捉到的降价",
+    "signInToRemix": "登录后即可改编此行程",
+    "signIn": "登录"
   },
   "unsupported": {
     "update": "请更新应用以查看此问题。"
@@ -79,5 +85,49 @@
   },
   "support": {
     "contact": "联系支持"
+  },
+  "admin": {
+    "chartEvents": "每日事件数，最近 30 天",
+    "chartSessions": "每日会话数，最近 30 天",
+    "deactivateConfirm": "要停用 {{name}} 吗？",
+    "selectUser": "选择一位用户以查看详情"
+  },
+  "trips": {
+    "accessibility": "无障碍信息",
+    "bestValue": "最超值",
+    "budgetPlanner": "预算规划",
+    "departs": "出发日期 {{date}}",
+    "explore": "探索",
+    "filterAll": "全部",
+    "filterPast": "已结束",
+    "filterUpcoming": "即将出发",
+    "newSearch": "新搜索",
+    "nextTrip": "下一次旅行",
+    "noMatch": "没有符合搜索条件的计划。",
+    "noPlansBody": "你从结果页或聊天中保存的计划会显示在这里。",
+    "noPlansTitle": "还没有保存的计划",
+    "openInMyPlan": "在“我的计划”中打开",
+    "savedPlans": "已保存的计划",
+    "searchPlans": "搜索计划",
+    "selectPlan": "选择一个计划",
+    "signInBody": "登录后即可查看你保存的计划。",
+    "signInTitle": "你的旅行"
+  },
+  "settings": {
+    "alertPoll": "检查新提醒",
+    "alertPollHint": "应用打开期间，每分钟检查一次新的价格提醒。",
+    "features": "功能",
+    "featuresHint": "选择哪些工具显示在“旅行”标签页中。",
+    "licences": "开源许可",
+    "nearbyInvites": "附近推荐",
+    "nearbyInvitesHint": "旅行时为你推荐附近的地点。",
+    "notifications": "通知",
+    "retakeOnboarding": "重新进行欢迎问卷",
+    "reminders": "行程提醒",
+    "remindersHint": "在出行前及旅途中于此设备上提醒你。",
+    "signedInAs": "已登录为 {{name}}",
+    "about": "关于",
+    "account": "账户",
+    "version": "版本 {{version}}"
   }
 }

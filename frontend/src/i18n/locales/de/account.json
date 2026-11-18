@@ -37,7 +37,9 @@
       "built_other": "Basiert auf {{count}} Signalen aus deinen gespeicherten Plänen.",
       "personalised": "Suchen im angemeldeten Zustand werden automatisch mit diesem Profil personalisiert.",
       "empty": "Noch nichts gelernt – speichere ein paar Reisepläne und deine künftigen Suchen werden automatisch personalisiert.",
-      "confirmReset": "Dein gelerntes Geschmacksprofil zurücksetzen? Künftige Suchen werden nicht mehr anhand früherer Pläne personalisiert."
+      "confirmReset": "Dein gelerntes Geschmacksprofil zurücksetzen? Künftige Suchen werden nicht mehr anhand früherer Pläne personalisiert.",
+      "loadFailed": "Dein Geschmacksprofil konnte nicht geladen werden.",
+      "resetFailed": "Dein Geschmacksprofil konnte nicht zurückgesetzt werden. Versuche es erneut."
     },
     "signal": {
       "activity_category": "Lieblingsaktivitäten",
@@ -101,7 +103,11 @@
     "saving": "Speichern…",
     "saved": "Vorlieben gespeichert!",
     "errorWithDetail": "Fehler: {{detail}}",
-    "saveFailed": "Speichern fehlgeschlagen"
+    "saveFailed": "Speichern fehlgeschlagen",
+    "email": {
+      "conflict": "Diese E-Mail-Adresse wird bereits von einem anderen Konto verwendet."
+    },
+    "loadFailed": "Deine Einstellungen konnten nicht geladen werden."
   },
   "admin": {
     "title": "Admin-Bereich",

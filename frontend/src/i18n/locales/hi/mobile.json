@@ -59,7 +59,13 @@
     "openInBrowser": "ब्राउज़र में खोलें",
     "openLinkLabel": "शेयर किया गया लिंक खोलें",
     "openLinkPlaceholder": "Voyager का लिंक पेस्ट करें",
-    "openLinkInvalid": "यह Voyager का शेयर लिंक नहीं लगता।"
+    "openLinkInvalid": "यह Voyager का शेयर लिंक नहीं लगता।",
+    "byline": "{{name}} ने साझा किया",
+    "recapTag": "यात्रा का रीकैप",
+    "remix": "मेरी यात्राओं में रीमिक्स करें",
+    "savingsTag": "पकड़ी गई कीमतों की गिरावट",
+    "signInToRemix": "इस यात्रा को रीमिक्स करने के लिए साइन इन करें",
+    "signIn": "साइन इन करें"
   },
   "unsupported": {
     "update": "यह सवाल देखने के लिए ऐप अपडेट करें।"
@@ -79,5 +85,49 @@
   },
   "support": {
     "contact": "सहायता से संपर्क करें"
+  },
+  "admin": {
+    "chartEvents": "दैनिक इवेंट, पिछले 30 दिन",
+    "chartSessions": "दैनिक सत्र, पिछले 30 दिन",
+    "deactivateConfirm": "{{name}} को निष्क्रिय करें?",
+    "selectUser": "विवरण देखने के लिए किसी उपयोगकर्ता को चुनें"
+  },
+  "trips": {
+    "accessibility": "सुगम्यता की जानकारी",
+    "bestValue": "सबसे बढ़िया वैल्यू",
+    "budgetPlanner": "बजट प्लानर",
+    "departs": "प्रस्थान {{date}}",
+    "explore": "एक्सप्लोर करें",
+    "filterAll": "सभी",
+    "filterPast": "बीते",
+    "filterUpcoming": "आने वाले",
+    "newSearch": "नई खोज",
+    "nextTrip": "अगली यात्रा",
+    "noMatch": "आपकी खोज से कोई प्लान मेल नहीं खाता।",
+    "noPlansBody": "परिणाम या चैट से सेव किए गए प्लान यहां दिखेंगे।",
+    "noPlansTitle": "अभी तक कोई सेव किया प्लान नहीं",
+    "openInMyPlan": "मेरे प्लान में खोलें",
+    "savedPlans": "सेव किए गए प्लान",
+    "searchPlans": "प्लान खोजें",
+    "selectPlan": "कोई प्लान चुनें",
+    "signInBody": "अपने सेव किए प्लान देखने के लिए साइन इन करें।",
+    "signInTitle": "आपकी यात्राएं"
+  },
+  "settings": {
+    "alertPoll": "नए अलर्ट जांचें",
+    "alertPollHint": "ऐप खुला रहने पर हर मिनट नए प्राइस अलर्ट खोजता है।",
+    "features": "सुविधाएं",
+    "featuresHint": "चुनें कि आपके यात्रा टैब में कौन से टूल दिखें।",
+    "licences": "ओपन-सोर्स लाइसेंस",
+    "nearbyInvites": "मेरे आस-पास के सुझाव",
+    "nearbyInvitesHint": "यात्रा के दौरान आस-पास की जगहें सुझाता है।",
+    "notifications": "सूचनाएं",
+    "retakeOnboarding": "वेलकम क्विज़ फिर से लें",
+    "reminders": "यात्रा रिमाइंडर",
+    "remindersHint": "आपकी यात्राओं से पहले और उनके दौरान इस डिवाइस पर रिमाइंडर।",
+    "signedInAs": "{{name}} के रूप में साइन इन हैं",
+    "about": "बारे में",
+    "account": "खाता",
+    "version": "संस्करण {{version}}"
   }
 }

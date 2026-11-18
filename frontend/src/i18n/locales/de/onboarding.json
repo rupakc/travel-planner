@@ -157,5 +157,16 @@
     "syncFailedBody": "Deine Antworten bleiben auf diesem Gerät. Deine Interessen, dein Budget, deine Reisegruppe und dein Reisepass wurden nicht in dein Konto übertragen.",
     "retry": "Nochmal",
     "continueWithoutSync": "Ohne Synchronisierung fortfahren"
+  },
+  "ui": {
+    "alsoLike": "Dir gefällt auch: {{types}}",
+    "close": "Schließen",
+    "continueOffline": "Ohne Synchronisierung fortfahren",
+    "exploreFirst": "Erst mal umschauen",
+    "planTrip": "Reise planen",
+    "saveChanges": "Änderungen speichern",
+    "saveFailed": "Das Speichern in deinem Konto ist fehlgeschlagen. Deine Antworten bleiben auf diesem Gerät erhalten.",
+    "saving": "Wird gespeichert…",
+    "yourType": "Dein Reisetyp"
   }
 }

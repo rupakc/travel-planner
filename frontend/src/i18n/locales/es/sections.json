@@ -251,5 +251,9 @@
     },
     "staleNote": "Tu plan cambió desde este chequeo: vuelve a comprobarlo",
     "unavailable": "El chequeo no está disponible para este plan: vuelve a lanzar la búsqueda."
+  },
+  "card": {
+    "collapsed": "Contraído",
+    "expanded": "Expandido"
   }
 }

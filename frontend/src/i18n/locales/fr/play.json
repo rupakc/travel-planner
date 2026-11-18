@@ -47,7 +47,9 @@
     "next": "Question suivante",
     "finish": "Voir le résultat",
     "timer_many": "Encore {{count}} secondes",
-    "correctPoints_many": "Bravo ! +{{count}} points"
+    "correctPoints_many": "Bravo ! +{{count}} points",
+    "alreadyDone": "Vous avez déjà joué au quiz du jour. Revenez demain.",
+    "expired": "Ce quiz a expiré. Lancez-en un nouveau depuis Play."
   },
   "result": {
     "title": "Votre résultat",
@@ -81,7 +83,8 @@
     "winner_them": "Il ou elle a gagné cette fois.",
     "winner_draw": "Égalité.",
     "accept": "Accepter et jouer",
-    "decline": "Refuser"
+    "decline": "Refuser",
+    "resume": "Reprendre votre quiz"
   },
   "board": {
     "title": "Classement",
@@ -103,5 +106,13 @@
     "points_many": "{{count}} points",
     "mine_many": "Vous êtes {{rank}}e avec {{count}} points",
     "unranked": "Vous n'êtes pas encore classé. Jouez au quiz du jour pour entrer au classement."
+  },
+  "home": {
+    "freeze": "Un gel de série est prêt. Un jour manqué ne brisera pas votre série.",
+    "history": "Parties récentes",
+    "openH2H_one": "{{count}} duel vous attend",
+    "openH2H_other": "{{count}} duels vous attendent",
+    "openH2H_many": "{{count}} duels vous attendent",
+    "unavailable": "Play n'est pas disponible pour le moment."
   }
 }

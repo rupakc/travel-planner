@@ -105,10 +105,13 @@
     },
     "created": "Shared {{date}}",
     "legacyTitle": "Older links",
-    "legacyIntro": "Plan links you shared before. Stopping one makes it stop working."
+    "legacyIntro": "Plan links you shared before. Stopping one makes it stop working.",
+    "shareAgain": "Share again"
   },
   "entry": {
     "link": "Share link"
   },
-  "quizCta": "Share result"
+  "quizCta": "Share result",
+  "saveFirst": "Update the link first. Sharing or copying now would send the link as it was before your changes.",
+  "sameLinkNote": "Sharing this again updates the same link: your new choices replace the earlier ones."
 }

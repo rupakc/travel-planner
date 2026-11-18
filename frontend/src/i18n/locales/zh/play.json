@@ -39,7 +39,9 @@
     "correctPoints_other": "答对了！+{{count}} 分",
     "wrongNote": "这次没答对，已标出正确答案。",
     "next": "下一题",
-    "finish": "查看结果"
+    "finish": "查看结果",
+    "alreadyDone": "你已经玩过今天的测验了，明天再来吧。",
+    "expired": "此测验已超时。请从“玩”中开始新的测验。"
   },
   "result": {
     "title": "你的成绩",
@@ -69,7 +71,8 @@
     "winner_them": "这次对方赢了。",
     "winner_draw": "平局。",
     "accept": "接受并开始",
-    "decline": "拒绝"
+    "decline": "拒绝",
+    "resume": "继续你的测验"
   },
   "board": {
     "title": "排行榜",
@@ -87,5 +90,11 @@
     "points_other": "{{count}} 分",
     "mine_other": "你排第 {{rank}} 名，{{count}} 分",
     "unranked": "你还没有排名。参与每日答题即可上榜。"
+  },
+  "home": {
+    "freeze": "连续记录保护已就绪。漏掉一天不会中断你的连续记录。",
+    "history": "最近的游戏",
+    "openH2H_other": "有 {{count}} 场对决在等你",
+    "unavailable": "“玩”功能暂时不可用。"
   }
 }

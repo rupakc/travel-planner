@@ -99,7 +99,11 @@
     "requested": "Angefragt",
     "notFound": "Dieses Profil ist nicht verfügbar.",
     "noIdeas": "Keine Ideen vorhanden.",
-    "edit": "Profil bearbeiten"
+    "edit": "Profil bearbeiten",
+    "cancelRequest": "Folgeanfrage zurückziehen",
+    "createFirst": "Erstelle dein Profil, um anderen zu folgen.",
+    "stopFollowing": "Nicht mehr folgen",
+    "viewOwn": "So sehen andere dein Profil"
   },
   "editor": {
     "title": "Dein Profil bearbeiten",
@@ -165,5 +169,11 @@
     "cannot_follow_self": "Du kannst dir nicht selbst folgen.",
     "cannot_block_self": "Du kannst dich nicht selbst blockieren.",
     "not_found": "Das ist nicht verfügbar."
+  },
+  "lists": {
+    "noBlocked": "Du hast niemanden blockiert.",
+    "noFollowers": "Noch keine Follower.",
+    "noFollowing": "Du folgst noch niemandem.",
+    "noRequests": "Keine Folgeanfragen."
   }
 }

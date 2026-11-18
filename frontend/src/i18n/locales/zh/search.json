@@ -323,5 +323,12 @@
     "capNote": "我们会规划前 {{max}} 个已勾选的地点，取消部分勾选即可自行选择。",
     "startOver": "重新开始",
     "plan_other": "规划这趟旅行（{{count}} 个地点）"
+  },
+  "pace": {
+    "label": "行程节奏"
+  },
+  "validation": {
+    "required": "请选择出发地、目的地和国籍，然后规划你的行程。",
+    "returnBeforeDeparture": "返程日期不能早于出发日期。"
   }
 }

@@ -341,5 +341,12 @@
     "plan_one": "Planificar este viaje ({{count}} lugar)",
     "plan_other": "Planificar este viaje ({{count}} lugares)",
     "plan_many": "Planificar este viaje ({{count}} lugares)"
+  },
+  "pace": {
+    "label": "Ritmo del viaje"
+  },
+  "validation": {
+    "required": "Elige desde dónde y hacia dónde vuelas, y tu nacionalidad; después planifica tu viaje.",
+    "returnBeforeDeparture": "La fecha de regreso no puede ser anterior a la de salida."
   }
 }

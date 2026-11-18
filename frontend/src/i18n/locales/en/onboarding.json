@@ -157,5 +157,16 @@
     "syncFailedBody": "Your answers are kept on this device. Your interests, budget, travel group and passport didn't reach your account.",
     "retry": "Retry",
     "continueWithoutSync": "Continue without syncing"
+  },
+  "ui": {
+    "alsoLike": "Also like: {{types}}",
+    "close": "Close",
+    "continueOffline": "Continue without syncing",
+    "exploreFirst": "Just explore",
+    "planTrip": "Plan a trip",
+    "saveChanges": "Save changes",
+    "saveFailed": "Couldn't save to your account. Your answers are kept on this device.",
+    "saving": "Saving…",
+    "yourType": "Your traveller type"
   }
 }

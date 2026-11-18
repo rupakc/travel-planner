@@ -158,5 +158,16 @@
     "syncFailedBody": "Vos réponses restent sur cet appareil. Vos centres d’intérêt, votre budget, votre groupe de voyage et votre passeport n’ont pas atteint votre compte.",
     "retry": "Réessayer",
     "continueWithoutSync": "Continuer sans synchroniser"
+  },
+  "ui": {
+    "alsoLike": "Vous aimez aussi : {{types}}",
+    "close": "Fermer",
+    "continueOffline": "Continuer sans synchroniser",
+    "exploreFirst": "Juste explorer",
+    "planTrip": "Planifier un voyage",
+    "saveChanges": "Enregistrer les modifications",
+    "saveFailed": "Impossible d'enregistrer dans votre compte. Vos réponses sont conservées sur cet appareil.",
+    "saving": "Enregistrement…",
+    "yourType": "Votre profil de voyageur"
   }
 }

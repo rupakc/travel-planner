@@ -47,5 +47,8 @@
       "danger": "Gefahr",
       "critical": "kritisch"
     }
+  },
+  "error": {
+    "network": "Der Server ist nicht erreichbar. Prüfe deine Verbindung und versuche es erneut."
   }
 }

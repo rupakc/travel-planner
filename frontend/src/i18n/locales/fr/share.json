@@ -105,10 +105,13 @@
     },
     "created": "Partagé {{date}}",
     "legacyTitle": "Anciens liens",
-    "legacyIntro": "Liens de plans que vous avez partagés auparavant. En arrêter un le rend inutilisable."
+    "legacyIntro": "Liens de plans que vous avez partagés auparavant. En arrêter un le rend inutilisable.",
+    "shareAgain": "Partager à nouveau"
   },
   "entry": {
     "link": "Partager le lien"
   },
-  "quizCta": "Partager le résultat"
+  "quizCta": "Partager le résultat",
+  "saveFirst": "Mettez d'abord le lien à jour. Le partager ou le copier maintenant enverrait le lien tel qu'il était avant vos modifications.",
+  "sameLinkNote": "Partager à nouveau met à jour le même lien : vos nouveaux choix remplacent les précédents."
 }

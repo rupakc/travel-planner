@@ -251,5 +251,9 @@
     },
     "staleNote": "Votre plan a changé depuis ce bilan — refaites-le",
     "unavailable": "Le bilan n’est pas disponible pour ce plan — relancez la recherche."
+  },
+  "card": {
+    "collapsed": "Réduit",
+    "expanded": "Développé"
   }
 }

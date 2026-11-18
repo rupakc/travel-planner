@@ -105,10 +105,13 @@
     },
     "created": "分享于 {{date}}",
     "legacyTitle": "旧链接",
-    "legacyIntro": "你之前分享的行程链接。停止分享后，该链接将失效。"
+    "legacyIntro": "你之前分享的行程链接。停止分享后，该链接将失效。",
+    "shareAgain": "再次分享"
   },
   "entry": {
     "link": "分享链接"
   },
-  "quizCta": "分享结果"
+  "quizCta": "分享结果",
+  "saveFirst": "请先更新链接。现在分享或复制，发送的仍是你修改之前的链接。",
+  "sameLinkNote": "再次分享会更新同一个链接：你的新选择将替换之前的选择。"
 }

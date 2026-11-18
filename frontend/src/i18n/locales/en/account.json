@@ -37,7 +37,9 @@
       "built_other": "Built from {{count}} signals in your saved plans.",
       "personalised": "Logged-in searches are automatically personalised with this profile.",
       "empty": "Nothing learned yet — save a few trip plans and your future searches will be personalised automatically.",
-      "confirmReset": "Reset your learned taste profile? Future searches will no longer be personalised from past plans."
+      "confirmReset": "Reset your learned taste profile? Future searches will no longer be personalised from past plans.",
+      "loadFailed": "Couldn’t load your taste profile.",
+      "resetFailed": "Couldn’t reset your taste profile. Try again."
     },
     "signal": {
       "activity_category": "Favourite activity types",
@@ -101,7 +103,11 @@
     "saving": "Saving…",
     "saved": "Preferences saved!",
     "errorWithDetail": "Error: {{detail}}",
-    "saveFailed": "Save failed"
+    "saveFailed": "Save failed",
+    "email": {
+      "conflict": "That email address is already used by another account."
+    },
+    "loadFailed": "Couldn’t load your preferences."
   },
   "admin": {
     "title": "Admin Panel",

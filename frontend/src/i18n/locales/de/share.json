@@ -105,10 +105,13 @@
     },
     "created": "Geteilt {{date}}",
     "legacyTitle": "Ältere Links",
-    "legacyIntro": "Plan-Links, die du früher geteilt hast. Wenn du einen beendest, funktioniert er nicht mehr."
+    "legacyIntro": "Plan-Links, die du früher geteilt hast. Wenn du einen beendest, funktioniert er nicht mehr.",
+    "shareAgain": "Erneut teilen"
   },
   "entry": {
     "link": "Link teilen"
   },
-  "quizCta": "Ergebnis teilen"
+  "quizCta": "Ergebnis teilen",
+  "saveFirst": "Aktualisiere zuerst den Link. Wenn du ihn jetzt teilst oder kopierst, wird er so gesendet, wie er vor deinen Änderungen war.",
+  "sameLinkNote": "Wenn du das erneut teilst, wird derselbe Link aktualisiert: Deine neuen Einstellungen ersetzen die früheren."
 }

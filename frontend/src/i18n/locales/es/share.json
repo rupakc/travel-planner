@@ -105,10 +105,13 @@
     },
     "created": "Compartido {{date}}",
     "legacyTitle": "Enlaces anteriores",
-    "legacyIntro": "Enlaces de planes que compartiste antes. Detener uno hace que deje de funcionar."
+    "legacyIntro": "Enlaces de planes que compartiste antes. Detener uno hace que deje de funcionar.",
+    "shareAgain": "Compartir de nuevo"
   },
   "entry": {
     "link": "Compartir enlace"
   },
-  "quizCta": "Compartir resultado"
+  "quizCta": "Compartir resultado",
+  "saveFirst": "Actualiza primero el enlace. Compartirlo o copiarlo ahora enviaría el enlace tal como estaba antes de tus cambios.",
+  "sameLinkNote": "Si lo vuelves a compartir, se actualiza el mismo enlace: tus nuevas opciones sustituyen a las anteriores."
 }
