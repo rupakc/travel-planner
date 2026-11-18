@@ -245,5 +245,15 @@
   "card": {
     "collapsed": "已收起",
     "expanded": "已展开"
+  },
+  "commerce": {
+    "minStars": "最低星级",
+    "tier": {
+      "luxury": "奢华",
+      "premium": "高端",
+      "midRange": "中档",
+      "budget": "经济型",
+      "other": "其他住宿"
+    }
   }
 }

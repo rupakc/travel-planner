@@ -129,5 +129,9 @@
     "about": "关于",
     "account": "账户",
     "version": "版本 {{version}}"
+  },
+  "plan": {
+    "export": "导出",
+    "signInToSave": "登录后即可保存并分享此计划。"
   }
 }

@@ -250,5 +250,15 @@
   "card": {
     "collapsed": "Eingeklappt",
     "expanded": "Ausgeklappt"
+  },
+  "commerce": {
+    "minStars": "Mindeststerne",
+    "tier": {
+      "luxury": "Luxus",
+      "premium": "Premium",
+      "midRange": "Mittelklasse",
+      "budget": "Budget",
+      "other": "Weitere Unterkünfte"
+    }
   }
 }

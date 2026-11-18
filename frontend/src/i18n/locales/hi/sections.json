@@ -250,5 +250,15 @@
   "card": {
     "collapsed": "संक्षिप्त",
     "expanded": "विस्तृत"
+  },
+  "commerce": {
+    "minStars": "न्यूनतम स्टार",
+    "tier": {
+      "luxury": "लक्ज़री",
+      "premium": "प्रीमियम",
+      "midRange": "मध्यम श्रेणी",
+      "budget": "बजट",
+      "other": "अन्य ठहरने की जगहें"
+    }
   }
 }

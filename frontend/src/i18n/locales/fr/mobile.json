@@ -129,5 +129,9 @@
     "about": "À propos",
     "account": "Compte",
     "version": "Version {{version}}"
+  },
+  "plan": {
+    "export": "Exporter",
+    "signInToSave": "Connectez-vous pour enregistrer et partager ce plan."
   }
 }
