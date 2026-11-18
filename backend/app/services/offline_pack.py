@@ -31,6 +31,16 @@ def _iso(value: date | None) -> str | None:
     return value.isoformat() if value else None
 
 
+def _official_list_url(entry: dict) -> str | None:
+    """Link to the official medical list the crawler attached (PR #228), so a
+    hospital phone removed as unverified can point to it offline."""
+    for m in entry.get("medical_facilities") or []:
+        url = ((m or {}).get("source") or {}).get("url") if isinstance(m, dict) else None
+        if isinstance(url, str) and url.lower().startswith(("https://", "http://")):
+            return url
+    return None
+
+
 def _snapshot_emergency(snapshot: dict | None, cities: list[str]) -> list[dict] | None:
     card = (snapshot or {}).get("emergency_card")
     if not isinstance(card, dict) or card.get("error"):
@@ -42,15 +52,17 @@ def _snapshot_emergency(snapshot: dict | None, cities: list[str]) -> list[dict] 
     for i, e in enumerate(entries):
         if not isinstance(e, dict) or not e.get("emergency_numbers"):
             continue
-        out.append(
-            {
-                "city": e.get("city") or (cities[i] if i < len(cities) else None),
-                "emergency_numbers": e["emergency_numbers"],
-                "embassy": e.get("embassy"),
-                "hospitals": e.get("hospitals") or [],
-                "local_phrases": e.get("local_phrases") or [],
-            }
-        )
+        entry = {
+            "city": e.get("city") or (cities[i] if i < len(cities) else None),
+            "emergency_numbers": e["emergency_numbers"],
+            "embassy": e.get("embassy"),
+            "hospitals": e.get("hospitals") or [],
+            "local_phrases": e.get("local_phrases") or [],
+        }
+        list_url = _official_list_url(e)
+        if list_url:  # only with crawler data; otherwise the pack is unchanged
+            entry["medical_list_url"] = list_url
+        out.append(entry)
     return out or None
 
 

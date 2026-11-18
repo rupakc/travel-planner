@@ -48,6 +48,7 @@
     "checked": "Geprüft am {{date}}",
     "embassy": "Botschaft",
     "hospital": "Krankenhaus",
+    "phoneUnverified": "Telefonnummer nicht geprüft – bitte auf der offiziellen Website nachsehen.",
     "kinds": {
       "police": "Polizei",
       "ambulance": "Rettungsdienst",

@@ -58,6 +58,29 @@ def test_pack_prefers_ai_snapshot_with_as_of():
     assert em["cities"][0]["emergency_numbers"] == {"police": "110"}
 
 
+def test_unverified_phones_pass_through_with_official_list_url():
+    city = {
+        "city": "Tokyo",
+        "emergency_numbers": {"police": "110"},
+        "embassy": {"name": "Embassy", "phone": None, "phone_unverified": True},
+        "hospitals": [{"name": "H", "phone": None, "phone_unverified": True}],
+        "medical_facilities": [
+            {"name": "M", "source": {"url": "javascript:alert(1)"}},
+            {"name": "N", "source": {"url": "https://www.gov.uk/list"}},
+        ],
+    }
+    snap = {"emergency_card": {"cities": [city]}}
+    em = build_pack(_plan(), snap, [], TODAY)["emergency"]["cities"][0]
+    assert em["embassy"]["phone_unverified"] is True
+    assert em["hospitals"][0]["phone_unverified"] is True
+    assert em["medical_list_url"] == "https://www.gov.uk/list"
+
+
+def test_no_medical_list_url_without_crawler_data():
+    em = build_pack(_plan(), _card(), [], TODAY)["emergency"]["cities"][0]
+    assert "medical_list_url" not in em
+
+
 def test_multi_city_has_one_entry_per_city():
     sd = {"destinations": ["Tokyo", "Paris"], "departure_date": "2027-04-01"}
     pack = build_pack(_plan(search_data=sd), None, [], TODAY)
