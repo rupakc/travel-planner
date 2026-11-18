@@ -250,5 +250,15 @@
   "card": {
     "collapsed": "Collapsed",
     "expanded": "Expanded"
+  },
+  "commerce": {
+    "minStars": "Minimum stars",
+    "tier": {
+      "luxury": "Luxury",
+      "premium": "Premium",
+      "midRange": "Mid-range",
+      "budget": "Budget",
+      "other": "Other stays"
+    }
   }
 }

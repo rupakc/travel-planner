@@ -255,5 +255,15 @@
   "card": {
     "collapsed": "Contraído",
     "expanded": "Expandido"
+  },
+  "commerce": {
+    "minStars": "Estrellas mínimas",
+    "tier": {
+      "luxury": "Lujo",
+      "premium": "Premium",
+      "midRange": "Gama media",
+      "budget": "Económico",
+      "other": "Otros alojamientos"
+    }
   }
 }

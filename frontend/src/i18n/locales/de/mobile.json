@@ -129,5 +129,9 @@
     "about": "Info",
     "account": "Konto",
     "version": "Version {{version}}"
+  },
+  "plan": {
+    "export": "Exportieren",
+    "signInToSave": "Melde dich an, um diesen Plan zu speichern und zu teilen."
   }
 }

@@ -255,5 +255,15 @@
   "card": {
     "collapsed": "Réduit",
     "expanded": "Développé"
+  },
+  "commerce": {
+    "minStars": "Étoiles minimum",
+    "tier": {
+      "luxury": "Luxe",
+      "premium": "Premium",
+      "midRange": "Milieu de gamme",
+      "budget": "Économique",
+      "other": "Autres hébergements"
+    }
   }
 }
