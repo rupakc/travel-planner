@@ -32,7 +32,7 @@ The crawler API states each item's licence class. The app applies these rules:
 
 ## Safety rule for phone numbers
 
-The emergency card prefers **showing nothing over a guessed number**. When the crawler answered but has no official office or hospital list for the trip, the model's embassy and hospital phone numbers are dropped, not shown as facts. When the crawler is off or down, the card is exactly as before.
+The emergency card prefers **showing nothing over a guessed number**. When the crawler answered but has no official office or hospital list for the trip, the model's embassy and hospital phone numbers are dropped, not shown as facts. Wherever such a phone would appear (the on-screen card, the printed / PDF card and the offline pack) the card says "Phone number not verified — check the official website" instead, never a blank; for hospitals the label links to the official medical list when there is one (the offline pack carries it as `medical_list_url`). When the crawler is off or down, the card is exactly as before.
 
 ## Fallbacks
 

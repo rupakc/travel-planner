@@ -63,3 +63,46 @@ describe('buildEmergencyCardHtml', () => {
     expect(html).toContain('<strong>&lt;script&gt;alert(1)&lt;/script&gt;</strong>')
   })
 })
+
+describe('buildEmergencyCardHtml with phones removed as unverified (crawler data)', () => {
+  const LABEL = 'Phone number not verified — check the official website.'
+  const removed = {
+    emergency_numbers: { police: '110' },
+    embassy: { name: 'Embassy of X', address: 'Addr', phone: null, emergency_after_hours: null, phone_unverified: true, website: 'https://embassy.test', hours: '9-5' },
+    hospitals: [{ name: 'Hospital H', phone: null, phone_unverified: true, address: 'Street 1' }],
+    medical_facilities: [{ name: 'Official clinic', source: { url: 'https://www.gov.uk/medical-list' } }],
+  }
+  const count = (html) => html.split(LABEL).length - 1
+
+  it('labels the removed embassy and hospital phones instead of a blank', () => {
+    const html = buildEmergencyCardHtml({ data: removed, destination: 'X' })
+    expect(count(html)).toBe(2)
+    expect(html).not.toMatch(/📞\s*(\||<br|<\/p>)/)
+    expect(html).not.toContain('After hours: —')
+  })
+
+  it('links the hospital label to the official medical list, never javascript:', () => {
+    const html = buildEmergencyCardHtml({ data: removed, destination: 'X' })
+    expect(html).toContain(`<a href="https://www.gov.uk/medical-list">${LABEL}</a>`)
+    const bad = buildEmergencyCardHtml({ data: { ...removed, medical_facilities: [{ source: { url: 'javascript:alert(1)' } }] }, destination: 'X' })
+    expect(bad).not.toMatch(/href="javascript/i)
+    expect(count(bad)).toBe(2)
+  })
+
+  it('never prints a guessed number when the phone is flagged unverified', () => {
+    const html = buildEmergencyCardHtml({
+      data: { cities: [{ ...removed, city: 'Paris', embassy: { ...removed.embassy, phone: '+33 1 0000' }, hospitals: [{ name: 'H', phone: '+33 2 0000', phone_unverified: true }] }] },
+      destination: 'X',
+    })
+    expect(html).not.toContain('+33')
+    expect(count(html)).toBe(2)
+  })
+
+  it('is unchanged when the flags are absent (crawler off)', () => {
+    const html = buildEmergencyCardHtml({ data: { embassy: { name: 'E', phone: '+1 555', emergency_after_hours: '+1 666' }, hospitals: [{ name: 'H', phone: '+1 777' }] }, destination: 'X' })
+    expect(html).not.toContain(LABEL)
+    expect(html).toContain('📞 <a href="tel:+1 555">+1 555</a>')
+    expect(html).toContain('+1 666')
+    expect(html).toContain('📞 <a href="tel:+1 777">+1 777</a>')
+  })
+})

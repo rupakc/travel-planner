@@ -108,6 +108,7 @@ Clients send the snapshot after every plan save or update made while the results
  "checkins": ["2027-04-01"]}
 ```
 - `rate` is local units per 1 home unit.
+- Emergency `cities[]` entries pass the snapshot's `embassy` and `hospitals` through, including `phone_unverified: true` (with `phone: null`) when the crawler answered without an official entry ([Crawler-Data](Crawler-Data.md)); clients show "Phone number not verified — check the official website" there, never a blank. With crawler data an entry may also carry `medical_list_url` (the official medical-facilities list, http(s) only), which that label links to for hospitals. Both are additive and absent when the crawler is off.
 - `home` is `USD` unless the snapshot's forex has a rate from the traveller's home currency.
 - `phrase` ids: `help`, `call_police`, `need_doctor`, `take_me_to`, `thank_you`, `how_much`, `where_toilet`, `dont_understand`.
 - `phrases` is `null` for English-speaking countries.
