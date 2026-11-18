@@ -1942,6 +1942,7 @@
 </code></pre>
 <ul>
 <li><code>rate</code> is local units per 1 home unit.</li>
+<li>Emergency <code>cities[]</code> entries pass the snapshot's <code>embassy</code> and <code>hospitals</code> through, including <code>phone_unverified: true</code> (with <code>phone: null</code>) when the crawler answered without an official entry (<a href="../Crawler-Data/">Crawler-Data</a>); clients show "Phone number not verified — check the official website" there, never a blank. With crawler data an entry may also carry <code>medical_list_url</code> (the official medical-facilities list, http(s) only), which that label links to for hospitals. Both are additive and absent when the crawler is off.</li>
 <li><code>home</code> is <code>USD</code> unless the snapshot's forex has a rate from the traveller's home currency.</li>
 <li><code>phrase</code> ids: <code>help</code>, <code>call_police</code>, <code>need_doctor</code>, <code>take_me_to</code>, <code>thank_you</code>, <code>how_much</code>, <code>where_toilet</code>, <code>dont_understand</code>.</li>
 <li><code>phrases</code> is <code>null</code> for English-speaking countries.</li>

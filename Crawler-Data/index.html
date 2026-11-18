@@ -1679,7 +1679,7 @@
 <li>Attribution is shown wherever the data is shown: source name, link, "as of" date, and the licence attribution line.</li>
 </ul>
 <h2 id="safety-rule-for-phone-numbers">Safety rule for phone numbers</h2>
-<p>The emergency card prefers <strong>showing nothing over a guessed number</strong>. When the crawler answered but has no official office or hospital list for the trip, the model's embassy and hospital phone numbers are dropped, not shown as facts. When the crawler is off or down, the card is exactly as before.</p>
+<p>The emergency card prefers <strong>showing nothing over a guessed number</strong>. When the crawler answered but has no official office or hospital list for the trip, the model's embassy and hospital phone numbers are dropped, not shown as facts. Wherever such a phone would appear (the on-screen card, the printed / PDF card and the offline pack) the card says "Phone number not verified — check the official website" instead, never a blank; for hospitals the label links to the official medical list when there is one (the offline pack carries it as <code>medical_list_url</code>). When the crawler is off or down, the card is exactly as before.</p>
 <h2 id="fallbacks">Fallbacks</h2>
 <table>
 <thead>
