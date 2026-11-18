@@ -608,6 +608,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../Crawler-Data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Crawler Data
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../Multi-City-Trips/" class="md-nav__link">
         
   
@@ -3404,7 +3432,7 @@
 <h3 id="post-apitelemetry">POST /api/telemetry</h3>
 <p>Body <code>{"client": {anon_id, session_id, platform, app_version, locale}, "events": [{event, ts, screen, props}]}</code>. Auth is optional (a signed-in caller's user id is stored). Each event and prop is checked against a closed registry; unknown events, unknown props and values that are not short tokens, numbers, booleans or listed enums are dropped silently, so a well-formed batch always returns <code>204</code>. <code>422</code> for a malformed envelope or more than 100 events; <code>413</code> when the body exceeds 64 KB (or 256 KB once gunzipped; <code>Content-Encoding: gzip</code> is accepted); <code>404</code> when <code>TELEMETRY_ENABLED=false</code>. Own rate bucket <code>telemetry</code> (600 per 10 minutes); never behind <code>ALLOW_ANONYMOUS_AI</code>.</p>
 <h3 id="get-apiconfig">GET /api/config</h3>
-<p>Public, <code>Cache-Control: max-age=300</code>. Returns <code>{"public_base_url", "telemetry": {"enabled", "flush_interval_s", "max_batch"}, "features": {"telemetry"}}</code>. Clients treat a <code>404</code> as "telemetry off".</p>
+<p>Public, <code>Cache-Control: max-age=300</code>. Returns <code>{"public_base_url", "telemetry": {"enabled", "flush_interval_s", "max_batch"}, "features": {"telemetry", …}}</code>. Clients treat a <code>404</code> as "telemetry off". <code>features.crawler_data</code> is true when the crawler read API is configured (<a href="../Crawler-Data/">Crawler Data</a>): sections may then carry the optional fields <code>crawler_sources</code>, <code>exchange_rates[].rate_source</code>, <code>emergency_numbers_source</code>, <code>official_numbers</code>, <code>embassy.verified</code> / <code>embassy.source</code> / <code>embassy.phone_unverified</code>, <code>embassies</code>, <code>hospitals[].phone_unverified</code>, <code>medical_facilities</code>, <code>official_entry</code> (visa), <code>public_holidays</code> (events, itinerary) and <code>typical_fares</code> (pricing advisor).</p>
 <h3 id="get-apiadmintelemetrysummarydays30">GET /api/admin/telemetry/summary?days=30</h3>
 <p>Admin only. Returns <code>{"days": [{day, users, sessions, events}], "top_events": [{event, events}], "top_screens": [{route, views}], "users_7d"}</code> from the daily rollups plus today's live numbers. <code>users</code> (signed-in user, else anonymous id) and <code>sessions</code> are exact distinct counts across all events and platforms, read from <code>telemetry_daily_totals</code>. <code>users_7d</code> is the distinct users over the trailing 7 UTC days, today included, counted from raw events. Rolled-up days are re-rolled for the trailing 7 days, so late events from offline clients are included.</p>
 <hr />
@@ -3760,7 +3788,7 @@
 <hr />
 <h2 id="health">Health</h2>
 <h3 id="get-health">GET /health</h3>
-<p><code>{"status": "ok", "service": "travel-planner-backend", "serpapi_configured": true|false, "fare_watch_available": true|false, "email_alerts_available": true|false, "push_configured": true|false}</code>. No auth. The frontend reads it once per page load: <code>serpapi_configured</code> offers the fare calendar, <code>fare_watch_available</code> (SerpAPI set and <code>FARE_WATCH_ENABLED</code>) offers "Watch fare", <code>email_alerts_available</code> (<code>SMTP_HOST</code> set) offers "Also email me". <code>push_configured</code> (<code>FCM_SERVICE_ACCOUNT_FILE</code> names an existing file) tells the Android app that alerts are pushed, so it can poll less. <code>tripadvisor</code> is <code>{configured, enabled, used, cap, paused}</code> (billable Tripadvisor entities against <code>TRIPADVISOR_BUDGET_CAP</code>) and <code>tripadvisor_budget_ok</code> is false from 80 % of the cap on, for an uptime-check content match (<a href="../Tripadvisor/#budget">Tripadvisor Ratings</a>). Docker Compose uses this endpoint as the backend healthcheck.</p>
+<p><code>{"status": "ok", "service": "travel-planner-backend", "serpapi_configured": true|false, "fare_watch_available": true|false, "email_alerts_available": true|false, "push_configured": true|false}</code>. No auth. The frontend reads it once per page load: <code>serpapi_configured</code> offers the fare calendar, <code>fare_watch_available</code> (SerpAPI set and <code>FARE_WATCH_ENABLED</code>) offers "Watch fare", <code>email_alerts_available</code> (<code>SMTP_HOST</code> set) offers "Also email me". <code>push_configured</code> (<code>FCM_SERVICE_ACCOUNT_FILE</code> names an existing file) tells the Android app that alerts are pushed, so it can poll less. <code>tripadvisor</code> is <code>{configured, enabled, used, cap, paused}</code> (billable Tripadvisor entities against <code>TRIPADVISOR_BUDGET_CAP</code>) and <code>tripadvisor_budget_ok</code> is false from 80 % of the cap on, for an uptime-check content match (<a href="../Tripadvisor/#budget">Tripadvisor Ratings</a>). <code>crawler</code> is <code>{configured, ok}</code>: the crawler read API is configured and answered a cached <code>/v1/stats</code> call (<a href="../Crawler-Data/">Crawler Data</a>). Docker Compose uses this endpoint as the backend healthcheck.</p>
 <h3 id="get-healthagents">GET /health/agents</h3>
 <p>A deep check: one tiny call (15 s timeout, no retries) to the configured provider, cached for 5 minutes. Reports <code>llm</code> (<code>ok</code>, <code>empty-response</code>, <code>spend-cap</code>, <code>billing-disabled</code> or <code>error: &lt;ExceptionType&gt;</code>), <code>llm_provider</code> (<code>gemini</code> or <code>anthropic</code>), <code>llm_provider_reason</code> (how <code>LLM_PROVIDER</code> resolved, e.g. <code>auto: GCP_PROJECT set</code>), <code>serpapi_configured</code> and <code>backup_configured</code>.</p>
 

@@ -608,6 +608,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../Crawler-Data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Crawler Data
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../Multi-City-Trips/" class="md-nav__link">
         
   
@@ -1495,6 +1523,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#crawler-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Crawler data
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#offline-pack-and-the-journey-flag" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1932,6 +1971,20 @@ cat /tmp/voyager-migration/migration-report.md     # per-table counts must match
 <li>Restart the app. <code>/health</code> then shows <code>tripadvisor.enabled: true</code>.</li>
 </ol>
 <p><strong>Budget alerts.</strong> The VM has no logging agent, so the <code>tripadvisor_budget</code> WARNING lines stay in Docker's local logs (<code>sudo docker compose -f /opt/voyager/compose.yaml --project-directory /opt/voyager logs app | grep tripadvisor_budget</code>) and a log-based alert would never fire. Use an uptime check on <code>/health</code> matching <code>"tripadvisor_budget_ok":true</code> (false from 80 % of the cap on) with the existing email channel; with <code>SMTP_HOST</code> and <code>ADMIN_EMAIL</code> set, the app also emails the owner at 80 % and at the cap. After adding payment details in the Terra dashboard, raise <code>TRIPADVISOR_BUDGET_CAP</code> and restart.</p>
+<h2 id="crawler-data">Crawler data</h2>
+<p>Off by default (<code>CRAWLER_ENABLED=false</code>). The app reads official facts from the crawler VM's private read API (<a href="../Crawler-Data/">Crawler Data</a>). Both VMs are in <code>voyager-prod-ohzkl</code>, on the default VPC. The crawler's <code>infrastructure/bootstrap.sh</code> creates everything the app needs:</p>
+<ul>
+<li>the secrets <code>crawler-api-token-voyager</code> (<code>voyager.&lt;secret&gt;</code>, registered with <code>vcadm client add --name voyager</code>) and <code>crawler-api-tls-cert</code> (a self-signed certificate for the crawler's static internal IP), with <code>secretAccessor</code> for <code>vm-runtime@voyager-prod-ohzkl.iam.gserviceaccount.com</code> on both;</li>
+<li>the firewall rule <code>allow-crawler-api</code>: TCP 8443 from source service account <code>vm-runtime</code> to target service account <code>crawler-runtime</code>, priority 900, ahead of <code>deny-crawler-ingress</code> (1000). The app's container egress is NATed to the VM, so it matches. The app VM's egress governor only shapes replies from ports 80/443, so outbound 8443 is not affected.</li>
+</ul>
+<p>To turn it on:</p>
+<ol>
+<li>Check access <strong>first</strong>: a secret the VM can't read (403) stops the app from starting. <code>gcloud secrets get-iam-policy crawler-api-token-voyager --project=voyager-prod-ohzkl</code> and the same for <code>crawler-api-tls-cert</code> must list <code>vm-runtime</code> with <code>roles/secretmanager.secretAccessor</code>. Check the rule with <code>gcloud compute firewall-rules describe allow-crawler-api --project=voyager-prod-ohzkl</code>. Check reachability from the app VM: <code>curl -sk https://10.142.0.3:8443/healthz</code> should return <code>{"status":"ok"}</code>. Use the crawler's actual reserved IP, <code>gcloud compute addresses describe crawler-internal-ip --region=us-east1 --format='value(address)'</code>.</li>
+<li>In <code>/opt/voyager/app.env</code>: append <code>,CRAWLER_API_TOKEN=crawler-api-token-voyager,CRAWLER_CA_PEM=crawler-api-tls-cert</code> to <code>SECRET_MANAGER_SECRETS</code>, and set <code>CRAWLER_ENABLED=true</code> and <code>CRAWLER_API_URL=https://&lt;crawler internal IP&gt;:8443</code>.</li>
+<li>Restart the app. <code>/health</code> then shows <code>"crawler":{"configured":true,"ok":true}</code>, and <code>/api/config</code> shows <code>features.crawler_data: true</code>. If <code>ok</code> is false, check the app's logs: <code>crawler_unavailable</code> lines name the path and the error type. The sections keep working without the crawler.</li>
+</ol>
+<p><strong>Certificate rotation</strong> (<code>bootstrap.sh --rotate-tls</code> in the crawler repo): the app reads the certificate at start, and the crawler installs the new pair within an hour. Restart the app after the rotation. Until then, crawler calls fail the pin and the sections fall back to their behaviour without crawler data. For a seamless rotation, add a version of <code>crawler-api-tls-cert</code> that holds both PEMs (current + next) and restart the app before the crawler switches.</p>
+<p>To turn it off, set <code>CRAWLER_ENABLED=false</code> and restart.</p>
 <h2 id="offline-pack-and-the-journey-flag">Offline pack and the journey flag</h2>
 <ul>
 <li><strong>Service worker.</strong> The offline pack's service worker is <code>/sw.js</code>, served by Caddy with <code>Cache-Control: no-cache</code> so a new deploy is picked up on the next load. It is registered only when a user saves an offline pack, caches the app shell and the hashed <code>/assets/*</code> files listed in <code>/sw-assets.json</code>, and never intercepts <code>/api/*</code>. Trip data lives in the browser's IndexedDB, not on the VM.</li>

@@ -585,6 +585,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#crawler-data-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Crawler data (optional)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -856,6 +867,34 @@
     
   
     Tripadvisor Ratings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Crawler-Data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Crawler Data
   
 
     
@@ -1943,6 +1982,59 @@
 <td><code>TRIPADVISOR_LOGO_URL</code></td>
 <td>Tripadvisor's hosted horizontal lockup (<code>static.tacdn.com</code>)</td>
 <td>Logo shown on the card.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="crawler-data-optional">Crawler data (optional)</h3>
+<p>Official facts from the Voyager crawler's private read API: published FX rates, emergency numbers, embassies, official medical lists, travel advice, entry rules, public holidays and cached fares, always shown with their source and "as of" date. On only when <code>CRAWLER_ENABLED=true</code> and both <code>CRAWLER_API_URL</code> and <code>CRAWLER_API_TOKEN</code> are set (<code>features.crawler_data</code> in <code>/api/config</code>, <code>crawler</code> in <code>/health</code>). Off, or with the crawler down, every section behaves exactly as before. See <a href="../Crawler-Data/">Crawler Data</a>.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CRAWLER_ENABLED</code></td>
+<td><code>false</code></td>
+<td>Feature flag.</td>
+</tr>
+<tr>
+<td><code>CRAWLER_API_URL</code></td>
+<td><code>""</code></td>
+<td>Base URL of the read API, e.g. <code>https://10.142.0.3:8443</code> (the crawler VM's static internal IP).</td>
+</tr>
+<tr>
+<td><code>CRAWLER_API_TOKEN</code></td>
+<td><code>""</code></td>
+<td>Bearer token <code>&lt;client_id&gt;.&lt;secret&gt;</code>; never logged. In production: the secret <code>crawler-api-token-voyager</code> (<code>SECRET_MANAGER_SECRETS=…,CRAWLER_API_TOKEN=crawler-api-token-voyager</code>).</td>
+</tr>
+<tr>
+<td><code>CRAWLER_CA_PEM</code></td>
+<td><code>""</code></td>
+<td>The pinned self-signed certificate as PEM text; the client trusts only it. In production: the secret <code>crawler-api-tls-cert</code> (<code>…,CRAWLER_CA_PEM=crawler-api-tls-cert</code>). Two concatenated certificates (current + next) are accepted.</td>
+</tr>
+<tr>
+<td><code>CRAWLER_CA_FILE</code></td>
+<td><code>""</code></td>
+<td>The same, as a file path (local dev). With neither set, the system CAs are used.</td>
+</tr>
+<tr>
+<td><code>CRAWLER_TIMEOUT_S</code></td>
+<td><code>1.5</code></td>
+<td>Per-request timeout (connect + read).</td>
+</tr>
+<tr>
+<td><code>CRAWLER_CACHE_TTL_S</code></td>
+<td><code>900</code></td>
+<td>In-process cache of answers, empty ones included.</td>
+</tr>
+<tr>
+<td><code>CRAWLER_BREAKER_S</code></td>
+<td><code>60</code></td>
+<td>After a timeout, connection/TLS error, 401 or 5xx, skip the crawler for this long.</td>
 </tr>
 </tbody>
 </table>
