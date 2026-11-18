@@ -1904,19 +1904,19 @@
 <td>Public share viewer</td>
 <td>✅</td>
 <td>✅ deep link, plus paste-a-link; recap, savings, quiz and status kinds</td>
-<td>⏳ Phase 7</td>
+<td>✅ universal link plus paste-a-link; plan, recap, savings and unknown-kind views</td>
 </tr>
 <tr>
 <td>Share links 2.0: choose what is revealed (dates, origin, name), share card (link and story sizes), list and revoke links</td>
 <td>✅</td>
 <td>✅ share sheet with the card PNG, My shares with revoke (<a href="../Sharing-API/">Sharing API</a>)</td>
-<td>⏳ planned (<a href="../Sharing-API/">Sharing API</a>)</td>
+<td>✅ share sheet with reveal options and the card PNG, My shares with revoke</td>
 </tr>
 <tr>
 <td>Share a trip recap or savings card as a link</td>
 <td>✅</td>
 <td>✅</td>
-<td>⏳ planned</td>
+<td>✅ savings and plan entries; ⏳ recap entry not yet (no Recap screen on iOS)</td>
 </tr>
 <tr>
 <td>Link previews (Open Graph page and card.png for crawlers)</td>
@@ -2014,67 +2014,67 @@
 <td>Social profile (handle, privacy, opt-in fields)</td>
 <td>✅</td>
 <td>✅</td>
-<td>⏳ 7</td>
+<td>✅ handle, privacy, opt-in fields; ⏳ no avatars, home country cannot be cleared</td>
 </tr>
 <tr>
 <td>Follows, follow requests and blocks</td>
 <td>✅</td>
 <td>⏳ 8</td>
-<td>⏳ 7</td>
+<td>✅ follows, requests, blocks, lists</td>
 </tr>
 <tr>
 <td>Ideas feed, publish from a plan or recap, like, save (remix)</td>
 <td>✅</td>
 <td>✅</td>
-<td>⏳ 7</td>
+<td>✅ feed, publish, like, save; ⏳ forget-save UI not yet</td>
 </tr>
 <tr>
 <td>Comments and helpful marks</td>
 <td>✅</td>
 <td>⏳ 8</td>
-<td>⏳ 7</td>
+<td>✅ comments and helpful marks, community-rules gate</td>
 </tr>
 <tr>
 <td>Reports and admin moderation queue</td>
 <td>✅</td>
 <td>⏳ 8 (reports)</td>
-<td>⏳ 7 (reports)</td>
+<td>✅ reports (ideas, comments, profiles); — no moderation queue (admin is web)</td>
 </tr>
 <tr>
 <td>Daily quiz and topic packs</td>
 <td>✅</td>
 <td>✅</td>
-<td>⏳ 7</td>
+<td>✅ Play hub, quiz screens, packs</td>
 </tr>
 <tr>
 <td>Head-to-head challenges</td>
 <td>✅</td>
 <td>⏳ 8</td>
-<td>⏳ 7</td>
+<td>✅ typed-handle opponent picker only</td>
 </tr>
 <tr>
 <td>Weekly leaderboards (global, friends)</td>
 <td>✅</td>
 <td>✅</td>
-<td>⏳ 7</td>
+<td>✅ global and friends</td>
 </tr>
 <tr>
 <td>Weekly "Know before you go" challenge</td>
 <td>✅</td>
 <td>⏳ 8</td>
-<td>⏳ 7</td>
+<td>✅ start and card</td>
 </tr>
 <tr>
 <td>Quiz and trip-status share cards</td>
 <td>✅</td>
 <td>✅</td>
-<td>⏳ 7</td>
+<td>✅ share entries for quiz scores and trip status</td>
 </tr>
 <tr>
 <td>Social and quiz notifications (daily quiz reminder, likes and comments on your ideas, head-to-head)</td>
 <td>✅</td>
 <td>✅</td>
-<td>⏳ 7</td>
+<td>⏳ local daily quiz reminder gate only; push inert until APNs (owner-blocked)</td>
 </tr>
 </tbody>
 </table>
@@ -2113,13 +2113,13 @@
 <td>Fare watch and price watches (hotel, activity, trip)</td>
 <td>✅</td>
 <td>✅</td>
-<td>⏳ Phase 7</td>
+<td>✅ watches list, editor, cards</td>
 </tr>
 <tr>
 <td>Notification inbox and unread bell</td>
 <td>✅</td>
 <td>✅</td>
-<td>⏳ Phase 7</td>
+<td>✅ inbox and unread badge</td>
 </tr>
 <tr>
 <td>Alert e-mail</td>
@@ -2131,67 +2131,67 @@
 <td>Push notifications</td>
 <td>— (a toast, or a native notification while the tab is open)</td>
 <td>✅ FCM, per-category channels (inert until configured)</td>
-<td>⏳ Phase 6</td>
+<td>⏳ registration, routing and payload handling built; inert until the owner provides an APNs key</td>
 </tr>
 <tr>
 <td>Price story (chart, lowest, typical range, verdict)</td>
 <td>✅ (behind <code>PRICE_ALERTS_V2_ENABLED</code>)</td>
 <td>✅ (needs <code>features.alerts_api</code> / <code>price_alerts_v2</code>)</td>
-<td>⏳ Phase 7</td>
+<td>✅ chart, range, verdict, AI timing tip (flights)</td>
 </tr>
 <tr>
 <td>Drop moment, savings tally and Deal-hunter XP</td>
 <td>✅ (same flag; savings card follows the light/dark theme, drop-moment badge)</td>
 <td>✅ ("caught a drop", never "saved"); Deal-hunter progress track, Trips-hub bucket ring and confetti on drops and badges (reduced motion and <code>hide_game</code> respected)</td>
-<td>⏳ Phase 7</td>
+<td>✅ savings header, drop-moment card, "caught a drop" wording; ⏳ Deal-hunter progress track not stated</td>
 </tr>
 <tr>
 <td>One-tap watch and suggestions</td>
 <td>✅ (same flag; needs <code>SERPAPI_KEY</code>)</td>
 <td>✅ (needs <code>live_prices</code>; Results cards only so far)</td>
-<td>⏳ Phase 7</td>
+<td>⏳ data layer, quick-watch and Suggestions sheet built; the sheet has no entry point yet, no alerts-tab create path</td>
 </tr>
 <tr>
 <td>Weekly digest, quiet hours, caps and grouping (preferences)</td>
 <td>✅ (same flag; digest text localised)</td>
 <td>✅</td>
-<td>⏳ Phase 7</td>
+<td>✅ digest row, quiet hours, caps, grouping, paused banner</td>
 </tr>
 <tr>
 <td>Local trip reminders</td>
 <td>—</td>
 <td>✅</td>
-<td>⏳ Phase 7</td>
+<td>✅ device-local time</td>
 </tr>
 <tr>
 <td>Notification settings (categories, quiet hours, daily cap)</td>
 <td>✅ (Account → Notifications; shown when <code>features.notifications_api</code>)</td>
 <td>✅ (Settings → Notifications)</td>
-<td>⏳ Phase 7</td>
+<td>✅ categories, quiet hours, daily cap, permission status card</td>
 </tr>
 <tr>
 <td>Localized notification text catalog (<code>/notifications/catalog</code>)</td>
 <td>— (server-side)</td>
 <td>✅ (used for on-device "near you" text)</td>
-<td>⏳ Phase 7</td>
+<td>✅ used for near-you text</td>
 </tr>
 <tr>
 <td>Trip-phase pushes (T-30, T-7, T-1, morning brief)</td>
 <td>—</td>
 <td>✅ taps open the trip Today tab; the morning-brief switch now also turns the local trip switch on</td>
-<td>⏳ Phase 6</td>
+<td>⏳ local trip reminders only; remote push inert until APNs</td>
 </tr>
 <tr>
 <td>"Search the web now" on a watch</td>
 <td>✅</td>
 <td>✅</td>
-<td>⏳ Phase 7</td>
+<td>✅ live-check sheet</td>
 </tr>
 <tr>
 <td>Near me</td>
 <td>✅</td>
 <td>✅ (a background geofence arrival notification is not built, by ruling)</td>
-<td></td>
+<td>✅ v1 nearest place and activities; ⏳ personalized near-you text and the device switch UI unconfirmed; near-you notifier built</td>
 </tr>
 <tr>
 <td>Official crawler data with sources: published FX rates, official emergency numbers, embassies and medical lists, entry rules and travel advice, public holidays, typical cached fares (<code>features.crawler_data</code>, off by default; <a href="../Crawler-Data/">Crawler Data</a>)</td>
