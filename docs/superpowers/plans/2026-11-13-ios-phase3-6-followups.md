@@ -21,9 +21,10 @@ Source: the iOS build ledger (`.superpowers/sdd/2026-11-11-ios-app/progress.md` 
 - Plans cache and detail files stay on disk after sign-out (read-guarded per user); offline detail only for plans opened online.
 - Hidden Explore modes keep streams alive; changing language rebuilds the auth gate and drops form input; 401 uses the generic login copy.
 
-## i18n (English-only pending keys)
-- Strings in `i18n/pending/en/` (social, play, share, sections.commerce, pace/validation, onboarding 9 keys, T30/T35/T36/T37 strings) are English in other languages until a web PR promotes them; hub history and open-matches copy shows English in de/hi.
-- `ai_limit` / `ai_billing` catalogue keys are missing (web has none); iOS falls back to the backend detail text. A small web `mobile.json` PR would fix it.
+## i18n
+- The pending English-only keys are translated in all 7 languages (web PRs #230, #231, #232; iOS PR #79); `i18n/pending` is empty (only `.gitkeep`).
+- The translations need a native-speaker review (owner).
+- `ai_limit` / `ai_billing` catalogue keys are still missing (web `frontend/src/i18n/locales/en/*.json` has none); iOS falls back to the backend detail text. A small web `mobile.json` PR would fix it.
 - Home airport is saved as `current_residence` (no home-airport field).
 
 ## Backend and contract asks to this repo
@@ -44,7 +45,37 @@ Source: the iOS build ledger (`.superpowers/sdd/2026-11-11-ios-app/progress.md` 
 ## Tests and infra
 - App-hosted Keychain test (real SecItem with an entitlement) not written; SPM test bundles cannot carry entitlements. ConsentCard real-gate test gap (`TimeZone.current` vs `core.zoneIdentifier`).
 - `PaletteTests` 240 s CoreUI stall recurred three times; a guard landed in #64, watch for recurrence. `Nearby test_neverPersisted` flaked twice (fixed in #49, #51).
+- macOS runner capacity ("job was not acquired by Runner") cancels jobs with zero steps; fix: `gh run rerun --failed`.
 - `ui-smoke` runner flakes (simulator warm-up timeouts, `LaunchTests` hangs, runs cancelled without steps) need reruns; a retry that reboots or erases the simulator on warm-up timeout was not built (watchdog is 600 s).
 - Generated L10n `Keys.swift` / `xcstrings` conflict on every rebase (consider a merge driver or regenerate-on-CI).
 - Stub backend gaps: `phase4.py` lacks legacy `DELETE /plans/{id}/share` and `legacy_plan_shares`; response shapes were guessed in places.
 - Minor: `ChatThreadStore` `hasSwitched`/`isReady` design; unsaved in-memory threads lost on quit; the tee-flush race and FontRegistry readiness signal.
+
+## Final review residuals (2026-11-19)
+Source: the iOS final whole-branch review (written against iOS `38d0739`; B1, M1-M11 and the #80 follow-ups are fixed or in review). Each item re-checked against iOS `origin/main` (`372b32e`); paths are under `Packages/VoyagerKit/Sources/`. 18 of the 19 Minors are still open (Minor 3 is fixed).
+- B1 (price story never loads): fixed in open PR #73 and on `origin/test/phase-smoke` (`FeatureAlerts/WatchCard.swift:43` starts the load); on `origin/main` `FeatureAlerts/Slots/WatchCardSlot.swift:17` still has the dead `.task`. Merge #73 before release.
+- Minor 1: failed alert-prefs read becomes nil, so the poller skips quiet hours, `targets_only` and caps (`NotificationsCore/BackgroundTasks.swift:74`); return nil (wait) when `hasAlertsV2` and the read throws.
+- Minor 2: hard-coded punctuation in localised strings (`FeatureAlerts/Story/PriceStoryView.swift:148`, `Savings/DropMomentCard.swift:45`, `Savings/DigestRow.swift:26,92` colours by `hasPrefix("−")`); use catalogue templates and colour by sign of the number.
+- Minor 4: dead `.priceStory` route (`AppShell/AppRouter.swift:87`) falls to the `EmptyState` default (`AppShell/TabRoots.swift:120`); map to `AlertsRootView` or remove.
+- Minor 5: "server push live" uses the account-wide device count, which includes Android (`NotificationsCore/ReminderPolicy.swift:26`, `BackgroundTasks.swift:75`); gate on this device's own APNs registration (Major once `features.apns` is on).
+- Minor 6: cold-launch tap routes before `/config` loads (`NotificationsCore/BackgroundTasks.swift:167-168`, `clientConfig?.journeyAvailable ?? false`); wait for deferred start.
+- Minor 7: sign-out race, an in-flight `refresh` can reschedule the old user's reminders after the purge (`NotificationsCore/TripReminderScheduler.swift:109-119`, `accountChanged` :129-131); re-check the user before `reschedule`.
+- Minor 8: failed first catalogue fetch returns English for any locale (`VoyagerEnv/Phase6/NotificationCatalogCache.swift:41`); return bundled only for `.en`, else nil to use the localised fallback.
+- Minor 9: Quiz category switch never shows and quiz rows are always dropped (`FeatureSettings/Notifications/NotificationSettingsModel.swift:46`, `NotificationsCore/BackgroundTasks.swift:69`; `hideGameSetting` is nil); treat nil as visible, let `403 game_hidden` hide it.
+- Minor 10: shared card period shows raw `YYYY-MM` (`FeatureShare/Viewer/SharedCardBody.swift:41`); format as localised month and year.
+- Minor 11: missing quiz session shows as a retryable error (`VoyagerData/Phase5/Phase5Repositories.swift:438`, matches "session" but the backend says "Quiz not found."); also match "quiz".
+- Minor 12: Play hub reloads on every appear (`FeaturePlay/PlayHomeView.swift:35`, `H2H/H2HMatchView.swift:34`; `PlayHomeModel.load` :55 has no in-flight guard; `onAppear` is now gated by `needsRefresh`); guard with `didStart` and a generation counter.
+- Minor 13: "See result" does nothing until the summary arrives (`FeaturePlay/Quiz/QuizModel.swift:166-172,197`); set `result` after the summary, or make `next()` wait.
+- Minor 14: block from the feed fails silently and sends no `social_block` (`FeatureSocial/Feed/FeedModel.swift:217` `catch {}`, `Feed/IdeaActions.swift:53-56`); show the failure and emit `.socialBlock(on: true)`.
+- Minor 15: profile editor offers game switches after `403 game_hidden` (`FeatureSocial/Profile/ProfileEditorModel.swift:79` ignores `env.play.isHiddenByServer`); treat it as hidden.
+- Minor 16: "Create a profile" prompt stays after a profile is created (`FeatureSocial/Feed/FeedModel.swift:68-74,133`, `loadProfile` only in first `start()`); re-check in `load()` or on editor save.
+- Minor 17: private profile joins the board but shows "unranked" forever (`FeaturePlay/Boards/BoardModel.swift:59-62,109-116`); explain the profile must be visible and link to the editor.
+- Minor 18: untranslated Social errors `text_invalid`, `snapshot_too_large`, `handle_rate_limited` fall back to backend English (`FeatureSocial/Feed/IdeaFailure.swift:46-61`; `email_unverified` is now mapped; `social:errors.handle_rate_limited` exists); map them to existing keys.
+- Minor 19: Preferences save 422s when the traveller total is above 20 (`FeaturePreferences/PreferencesModel.swift:90,101,159` caps per group only, backend `le=20`); cap the total in `setCount`.
+
+Rulings and deferred:
+- Like/save state can drift between the idea detail screen and the feed until a refresh (deferred).
+- M7 caveat: once APNs push is live (`features.apns`), the local trip-reminder switch (`env.device.reminderOptIn`, checked at `NotificationsCore/TripReminderScheduler.swift:104`) will not silence server-sent trip rows; revisit with Wave 7.
+- `reminderOptIn` defaults to false (`VoyagerEnv/DeviceSettings.swift:88`, `defaults.bool`): intentional opt-in.
+- Intended behaviour, no change: Compare horizontal scroll at SE width, the AX5 VButton label cap, the "Getting today's price…" copy.
+- iPad portrait: `AppShell/SidebarShell.swift` switches column visibility to `.doubleColumn` / `.detailOnly` in portrait (PR #73, not yet on `origin/main`). Rotating to landscape while `.detailOnly` keeps the detail-only view until the next selection; check on a device.
