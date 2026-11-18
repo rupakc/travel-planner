@@ -36,7 +36,9 @@
       "built_other": "基于你已保存行程中的 {{count}} 个信号。",
       "personalised": "登录后的搜索会自动使用此画像进行个性化。",
       "empty": "暂时还没有学到什么——保存几个行程后，之后的搜索会自动个性化。",
-      "confirmReset": "要重置已学习的口味画像吗？之后的搜索将不再根据过往行程个性化。"
+      "confirmReset": "要重置已学习的口味画像吗？之后的搜索将不再根据过往行程个性化。",
+      "loadFailed": "无法加载你的口味档案。",
+      "resetFailed": "无法重置你的口味档案。请重试。"
     },
     "signal": {
       "activity_category": "喜爱的活动类型",
@@ -100,7 +102,11 @@
     "saving": "正在保存…",
     "saved": "偏好已保存！",
     "errorWithDetail": "错误：{{detail}}",
-    "saveFailed": "保存失败"
+    "saveFailed": "保存失败",
+    "email": {
+      "conflict": "该邮箱地址已被另一个账户使用。"
+    },
+    "loadFailed": "无法加载你的偏好设置。"
   },
   "admin": {
     "title": "管理面板",

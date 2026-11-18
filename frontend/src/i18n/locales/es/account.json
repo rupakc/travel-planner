@@ -38,7 +38,9 @@
       "built_other": "Basado en {{count}} señales de tus planes guardados.",
       "personalised": "Las búsquedas con sesión iniciada se personalizan automáticamente con este perfil.",
       "empty": "Aún no hemos aprendido nada: guarda algunos planes y tus próximas búsquedas se personalizarán solas.",
-      "confirmReset": "¿Restablecer tu perfil de gustos? Las próximas búsquedas dejarán de personalizarse con tus planes anteriores."
+      "confirmReset": "¿Restablecer tu perfil de gustos? Las próximas búsquedas dejarán de personalizarse con tus planes anteriores.",
+      "loadFailed": "No se pudo cargar tu perfil de gustos.",
+      "resetFailed": "No se pudo restablecer tu perfil de gustos. Inténtalo de nuevo."
     },
     "signal": {
       "activity_category": "Tipos de actividad favoritos",
@@ -102,7 +104,11 @@
     "saving": "Guardando…",
     "saved": "¡Preferencias guardadas!",
     "errorWithDetail": "Se produjo un error: {{detail}}",
-    "saveFailed": "No se pudo guardar"
+    "saveFailed": "No se pudo guardar",
+    "email": {
+      "conflict": "Esa dirección de correo ya la usa otra cuenta."
+    },
+    "loadFailed": "No se pudieron cargar tus preferencias."
   },
   "admin": {
     "title": "Panel de administración",

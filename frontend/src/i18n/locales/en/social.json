@@ -99,7 +99,11 @@
     "requested": "Requested",
     "notFound": "This profile is not available.",
     "noIdeas": "No ideas to show.",
-    "edit": "Edit profile"
+    "edit": "Edit profile",
+    "cancelRequest": "Cancel follow request",
+    "createFirst": "Create your profile to follow people.",
+    "stopFollowing": "Stop following",
+    "viewOwn": "See how others see your profile"
   },
   "editor": {
     "title": "Edit your profile",
@@ -165,5 +169,11 @@
     "cannot_follow_self": "You can't follow yourself.",
     "cannot_block_self": "You can't block yourself.",
     "not_found": "That is not available."
+  },
+  "lists": {
+    "noBlocked": "You have not blocked anyone.",
+    "noFollowers": "No followers yet.",
+    "noFollowing": "You are not following anyone yet.",
+    "noRequests": "No follow requests."
   }
 }

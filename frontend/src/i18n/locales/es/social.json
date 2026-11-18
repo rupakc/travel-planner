@@ -99,7 +99,11 @@
     "requested": "Solicitado",
     "notFound": "Este perfil no está disponible.",
     "noIdeas": "No hay ideas que mostrar.",
-    "edit": "Editar perfil"
+    "edit": "Editar perfil",
+    "cancelRequest": "Cancelar solicitud de seguimiento",
+    "createFirst": "Crea tu perfil para seguir a otras personas.",
+    "stopFollowing": "Dejar de seguir",
+    "viewOwn": "Ver cómo ven otros tu perfil"
   },
   "editor": {
     "title": "Edita tu perfil",
@@ -165,5 +169,11 @@
     "cannot_follow_self": "No puedes seguirte a ti mismo.",
     "cannot_block_self": "No puedes bloquearte a ti mismo.",
     "not_found": "Eso no está disponible."
+  },
+  "lists": {
+    "noBlocked": "No has bloqueado a nadie.",
+    "noFollowers": "Aún no tienes seguidores.",
+    "noFollowing": "Todavía no sigues a nadie.",
+    "noRequests": "No hay solicitudes de seguimiento."
   }
 }

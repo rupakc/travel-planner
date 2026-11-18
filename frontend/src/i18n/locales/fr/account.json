@@ -38,7 +38,9 @@
       "built_other": "Établi à partir de {{count}} signaux dans vos plans enregistrés.",
       "personalised": "Les recherches effectuées une fois connecté sont personnalisées automatiquement avec ce profil.",
       "empty": "Rien appris pour l’instant : enregistrez quelques plans et vos prochaines recherches seront personnalisées automatiquement.",
-      "confirmReset": "Réinitialiser votre profil de goûts ? Les prochaines recherches ne seront plus personnalisées d’après vos plans passés."
+      "confirmReset": "Réinitialiser votre profil de goûts ? Les prochaines recherches ne seront plus personnalisées d’après vos plans passés.",
+      "loadFailed": "Impossible de charger votre profil de goûts.",
+      "resetFailed": "Impossible de réinitialiser votre profil de goûts. Réessayez."
     },
     "signal": {
       "activity_category": "Types d’activités préférés",
@@ -102,7 +104,11 @@
     "saving": "Enregistrement…",
     "saved": "Préférences enregistrées !",
     "errorWithDetail": "Erreur : {{detail}}",
-    "saveFailed": "Échec de l’enregistrement"
+    "saveFailed": "Échec de l’enregistrement",
+    "email": {
+      "conflict": "Cette adresse e-mail est déjà utilisée par un autre compte."
+    },
+    "loadFailed": "Impossible de charger vos préférences."
   },
   "admin": {
     "title": "Espace administrateur",
