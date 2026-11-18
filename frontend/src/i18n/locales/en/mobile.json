@@ -59,7 +59,13 @@
     "openInBrowser": "Open in browser",
     "openLinkLabel": "Open a shared link",
     "openLinkPlaceholder": "Paste a Voyager link",
-    "openLinkInvalid": "That doesn't look like a Voyager share link."
+    "openLinkInvalid": "That doesn't look like a Voyager share link.",
+    "byline": "Shared by {{name}}",
+    "recapTag": "Trip recap",
+    "remix": "Remix into my trips",
+    "savingsTag": "Price drops caught",
+    "signInToRemix": "Sign in to remix this trip",
+    "signIn": "Sign in"
   },
   "unsupported": {
     "update": "Update the app to see this question."
@@ -79,5 +85,49 @@
   },
   "support": {
     "contact": "Contact support"
+  },
+  "admin": {
+    "chartEvents": "Daily events, last 30 days",
+    "chartSessions": "Daily sessions, last 30 days",
+    "deactivateConfirm": "Deactivate {{name}}?",
+    "selectUser": "Select a user to see their details"
+  },
+  "trips": {
+    "accessibility": "Accessibility info",
+    "bestValue": "Best value",
+    "budgetPlanner": "Budget planner",
+    "departs": "Departs {{date}}",
+    "explore": "Explore",
+    "filterAll": "All",
+    "filterPast": "Past",
+    "filterUpcoming": "Upcoming",
+    "newSearch": "New search",
+    "nextTrip": "Next trip",
+    "noMatch": "No plans match your search.",
+    "noPlansBody": "Plans you save from Results or Chat show up here.",
+    "noPlansTitle": "No saved plans yet",
+    "openInMyPlan": "Open in My Plan",
+    "savedPlans": "Saved plans",
+    "searchPlans": "Search plans",
+    "selectPlan": "Select a plan",
+    "signInBody": "Sign in to see your saved plans.",
+    "signInTitle": "Your trips"
+  },
+  "settings": {
+    "alertPoll": "Check for new alerts",
+    "alertPollHint": "Looks for new price alerts every minute while the app is open.",
+    "features": "Features",
+    "featuresHint": "Choose which tools appear on your Trips tab.",
+    "licences": "Open-source licences",
+    "nearbyInvites": "Near me suggestions",
+    "nearbyInvitesHint": "Offer places nearby when you are travelling.",
+    "notifications": "Notifications",
+    "retakeOnboarding": "Retake the welcome quiz",
+    "reminders": "Trip reminders",
+    "remindersHint": "Reminders on this device before and during your trips.",
+    "signedInAs": "Signed in as {{name}}",
+    "about": "About",
+    "account": "Account",
+    "version": "Version {{version}}"
   }
 }

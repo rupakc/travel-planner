@@ -332,5 +332,12 @@
     "startOver": "Neu starten",
     "plan_one": "Reise planen ({{count}} Ort)",
     "plan_other": "Reise planen ({{count}} Orte)"
+  },
+  "pace": {
+    "label": "Reisetempo"
+  },
+  "validation": {
+    "required": "Wähle, von wo und wohin du fliegst, und deine Nationalität, und plane dann deine Reise.",
+    "returnBeforeDeparture": "Das Rückreisedatum darf nicht vor dem Abreisedatum liegen."
   }
 }

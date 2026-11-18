@@ -75,7 +75,8 @@
     "winner_them": "They won this one.",
     "winner_draw": "A draw.",
     "accept": "Accept and play",
-    "decline": "Decline"
+    "decline": "Decline",
+    "resume": "Continue your quiz"
   },
   "board": {
     "title": "Leaderboard",

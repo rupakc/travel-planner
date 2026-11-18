@@ -81,7 +81,8 @@
     "winner_them": "Il ou elle a gagné cette fois.",
     "winner_draw": "Égalité.",
     "accept": "Accepter et jouer",
-    "decline": "Refuser"
+    "decline": "Refuser",
+    "resume": "Reprendre votre quiz"
   },
   "board": {
     "title": "Classement",

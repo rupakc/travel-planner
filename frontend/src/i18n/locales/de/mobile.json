@@ -59,7 +59,13 @@
     "openInBrowser": "Im Browser öffnen",
     "openLinkLabel": "Geteilten Link öffnen",
     "openLinkPlaceholder": "Füge einen Voyager-Link ein",
-    "openLinkInvalid": "Das sieht nicht nach einem Voyager-Link zum Teilen aus."
+    "openLinkInvalid": "Das sieht nicht nach einem Voyager-Link zum Teilen aus.",
+    "byline": "Geteilt von {{name}}",
+    "recapTag": "Reiserückblick",
+    "remix": "In meine Reisen übernehmen",
+    "savingsTag": "Erwischte Preisrückgänge",
+    "signInToRemix": "Melde dich an, um diese Reise zu übernehmen",
+    "signIn": "Anmelden"
   },
   "unsupported": {
     "update": "Aktualisiere die App, um diese Frage zu sehen."
@@ -79,5 +85,49 @@
   },
   "support": {
     "contact": "Support kontaktieren"
+  },
+  "admin": {
+    "chartEvents": "Tägliche Ereignisse, letzte 30 Tage",
+    "chartSessions": "Tägliche Sitzungen, letzte 30 Tage",
+    "deactivateConfirm": "{{name}} deaktivieren?",
+    "selectUser": "Wähle einen Nutzer aus, um seine Details zu sehen"
+  },
+  "trips": {
+    "accessibility": "Informationen zur Barrierefreiheit",
+    "bestValue": "Bestes Preis-Leistungs-Verhältnis",
+    "budgetPlanner": "Budgetplaner",
+    "departs": "Abreise am {{date}}",
+    "explore": "Entdecken",
+    "filterAll": "Alle",
+    "filterPast": "Vergangen",
+    "filterUpcoming": "Bevorstehend",
+    "newSearch": "Neue Suche",
+    "nextTrip": "Nächste Reise",
+    "noMatch": "Keine Pläne passen zu deiner Suche.",
+    "noPlansBody": "Pläne, die du aus den Ergebnissen oder dem Chat speicherst, erscheinen hier.",
+    "noPlansTitle": "Noch keine gespeicherten Pläne",
+    "openInMyPlan": "In Mein Plan öffnen",
+    "savedPlans": "Gespeicherte Pläne",
+    "searchPlans": "Pläne durchsuchen",
+    "selectPlan": "Wähle einen Plan aus",
+    "signInBody": "Melde dich an, um deine gespeicherten Pläne zu sehen.",
+    "signInTitle": "Deine Reisen"
+  },
+  "settings": {
+    "alertPoll": "Nach neuen Alarmen suchen",
+    "alertPollHint": "Sucht jede Minute nach neuen Preisalarmen, solange die App geöffnet ist.",
+    "features": "Funktionen",
+    "featuresHint": "Wähle, welche Werkzeuge in deinem Tab „Reisen“ erscheinen.",
+    "licences": "Open-Source-Lizenzen",
+    "nearbyInvites": "Vorschläge in meiner Nähe",
+    "nearbyInvitesHint": "Zeigt Orte in der Nähe, wenn du unterwegs bist.",
+    "notifications": "Benachrichtigungen",
+    "retakeOnboarding": "Willkommensquiz wiederholen",
+    "reminders": "Reiseerinnerungen",
+    "remindersHint": "Erinnerungen auf diesem Gerät vor und während deiner Reisen.",
+    "signedInAs": "Angemeldet als {{name}}",
+    "about": "Info",
+    "account": "Konto",
+    "version": "Version {{version}}"
   }
 }

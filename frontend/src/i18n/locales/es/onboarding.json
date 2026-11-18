@@ -158,5 +158,16 @@
     "syncFailedBody": "Tus respuestas se quedan en este dispositivo. Tus intereses, presupuesto, grupo de viaje y pasaporte no llegaron a tu cuenta.",
     "retry": "Reintentar",
     "continueWithoutSync": "Continuar sin sincronizar"
+  },
+  "ui": {
+    "alsoLike": "También te gusta: {{types}}",
+    "close": "Cerrar",
+    "continueOffline": "Continuar sin sincronizar",
+    "exploreFirst": "Solo explorar",
+    "planTrip": "Planificar un viaje",
+    "saveChanges": "Guardar cambios",
+    "saveFailed": "No se pudo guardar en tu cuenta. Tus respuestas se conservan en este dispositivo.",
+    "saving": "Guardando…",
+    "yourType": "Tu tipo de viajero"
   }
 }

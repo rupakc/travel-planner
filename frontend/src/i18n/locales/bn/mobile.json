@@ -59,7 +59,13 @@
     "openInBrowser": "ব্রাউজারে খুলুন",
     "openLinkLabel": "শেয়ার করা লিংক খুলুন",
     "openLinkPlaceholder": "Voyager-এর লিংক পেস্ট করুন",
-    "openLinkInvalid": "এটি Voyager-এর শেয়ার লিংক বলে মনে হচ্ছে না।"
+    "openLinkInvalid": "এটি Voyager-এর শেয়ার লিংক বলে মনে হচ্ছে না।",
+    "byline": "{{name}} শেয়ার করেছেন",
+    "recapTag": "ভ্রমণের রিক্যাপ",
+    "remix": "আমার ট্রিপে রিমিক্স করুন",
+    "savingsTag": "ধরা পড়া দামের পতন",
+    "signInToRemix": "এই ট্রিপ রিমিক্স করতে সাইন ইন করুন",
+    "signIn": "সাইন ইন"
   },
   "unsupported": {
     "update": "এই প্রশ্নটি দেখতে অ্যাপ আপডেট করুন।"
@@ -79,5 +85,49 @@
   },
   "support": {
     "contact": "সহায়তার সঙ্গে যোগাযোগ করুন"
+  },
+  "admin": {
+    "chartEvents": "দৈনিক ইভেন্ট, গত ৩০ দিন",
+    "chartSessions": "দৈনিক সেশন, গত ৩০ দিন",
+    "deactivateConfirm": "{{name}}-কে নিষ্ক্রিয় করবেন?",
+    "selectUser": "বিবরণ দেখতে একজন ব্যবহারকারী বেছে নিন"
+  },
+  "trips": {
+    "accessibility": "অ্যাক্সেসিবিলিটি তথ্য",
+    "bestValue": "সেরা মূল্য",
+    "budgetPlanner": "বাজেট প্ল্যানার",
+    "departs": "যাত্রা {{date}}",
+    "explore": "এক্সপ্লোর করুন",
+    "filterAll": "সব",
+    "filterPast": "অতীত",
+    "filterUpcoming": "আসন্ন",
+    "newSearch": "নতুন অনুসন্ধান",
+    "nextTrip": "পরের ট্রিপ",
+    "noMatch": "আপনার অনুসন্ধানের সঙ্গে কোনো প্ল্যান মেলেনি।",
+    "noPlansBody": "ফলাফল বা চ্যাট থেকে সেভ করা প্ল্যান এখানে দেখা যাবে।",
+    "noPlansTitle": "এখনও কোনো সেভ করা প্ল্যান নেই",
+    "openInMyPlan": "আমার প্ল্যানে খুলুন",
+    "savedPlans": "সেভ করা প্ল্যান",
+    "searchPlans": "প্ল্যান খুঁজুন",
+    "selectPlan": "একটি প্ল্যান বেছে নিন",
+    "signInBody": "আপনার সেভ করা প্ল্যান দেখতে সাইন ইন করুন।",
+    "signInTitle": "আপনার ট্রিপ"
+  },
+  "settings": {
+    "alertPoll": "নতুন অ্যালার্ট খুঁজুন",
+    "alertPollHint": "অ্যাপ খোলা থাকলে প্রতি মিনিটে নতুন দামের অ্যালার্ট খোঁজে।",
+    "features": "ফিচার",
+    "featuresHint": "আপনার ট্রিপ ট্যাবে কোন টুলগুলো দেখাবে তা বেছে নিন।",
+    "licences": "ওপেন-সোর্স লাইসেন্স",
+    "nearbyInvites": "আমার কাছাকাছি পরামর্শ",
+    "nearbyInvitesHint": "ভ্রমণের সময় কাছাকাছি জায়গার পরামর্শ দেয়।",
+    "notifications": "বিজ্ঞপ্তি",
+    "retakeOnboarding": "স্বাগত কুইজ আবার দিন",
+    "reminders": "ট্রিপের রিমাইন্ডার",
+    "remindersHint": "আপনার ট্রিপের আগে ও চলাকালীন এই ডিভাইসে রিমাইন্ডার।",
+    "signedInAs": "{{name}} হিসেবে সাইন ইন করা আছে",
+    "about": "সম্পর্কে",
+    "account": "অ্যাকাউন্ট",
+    "version": "সংস্করণ {{version}}"
   }
 }

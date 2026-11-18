@@ -49,5 +49,8 @@
       "danger": "danger",
       "critical": "critique"
     }
+  },
+  "error": {
+    "network": "Impossible de joindre le serveur. Vérifiez votre connexion et réessayez."
   }
 }

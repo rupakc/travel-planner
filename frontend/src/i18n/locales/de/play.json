@@ -75,7 +75,8 @@
     "winner_them": "Diesmal hat die andere Person gewonnen.",
     "winner_draw": "Unentschieden.",
     "accept": "Annehmen und spielen",
-    "decline": "Ablehnen"
+    "decline": "Ablehnen",
+    "resume": "Quiz fortsetzen"
   },
   "board": {
     "title": "Bestenliste",

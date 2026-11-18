@@ -69,7 +69,8 @@
     "winner_them": "这次对方赢了。",
     "winner_draw": "平局。",
     "accept": "接受并开始",
-    "decline": "拒绝"
+    "decline": "拒绝",
+    "resume": "继续你的测验"
   },
   "board": {
     "title": "排行榜",

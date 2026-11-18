@@ -156,5 +156,16 @@
     "syncFailedBody": "你的答案保留在此设备上。你的兴趣、预算、同行人员和护照信息未能同步到你的账户。",
     "retry": "重试",
     "continueWithoutSync": "不同步，继续"
+  },
+  "ui": {
+    "alsoLike": "你还喜欢：{{types}}",
+    "close": "关闭",
+    "continueOffline": "不同步，继续",
+    "exploreFirst": "先随便看看",
+    "planTrip": "规划行程",
+    "saveChanges": "保存更改",
+    "saveFailed": "无法保存到你的账户。你的回答已保留在此设备上。",
+    "saving": "正在保存…",
+    "yourType": "你的旅行者类型"
   }
 }

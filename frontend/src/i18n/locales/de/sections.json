@@ -246,5 +246,9 @@
     },
     "staleNote": "Dein Plan hat sich seit diesem Check geändert – prüfe erneut",
     "unavailable": "Für diesen Plan ist kein Reise-Check verfügbar – starte die Suche erneut."
+  },
+  "card": {
+    "collapsed": "Eingeklappt",
+    "expanded": "Ausgeklappt"
   }
 }

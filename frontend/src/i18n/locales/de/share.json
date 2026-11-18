@@ -110,5 +110,6 @@
   "entry": {
     "link": "Link teilen"
   },
-  "quizCta": "Ergebnis teilen"
+  "quizCta": "Ergebnis teilen",
+  "saveFirst": "Aktualisiere zuerst den Link. Wenn du ihn jetzt teilst oder kopierst, wird er so gesendet, wie er vor deinen Änderungen war."
 }

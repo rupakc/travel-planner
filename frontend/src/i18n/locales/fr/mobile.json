@@ -59,7 +59,13 @@
     "openInBrowser": "Ouvrir dans le navigateur",
     "openLinkLabel": "Ouvrir un lien partagé",
     "openLinkPlaceholder": "Collez un lien Voyager",
-    "openLinkInvalid": "Ce lien ne ressemble pas à un lien de partage Voyager."
+    "openLinkInvalid": "Ce lien ne ressemble pas à un lien de partage Voyager.",
+    "byline": "Partagé par {{name}}",
+    "recapTag": "Récap du voyage",
+    "remix": "Remixer dans mes voyages",
+    "savingsTag": "Baisses de prix repérées",
+    "signInToRemix": "Connectez-vous pour remixer ce voyage",
+    "signIn": "Se connecter"
   },
   "unsupported": {
     "update": "Mettez l'app à jour pour voir cette question."
@@ -79,5 +85,49 @@
   },
   "support": {
     "contact": "Contacter l'assistance"
+  },
+  "admin": {
+    "chartEvents": "Événements quotidiens, 30 derniers jours",
+    "chartSessions": "Sessions quotidiennes, 30 derniers jours",
+    "deactivateConfirm": "Désactiver {{name}} ?",
+    "selectUser": "Sélectionnez un utilisateur pour voir ses détails"
+  },
+  "trips": {
+    "accessibility": "Infos d'accessibilité",
+    "bestValue": "Meilleur rapport qualité-prix",
+    "budgetPlanner": "Planificateur de budget",
+    "departs": "Départ le {{date}}",
+    "explore": "Explorer",
+    "filterAll": "Tous",
+    "filterPast": "Passés",
+    "filterUpcoming": "À venir",
+    "newSearch": "Nouvelle recherche",
+    "nextTrip": "Prochain voyage",
+    "noMatch": "Aucun plan ne correspond à votre recherche.",
+    "noPlansBody": "Les plans que vous enregistrez depuis les résultats ou le chat apparaissent ici.",
+    "noPlansTitle": "Aucun plan enregistré",
+    "openInMyPlan": "Ouvrir dans Mon plan",
+    "savedPlans": "Plans enregistrés",
+    "searchPlans": "Rechercher des plans",
+    "selectPlan": "Sélectionnez un plan",
+    "signInBody": "Connectez-vous pour voir vos plans enregistrés.",
+    "signInTitle": "Vos voyages"
+  },
+  "settings": {
+    "alertPoll": "Rechercher de nouvelles alertes",
+    "alertPollHint": "Recherche de nouvelles alertes de prix chaque minute tant que l'app est ouverte.",
+    "features": "Fonctionnalités",
+    "featuresHint": "Choisissez les outils qui apparaissent dans votre onglet Voyages.",
+    "licences": "Licences open source",
+    "nearbyInvites": "Suggestions près de moi",
+    "nearbyInvitesHint": "Propose des lieux à proximité quand vous voyagez.",
+    "notifications": "Notifications",
+    "retakeOnboarding": "Refaire le quiz de bienvenue",
+    "reminders": "Rappels de voyage",
+    "remindersHint": "Rappels sur cet appareil avant et pendant vos voyages.",
+    "signedInAs": "Connecté en tant que {{name}}",
+    "about": "À propos",
+    "account": "Compte",
+    "version": "Version {{version}}"
   }
 }

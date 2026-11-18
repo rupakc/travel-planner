@@ -81,7 +81,8 @@
     "winner_them": "Esta la ganó la otra persona.",
     "winner_draw": "Empate.",
     "accept": "Aceptar y jugar",
-    "decline": "Rechazar"
+    "decline": "Rechazar",
+    "resume": "Continúa tu quiz"
   },
   "board": {
     "title": "Clasificación",

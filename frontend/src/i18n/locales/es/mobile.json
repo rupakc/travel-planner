@@ -59,7 +59,13 @@
     "openInBrowser": "Abrir en el navegador",
     "openLinkLabel": "Abrir un enlace compartido",
     "openLinkPlaceholder": "Pega un enlace de Voyager",
-    "openLinkInvalid": "Eso no parece un enlace compartido de Voyager."
+    "openLinkInvalid": "Eso no parece un enlace compartido de Voyager.",
+    "byline": "Compartido por {{name}}",
+    "recapTag": "Resumen del viaje",
+    "remix": "Remezclar en mis viajes",
+    "savingsTag": "Bajadas de precio detectadas",
+    "signInToRemix": "Inicia sesión para remezclar este viaje",
+    "signIn": "Iniciar sesión"
   },
   "unsupported": {
     "update": "Actualiza la app para ver esta pregunta."
@@ -79,5 +85,49 @@
   },
   "support": {
     "contact": "Contactar con soporte"
+  },
+  "admin": {
+    "chartEvents": "Eventos diarios, últimos 30 días",
+    "chartSessions": "Sesiones diarias, últimos 30 días",
+    "deactivateConfirm": "¿Desactivar a {{name}}?",
+    "selectUser": "Selecciona un usuario para ver sus detalles"
+  },
+  "trips": {
+    "accessibility": "Información de accesibilidad",
+    "bestValue": "Mejor relación calidad-precio",
+    "budgetPlanner": "Planificador de presupuesto",
+    "departs": "Sale el {{date}}",
+    "explore": "Explorar",
+    "filterAll": "Todos",
+    "filterPast": "Pasados",
+    "filterUpcoming": "Próximos",
+    "newSearch": "Nueva búsqueda",
+    "nextTrip": "Próximo viaje",
+    "noMatch": "Ningún plan coincide con tu búsqueda.",
+    "noPlansBody": "Los planes que guardes desde Resultados o Chat aparecerán aquí.",
+    "noPlansTitle": "Aún no hay planes guardados",
+    "openInMyPlan": "Abrir en Mi plan",
+    "savedPlans": "Planes guardados",
+    "searchPlans": "Buscar planes",
+    "selectPlan": "Selecciona un plan",
+    "signInBody": "Inicia sesión para ver tus planes guardados.",
+    "signInTitle": "Tus viajes"
+  },
+  "settings": {
+    "alertPoll": "Buscar alertas nuevas",
+    "alertPollHint": "Busca nuevas alertas de precio cada minuto mientras la app está abierta.",
+    "features": "Funciones",
+    "featuresHint": "Elige qué herramientas aparecen en tu pestaña Viajes.",
+    "licences": "Licencias de código abierto",
+    "nearbyInvites": "Sugerencias cerca de mí",
+    "nearbyInvitesHint": "Ofrece lugares cercanos cuando estés de viaje.",
+    "notifications": "Notificaciones",
+    "retakeOnboarding": "Repetir el cuestionario de bienvenida",
+    "reminders": "Recordatorios de viaje",
+    "remindersHint": "Recordatorios en este dispositivo antes y durante tus viajes.",
+    "signedInAs": "Sesión iniciada como {{name}}",
+    "about": "Acerca de",
+    "account": "Cuenta",
+    "version": "Versión {{version}}"
   }
 }

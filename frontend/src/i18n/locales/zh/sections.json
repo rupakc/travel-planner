@@ -241,5 +241,9 @@
     },
     "staleNote": "自上次体检后行程已变更——请重新检查",
     "unavailable": "此行程暂无体检结果——请重新搜索。"
+  },
+  "card": {
+    "collapsed": "已收起",
+    "expanded": "已展开"
   }
 }

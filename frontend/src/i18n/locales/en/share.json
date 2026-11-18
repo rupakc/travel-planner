@@ -110,5 +110,6 @@
   "entry": {
     "link": "Share link"
   },
-  "quizCta": "Share result"
+  "quizCta": "Share result",
+  "saveFirst": "Update the link first. Sharing or copying now would send the link as it was before your changes."
 }

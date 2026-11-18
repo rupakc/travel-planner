@@ -49,5 +49,8 @@
       "danger": "peligro",
       "critical": "crítico"
     }
+  },
+  "error": {
+    "network": "No se puede conectar con el servidor. Comprueba tu conexión e inténtalo de nuevo."
   }
 }
