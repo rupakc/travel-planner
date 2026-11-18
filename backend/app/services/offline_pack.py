@@ -35,7 +35,9 @@ def _official_list_url(entry: dict) -> str | None:
     """Link to the official medical list the crawler attached (PR #228), so a
     hospital phone removed as unverified can point to it offline."""
     for m in entry.get("medical_facilities") or []:
-        url = ((m or {}).get("source") or {}).get("url") if isinstance(m, dict) else None
+        url = (
+            ((m or {}).get("source") or {}).get("url") if isinstance(m, dict) else None
+        )
         if isinstance(url, str) and url.lower().startswith(("https://", "http://")):
             return url
     return None
