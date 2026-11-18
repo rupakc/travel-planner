@@ -29,6 +29,8 @@ import BudgetPlanner from '../components/BudgetPlanner'
 import { defaultAllocation, reallocate, withTotal, fitResults, capsFromFit, flightKey } from '../utils/budgetPlanner'
 import { buildEmergencyCardHtml } from '../utils/emergencyCardPrint'
 import WalkingToursSection, { WalkingTourPlanRow } from '../components/WalkingToursSection'
+import TripadvisorBlock from '../components/TripadvisorBlock'
+import { RateSource, EmergencyOfficial, PhoneUnverified, VisaOfficial, HolidayNotice, TypicalFares } from '../components/OfficialData'
 import { orderSectionByCity } from '../utils/orderSectionByCity'
 import AirportSearch from '../components/ui/AirportSearch'
 import NationalitySearch from '../components/ui/NationalitySearch'
@@ -1355,12 +1357,18 @@ function formatEventDates(start, end) {
 function EventsSection({ data, selections, onSelect }) {
   const { t } = useTranslation('results')
   if (data?.error) return <div className="p-4 text-sm text-gray-500">{t('events.error')}</div>
-  if (!data?.results?.length) return <div className="p-4 text-sm text-gray-500">{t('events.none')}</div>
+  if (!data?.results?.length) return (
+    <div className="p-4 space-y-4">
+      <HolidayNotice holidays={data?.public_holidays} />
+      <div className="text-sm text-gray-500">{t('events.none')}</div>
+    </div>
+  )
   const highlights = data.results.filter(e => e.impact !== 'consider')
   const disruptions = data.results.filter(e => e.impact === 'consider')
   const isSelected = (ev) => (selections?.events || []).some(e => e.name === ev.name)
   return (
     <div className="p-4 space-y-4">
+      <HolidayNotice holidays={data.public_holidays} />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {highlights.map((ev, i) => {
           const style = EVENT_CATEGORY_STYLE[ev.category] || EVENT_CATEGORY_STYLE.other
@@ -1432,6 +1440,7 @@ function VisaSection({ data }) {
   return (
     <div className="p-4 space-y-5">
       <VerificationConflictBanner verification={data?.verification} />
+      <VisaOfficial entries={data?.official_entry} />
       {/* Visa Requirements */}
       {req && (
         <div className="space-y-3">
@@ -1686,6 +1695,7 @@ function ForexSection({ data }) {
                     <span className="text-sm text-gray-500">{rate.description}</span>
                   </div>
                   {rate.trend && rate.trend !== 'Live rate loading...' && <p className="text-xs text-gray-500 mt-1">{rate.trend}</p>}
+                  <RateSource rate={rate} />
                 </div>
               ))}
             </div>
@@ -1949,6 +1959,7 @@ function PricingAdvisorBanner({ data, departureDate }) {
           </button>
         </div>
       </div>
+      <TypicalFares fares={data.typical_fares} />
       <p className="text-xs text-gray-400 mt-2 border-t border-gray-200 pt-2">
         📊 {t('pricing.estimate', { disclaimer: data.disclaimer || '' })}
       </p>
@@ -1997,7 +2008,9 @@ function EmergencyCityCard({ card }) {
         <div className="bg-white border border-gray-200 rounded-lg p-3">
           <p className="text-sm font-semibold text-gray-800 mb-1">🏛️ {embassy.name}</p>
           <p className="text-xs text-gray-600">{embassy.address}</p>
-          <p className="text-xs text-gray-600 mt-1">📞 {embassy.phone} · {t('emergency.afterHours', { value: embassy.emergency_after_hours || '—' })}</p>
+          {embassy.phone_unverified
+            ? <p className="text-xs mt-1">📞 <PhoneUnverified /></p>
+            : <p className="text-xs text-gray-600 mt-1">📞 {embassy.phone} · {t('emergency.afterHours', { value: embassy.emergency_after_hours || '—' })}</p>}
           <p className="text-xs text-gray-500 mt-0.5">{embassy.hours}</p>
           {embassy.website && <a href={embassy.website} target="_blank" rel="noopener noreferrer" data-tid="results.emergency.embassy-site"
             className="text-xs text-teal-600 hover:underline mt-0.5 block">🌐 {embassy.website}</a>}
@@ -2015,13 +2028,17 @@ function EmergencyCityCard({ card }) {
             {hospitals.map((h, i) => (
               <div key={i} className="bg-white border border-gray-200 rounded-lg p-3">
                 <p className="text-sm font-medium text-gray-800">{h.name}</p>
-                <p className="text-xs text-gray-600">📞 {h.phone} · {h.address}</p>
+                {h.phone_unverified
+                  ? <p className="text-xs text-gray-600">{h.address}{h.address ? ' · ' : ''}<PhoneUnverified /></p>
+                  : <p className="text-xs text-gray-600">📞 {h.phone} · {h.address}</p>}
                 {h.notes && <p className="text-xs text-gray-500 italic mt-0.5">{h.notes}</p>}
               </div>
             ))}
           </div>
         </div>
       )}
+
+      <EmergencyOfficial card={card} />
 
       {/* Phrases */}
       {phrases.length > 0 && (
@@ -3994,13 +4011,13 @@ export default function ResultsPage() {
       emergency_card: () => <EmergencyCardSection data={data} status={status} />,
       getting_around: () => <GettingAroundSection data={data} {...sectionProps} />,
       forex:          () => <ForexSection data={data} />,
-      itinerary:      () => <ItinerarySection  data={data} selections={selections} onNoteChange={handleNoteChange} onSlotEdit={handleSlotEdit} onSlotPlan={handleSlotPlan}
+      itinerary:      () => <><HolidayNotice className="m-4 mb-0" holidays={data?.public_holidays || results.events?.public_holidays} /><ItinerarySection  data={data} selections={selections} onNoteChange={handleNoteChange} onSlotEdit={handleSlotEdit} onSlotPlan={handleSlotPlan}
         {...(loadedPlanId ? {
           editingDisabledReason: t('page.editingOff'),
         } : {
           onMoveSlot: handleMoveSlot, onRemoveSlot: handleRemoveSlot, onRestoreSlot: handleRestoreSlot,
           onUndoLayout: handleUndoLayout, onResetLayout: handleResetLayout, canUndo: layoutUndo.length > 0,
-        })} />,
+        })} /></>,
       stress_test:    () => <StressTestSection data={data} layoutMoved={layoutChangeCount(results.itinerary, selections.itinerary_layout) > 0}
         recheck={recheck ? { data: recheck.data, stale: recheckStale } : null}
         rechecking={recheckRun.running} recheckError={recheckError} onRecheck={handleRecheck} />,
@@ -4286,7 +4303,13 @@ export default function ResultsPage() {
         {view === 'cards' ? (
           <div className="space-y-5">
             <ConfidenceBanner data={confidenceData} />
-            {AGENT_ORDER.map(agent => renderSectionCard(agent, { animationDelay: `${AGENT_ORDER.indexOf(agent) * 80}ms` }))}
+            {AGENT_ORDER.map(agent => {
+              const card = renderSectionCard(agent, { animationDelay: `${AGENT_ORDER.indexOf(agent) * 80}ms` })
+              // Tripadvisor ratings: their own labelled card after Places to see, never merged into it
+              if (agent !== 'places_to_see') return card
+              return [card, <TripadvisorBlock key="tripadvisor" token={token}
+                destinations={searchData?.destinations?.length > 1 ? searchData.destinations : [searchData?.destination]} />]
+            })}
           </div>
         ) : (
           <TimelineView

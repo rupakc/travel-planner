@@ -1,0 +1,9 @@
+[
+  {
+    "id": "GHSA-fc5q-39xc-vjpf",
+    "package": "picomatch",
+    "expires": "2026-12-17",
+    "approved_by": "owner, 2026-11-17",
+    "reason": "picomatch ReDoS; every published version (<=4.0.7) is affected and no fix exists yet. Reached only via build/test tools (tailwindcss, vite, vitest), never shipped in the static SPA. Remove when a fixed picomatch is released."
+  }
+]

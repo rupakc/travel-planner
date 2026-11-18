@@ -48,6 +48,7 @@
     "checked": "{{date}} 已核对",
     "embassy": "大使馆",
     "hospital": "医院",
+    "phoneUnverified": "电话号码未经核实，请查看官方网站。",
     "kinds": {
       "police": "警察",
       "ambulance": "救护车",

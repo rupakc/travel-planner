@@ -56,6 +56,35 @@ With Gemini, the credentials need the Vertex AI User role (`roles/aiplatform.use
 | `SERPAPI_KEY` | `""` | SerpAPI key for live Google Flights fares, the fare calendar and Google's price insights. Empty means flights are LLM estimates and `POST /api/flights/fare-calendar` returns 503. `GET /health` reports `serpapi_configured`. |
 | `SERPER_KEY` | `""` | Serper.dev key for Places-to-See data (Google Places) and the second tier of activity and place link resolution. Empty means Places to See is LLM-only. |
 
+### Tripadvisor ratings (optional)
+
+Live, on-demand Tripadvisor ratings (Terra Discover API). On only when `TRIPADVISOR_ENABLED=true` and `TRIPADVISOR_API_KEY` is set (`features.tripadvisor` in `/api/config`). See [Tripadvisor Ratings](Tripadvisor.md) for the terms and the budget.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `TRIPADVISOR_ENABLED` | `false` | Feature flag. Off: `POST /api/tripadvisor/attractions` answers `404` and the web app hides the card. |
+| `TRIPADVISOR_API_KEY` | `""` | Terra API key, sent as `X-API-Key`; never logged or returned. In production it comes from the Secret Manager secret `crawler-src-tripadvisor-content-key` (`SECRET_MANAGER_SECRETS=…,TRIPADVISOR_API_KEY=crawler-src-tripadvisor-content-key`). |
+| `TRIPADVISOR_BUDGET_CAP` | `1000` | Hard cap on billable entities, counted in SQLite (`api_budget`). At the cap the feature pauses. The first 1,000 per Tripadvisor account lifetime are free: raise it only after adding payment details in the Terra dashboard. |
+| `TRIPADVISOR_PAGE_SIZE` | `5` | Attractions per lookup (1-20). Each one returned is a billable entity, on every view. |
+| `TRIPADVISOR_RADIUS_KM` | `8` | Search radius around the destination (Terra's maximum is 8 km). |
+| `TRIPADVISOR_BASE_URL` | `https://terra.tripadvisor.com/api` | Terra base URL. |
+| `TRIPADVISOR_LOGO_URL` | Tripadvisor's hosted horizontal lockup (`static.tacdn.com`) | Logo shown on the card. |
+
+### Crawler data (optional)
+
+Official facts from the Voyager crawler's private read API: published FX rates, emergency numbers, embassies, official medical lists, travel advice, entry rules, public holidays and cached fares, always shown with their source and "as of" date. On only when `CRAWLER_ENABLED=true` and both `CRAWLER_API_URL` and `CRAWLER_API_TOKEN` are set (`features.crawler_data` in `/api/config`, `crawler` in `/health`). Off, or with the crawler down, every section behaves exactly as before. See [Crawler Data](Crawler-Data.md).
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `CRAWLER_ENABLED` | `false` | Feature flag. |
+| `CRAWLER_API_URL` | `""` | Base URL of the read API, e.g. `https://10.142.0.3:8443` (the crawler VM's static internal IP). |
+| `CRAWLER_API_TOKEN` | `""` | Bearer token `<client_id>.<secret>`; never logged. In production: the secret `crawler-api-token-voyager` (`SECRET_MANAGER_SECRETS=…,CRAWLER_API_TOKEN=crawler-api-token-voyager`). |
+| `CRAWLER_CA_PEM` | `""` | The pinned self-signed certificate as PEM text; the client trusts only it. In production: the secret `crawler-api-tls-cert` (`…,CRAWLER_CA_PEM=crawler-api-tls-cert`). Two concatenated certificates (current + next) are accepted. |
+| `CRAWLER_CA_FILE` | `""` | The same, as a file path (local dev). With neither set, the system CAs are used. |
+| `CRAWLER_TIMEOUT_S` | `1.5` | Per-request timeout (connect + read). |
+| `CRAWLER_CACHE_TTL_S` | `900` | In-process cache of answers, empty ones included. |
+| `CRAWLER_BREAKER_S` | `60` | After a timeout, connection/TLS error, 401 or 5xx, skip the crawler for this long. |
+
 Other web lookups (link enrichment for hotels and activities, the forex agent's rate searches, walking-tour city-page discovery, and identifying an unknown airport code) go through DuckDuckGo via the `ddgs` package and need no key.
 
 ## Fare watch and email alerts (optional)
@@ -200,6 +229,7 @@ AI-calling endpoints are rate-limited per signed-in user, or per client IP for a
 | `RATE_LIMIT_DISCOVER` | `10` | `/api/discover` |
 | `RATE_LIMIT_IMPORT` | `20` | `/api/import/extract` (plan from a link, text or screenshots) |
 | `RATE_LIMIT_TELEMETRY` | `120` | `POST /api/telemetry` (batches per caller; a real web client sends about 40 per 10 minutes; not an AI route, so never behind `ALLOW_ANONYMOUS_AI`). The total across callers is bounded by `TELEMETRY_MAX_DB_MB` and `TELEMETRY_MAX_EVENTS_PER_DAY`. |
+| `RATE_LIMIT_TRIPADVISOR` | `10` | `POST /api/tripadvisor/attractions` per signed-in user (each lookup is billed by Tripadvisor; not an AI route). |
 | `RATE_LIMIT_LIGHT_AI` | `60` | Single-agent routes, `/*/filtered`, `/api/flights/fare-calendar`, `/api/stress-test`, `/api/layover`, `/api/events`, `/api/walking-tours`, creating a fare watch, its "Check now", `/api/nearby`, `/api/live-check` and changing the account email |
 | `RATE_LIMIT_SOCIAL_WRITE` | `30` | Phase 5: social writes per user (profile, follow, block, ideas, comments, reports); not an AI route. |
 | `RATE_LIMIT_SOCIAL_READ` | `120` | Phase 5: social reads per user (profiles, lists, feed). |

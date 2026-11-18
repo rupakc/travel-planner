@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from ..schemas.request import TravelSearchRequest
+from ..services import crawler_client, crawler_facts
 from .base_agent import BaseAgent, locale_kw
 from .loader import load_agent_definition
 
@@ -38,4 +39,13 @@ class EventsAgent(BaseAgent):
             "seasonal happenings overlapping these dates, plus any disruptions "
             "worth planning around."
         )
-        return await self.execute(prompt, **locale_kw(request))
+        if not crawler_client.configured():
+            return await self.execute(prompt, **locale_kw(request))
+        # Public holidays during the trip from the crawler: their own
+        # attributed list (docs/Crawler-Data.md); only open-licence ones are
+        # also given to the model as context
+        holidays = await crawler_facts.trip_holidays(request)
+        if holidays:
+            prompt += crawler_facts.holidays_prompt(holidays)
+        result = await self.execute(prompt, **locale_kw(request))
+        return crawler_facts.apply_holidays(result, holidays)

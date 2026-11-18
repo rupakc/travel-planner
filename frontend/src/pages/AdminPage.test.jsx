@@ -6,7 +6,7 @@ import { createRoot } from 'react-dom/client'
 vi.mock('../context/AuthContext', () => ({
   useAuth: () => ({ token: 't', user: { username: 'admin' } }),
 }))
-vi.mock('../services/api', () => ({ getTelemetrySummary: vi.fn() }))
+vi.mock('../services/api', () => ({ getTelemetrySummary: vi.fn(), getTripadvisorBudget: vi.fn(() => Promise.reject(new Error('404'))) }))
 
 import { getTelemetrySummary } from '../services/api'
 import AdminPage from './AdminPage'
