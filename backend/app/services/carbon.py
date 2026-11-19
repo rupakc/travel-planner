@@ -22,6 +22,7 @@ translate them; ``assumptions`` work the same way (``code`` + ``params``).
 
 from __future__ import annotations
 
+import copy
 import json
 import logging
 import math
@@ -203,9 +204,26 @@ def _km(a: tuple, b: tuple) -> float:
 # ── Calculator ───────────────────────────────────────────────────────────────
 
 
+def _with_live(static: dict, live: dict) -> dict:
+    """The committed table with a crawler overlay (services/carbon_live.py)
+    applied: newer DESNZ rows replace their committed rows, hotel-stay rows
+    may add countries, and the crawler sources join ``sources``."""
+    f = copy.deepcopy(static)
+    for group in ("flight", "ground"):
+        for key, fac in (live.get(group) or {}).items():
+            if key in f[group]:
+                f[group][key] = fac
+    for cc, fac in (live.get("hotel") or {}).items():
+        f["hotel"]["by_country"][cc] = fac
+    for sid, src in (live.get("sources") or {}).items():
+        f["sources"].setdefault(sid, src)
+    return f
+
+
 class _Run:
-    def __init__(self, req: dict):
-        self.f = factors()
+    def __init__(self, req: dict, live: dict | None = None):
+        self.live = live or None
+        self.f = _with_live(factors(), live) if self.live else factors()
         self.a = self.f["assumptions"]
         self.req = req
         self.search = req.get("search") if isinstance(req.get("search"), dict) else {}
@@ -213,6 +231,17 @@ class _Run:
         self.assumptions: list[dict] = []
         self.used: set[str] = set()
         self.hints: list[dict] = []
+
+    def src(self, *facs: dict) -> str:
+        """The source id of a line worked out from ``facs`` (all of them
+        are marked used): a crawler source when one of them is one, so the
+        line can carry it, else the first."""
+        ids = [fac["source"] for fac in facs]
+        self.used.update(ids)
+        return next((i for i in ids if self.is_live(i)), ids[0])
+
+    def is_live(self, sid: str) -> bool:
+        return bool(self.live) and sid in (self.live.get("sources") or {})
 
     # bookkeeping
     def assume(self, code: str, text: str, **params) -> None:
@@ -232,6 +261,9 @@ class _Run:
             "source": source,
             "params": params,
         }
+        if self.is_live(source):
+            # A number from the crawler carries its source object
+            ln["crawler_source"] = self.live["sources"][source]
         self.lines.append(ln)
         return ln
 
@@ -400,12 +432,14 @@ class _Run:
         km_total = 0.0
         kg_pp = 0.0
         keys = []
+        facs = []
         for a, b in zip(pts, pts[1:]):
             km = _km(a, b)
             key, fac = self.flight_factor(km, cabin)
             km_total += km
             kg_pp += km * fac["value"]
             keys.append(key)
+            facs.append(fac)
         self.assume(
             "flight_desnz",
             "Flights without a TIM figure: great-circle distance × DESNZ 2026 "
@@ -417,7 +451,7 @@ class _Run:
             f"Flight {route} ({round(km_total)} km)",
             kg_pp * n,
             "factor",
-            "desnz_2026",
+            self.src(*facs),
             route=route,
             km=round(km_total),
             cabin=cabin,
@@ -446,11 +480,12 @@ class _Run:
                 return
         key = "rail_national" if ca == cb else "rail_international"
         rail_kg = rail_km * self.f["ground"][key]["value"] * n
+        self.src(self.f["ground"][key])
         if flight_kg is None:
             km = _km(a, b)
             _, fac = self.flight_factor(km, "economy")
             flight_kg = km * fac["value"] * n
-        self.used.add("desnz_2026")
+            self.src(fac)
         for h in self.hints:  # the way back joins the way out
             if {h["from"], h["to"]} == {o, d}:
                 h["flight_kg"] = round(h["flight_kg"] + flight_kg, 1)
@@ -473,6 +508,55 @@ class _Run:
         )
 
     # ── stays
+    def stay_plan(self, nights: int, hotel: dict | None) -> list[tuple]:
+        """(city, nights, country code) of each stay with nights."""
+        hotel_cc = None
+        if isinstance(hotel, dict):
+            cc = str(hotel.get("country_code") or "").strip().upper()
+            hotel_cc = cc if len(cc) == 2 else None
+        plan = self.city_nights(nights)
+        out = []
+        for city, city_n in plan:
+            if city_n <= 0:
+                continue
+            cc = hotel_cc if (hotel_cc and len(plan) == 1) else None
+            if cc is None and city:
+                p = place(city)
+                cc = p[2] if p else None
+            out.append((city, city_n, cc))
+        return out
+
+    def grid_stay(self, where: str, cc: str, city_n: int, rooms: int, pt: dict) -> None:
+        """A stay in a country with no hotel-stay factor, from the crawler's
+        grid intensity: g/kWh × an assumed kWh-equivalent per room-night."""
+        kwh = float(self.a["hotel_grid_kwh_per_room_night"])
+        per = pt["g_per_kwh"] / 1000 * kwh
+        g = round(pt["g_per_kwh"])
+        self.assume(
+            "hotel_grid",
+            f"No hotel-stay factor for {where}: the country's electricity grid "
+            f"({g} g CO2e/kWh) × {round(kwh)} kWh-equivalent per room-night.",
+            city=where,
+            g_per_kwh=g,
+            kwh=round(kwh),
+        )
+        self.line(
+            "stays",
+            "hotel_nights",
+            f"Hotel in {where}: {city_n} night(s) × {rooms} room(s)",
+            city_n * rooms * per,
+            "estimate",
+            pt["source"],
+            city=where,
+            country=cc,
+            nights=city_n,
+            rooms=rooms,
+            per_room_night_kg=round(per, 1),
+            grid_g_per_kwh=g,
+            grid_year=pt.get("year"),
+        )
+        self.used.add("voyager")
+
     def stays(self, nights: int, n: int, hotel: dict | None) -> None:
         rooms = _int(self.req.get("rooms"), 1, 20)
         if rooms is None:
@@ -484,28 +568,20 @@ class _Run:
             )
         default = self.f["hotel"]["default"]
         by_country = self.f["hotel"]["by_country"]
-        hotel_cc = None
-        if isinstance(hotel, dict):
-            cc = str(hotel.get("country_code") or "").strip().upper()
-            hotel_cc = cc if len(cc) == 2 else None
-        plan = self.city_nights(nights)
-        for city, city_n in plan:
-            if city_n <= 0:
-                continue
-            cc = hotel_cc if (hotel_cc and len(plan) == 1) else None
-            if cc is None and city:
-                p = place(city)
-                cc = p[2] if p else None
+        grid = (self.live or {}).get("grid") or {}
+        for city, city_n, cc in self.stay_plan(nights, hotel):
             fac = by_country.get(cc or "")
             where = city or cc or "destination"
-            if fac:
+            if not fac and cc in grid:
+                self.grid_stay(where, cc, city_n, rooms, grid[cc])
+            elif fac:
                 self.line(
                     "stays",
                     "hotel_nights",
                     f"Hotel in {where}: {city_n} night(s) × {rooms} room(s)",
                     city_n * rooms * fac["value"],
                     "factor",
-                    "desnz_2026",
+                    self.src(fac),
                     city=where,
                     country=cc,
                     nights=city_n,
@@ -568,6 +644,13 @@ class _Run:
     def mix_kg(self, mix: dict[str, float], km: float, n: int) -> float:
         return sum(self.mode_kg(m, km * s, n) for m, s in mix.items())
 
+    def mix_src(self, mix: dict[str, float]) -> str:
+        facs = [self.f["ground"][m] for m in sorted(mix) if m != "active"]
+        if not facs:  # walking / cycling only: still the DESNZ line
+            self.used.add("desnz_2026")
+            return "desnz_2026"
+        return self.src(*facs)
+
     def ground(
         self, itinerary, options: list, nights: int, n: int, covered_legs: set
     ) -> None:
@@ -607,7 +690,7 @@ class _Run:
                 f"Local transport: {round(measured_km, 1)} km over {measured_days} day(s)",
                 self.mix_kg(mix, measured_km, n),
                 "factor",
-                "desnz_2026",
+                self.mix_src(mix),
                 km=round(measured_km, 1),
                 days=measured_days,
                 modes=sorted(mix),
@@ -626,7 +709,7 @@ class _Run:
                 f"Local transport: about {round(per_day)} km/day for {estimate_days} day(s)",
                 self.mix_kg(mix, km, n),
                 "estimate",
-                "desnz_2026",
+                self.mix_src(mix),
                 km=round(km, 1),
                 days=estimate_days,
                 modes=sorted(mix),
@@ -671,7 +754,7 @@ class _Run:
                 f"{route} by {mode.replace('_', ' ')} ({round(km)} km)",
                 self.mode_kg(mode, km, n),
                 "factor",
-                "desnz_2026",
+                self.src(self.f["ground"][mode]),
                 route=route,
                 km=round(km),
                 mode=mode,
@@ -731,7 +814,7 @@ class _Run:
                 f"{name[:80]} (about {rule['km']} km by {rule['mode'].replace('_', ' ')})",
                 kg,
                 "estimate",
-                "desnz_2026",
+                self.src(self.f["ground"][rule["mode"]]),
                 name=name[:80],
                 rule=rule["key"],
                 km=rule["km"],
@@ -820,12 +903,36 @@ def _cheapest(results) -> dict | None:
     return min(rs, key=_price) if rs else None
 
 
-def compute(req: dict) -> dict:
+def _hotel_of(req: dict) -> tuple[bool, dict | None]:
+    """(stays counted, the hotel) as ``compute`` picks them."""
+    sel = req.get("selections") if isinstance(req.get("selections"), dict) else None
+    if sel is not None:
+        hotel = sel.get("hotel") if isinstance(sel.get("hotel"), dict) else None
+        return hotel is not None, hotel
+    res = req.get("results") if isinstance(req.get("results"), dict) else {}
+    h = res.get("hotels") if isinstance(res.get("hotels"), dict) else {}
+    return True, _cheapest(h.get("results"))
+
+
+def stay_countries(req: dict) -> list[str]:
+    """Country codes of the trip's stays (what the crawler overlay may need
+    a grid intensity for). Local data only."""
+    include, hotel = _hotel_of(req)
+    if not include:
+        return []
+    run = _Run(req)
+    out = [cc for _, _, cc in run.stay_plan(run.nights(), hotel) if cc]
+    return list(dict.fromkeys(out))
+
+
+def compute(req: dict, live: dict | None = None) -> dict:
     """The footprint of one trip. ``req`` is the validated request body as a
     dict: ``search`` plus either ``selections`` (a plan) or ``results`` (a
     search-result summary), optional ``itinerary``, ``diet``, ``cabin``,
-    ``rooms``. Pure: the same input always gives the same output."""
-    run = _Run(req)
+    ``rooms``. ``live`` is the crawler overlay (services/carbon_live.py) or
+    None: without it the answer comes from the committed table alone. Pure:
+    the same input (and overlay) always gives the same output."""
+    run = _Run(req, live)
     f = run.f
     n = run.travellers()
     nights = run.nights()
@@ -865,8 +972,7 @@ def compute(req: dict) -> dict:
                 flights.append(pick)
         if flights:
             run.assume("flights_cheapest", "Flights: the cheapest listed option.")
-        h = res.get("hotels") if isinstance(res.get("hotels"), dict) else {}
-        hotel = _cheapest(h.get("results"))
+        hotel = _hotel_of(req)[1]
         if itinerary is None and isinstance(res.get("itinerary"), dict):
             itinerary = res["itinerary"]
         # Search results list every way to get around, not the ones used
@@ -902,14 +1008,26 @@ def compute(req: dict) -> dict:
         )
     for ln in run.lines:
         ln["kg"] = round(ln["kg"], 1)
+    live_used = [sid for sid in sorted(run.used) if run.is_live(sid)]
+    newer = [
+        sid for sid in live_used if f["sources"][sid].get("year") and "desnz" in sid
+    ]
+    if newer:
+        year = f["sources"][newer[0]]["year"]
+        run.assume(
+            "factors_newer",
+            f"Factors with a newer DESNZ {year} value use it (from the Voyager "
+            "crawler); the others are the built-in table's.",
+            year=year,
+        )
     car = f["ground"]["car_average"]["value"]
     budget = float(f["assumptions"]["annual_budget_kg_per_person"])
     sources = [
         {"id": sid, **f["sources"][sid]}
         for sid in ("google_tim", "desnz_2026", "owid_food", "voyager")
         if sid in run.used
-    ]
-    return {
+    ] + [{"id": sid, **f["sources"][sid]} for sid in live_used]
+    out = {
         "total_kg": round(total, 1),
         "per_person_kg": round(per_person, 1),
         "travellers": n,
@@ -929,5 +1047,12 @@ def compute(req: dict) -> dict:
         "sources": sources,
         "assumptions": run.assumptions,
         "factors_version": f["version"],
-        "attribution": [s["attribution"] for s in sources if s.get("attribution")],
+        "attribution": list(
+            dict.fromkeys(s["attribution"] for s in sources if s.get("attribution"))
+        ),
     }
+    if live_used:
+        # Only when a crawler number was used: a response without the crawler
+        # stays exactly what it was (older clients never see the key).
+        out["crawler_sources"] = [{"id": sid, **f["sources"][sid]} for sid in live_used]
+    return out

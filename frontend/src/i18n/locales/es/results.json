@@ -472,6 +472,7 @@
     "carKm": "Como conducir {{km}} km en un coche medio",
     "budget": "{{pct}} de un presupuesto anual de {{tonnes}} t por persona",
     "railHint": "Opción con menos carbono: un tren para {{route}} (unos {{km}} km) podría ahorrar unos {{kg}} kg de CO₂e. Comprueba si hay servicio.",
+    "liveData": "Incluye datos oficiales más recientes del rastreador de Voyager:",
     "how": "Cómo lo calculamos",
     "howIntro": "Los vuelos usan el Travel Impact Model de Google cuando tiene el vuelo; si no, los factores del Gobierno del Reino Unido (DESNZ 2026) según la distancia y la clase, con los efectos distintos del CO₂. El alojamiento, el transporte y las actividades usan factores DESNZ; las comidas, datos de alimentos de Our World in Data. Las estimaciones van indicadas.",
     "close": "Cerrar",
@@ -536,7 +537,9 @@
       "intercity_unknown": "{{route}} no contado: lugar no encontrado.",
       "food_basket": "Comidas: un día típico de comida con una dieta {{diet}} ({{kg_per_day}} kg por persona), contado entero.",
       "activities_partial": "Actividades: solo se estiman paseos en barco, excursiones en autocar y trayectos en coche; las demás no se cuentan (sin datos).",
-      "activities_unmodelled": "Actividades en avión o helicóptero no contadas (sin factor): {{count}}."
+      "activities_unmodelled": "Actividades en avión o helicóptero no contadas (sin factor): {{count}}.",
+      "hotel_grid": "Sin factor de estancia hotelera para {{city}}: la red eléctrica del país ({{g_per_kwh}} g CO₂e/kWh) × {{kwh}} kWh equivalentes por habitación y noche.",
+      "factors_newer": "Los factores con un valor DESNZ {{year}} más reciente lo usan (del rastreador de Voyager); los demás vienen de la tabla integrada."
     }
   }
 }

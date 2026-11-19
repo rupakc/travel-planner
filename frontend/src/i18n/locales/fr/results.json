@@ -472,6 +472,7 @@
     "carKm": "Autant que {{km}} km dans une voiture moyenne",
     "budget": "{{pct}} d'un budget annuel de {{tonnes}} t par personne",
     "railHint": "Option moins carbonée : un train pour {{route}} (environ {{km}} km) pourrait économiser environ {{kg}} kg CO₂e. Vérifiez qu'il existe une liaison.",
+    "liveData": "Inclut des données officielles plus récentes du robot d'exploration Voyager :",
     "how": "Notre méthode",
     "howIntro": "Les vols utilisent le Travel Impact Model de Google quand il connaît le vol, sinon les facteurs du gouvernement britannique (DESNZ 2026) selon la distance et la classe, effets hors CO₂ compris. L'hébergement, les transports et les activités utilisent des facteurs DESNZ ; les repas, les données alimentaires d'Our World in Data. Les estimations sont signalées.",
     "close": "Fermer",
@@ -536,7 +537,9 @@
       "intercity_unknown": "{{route}} non compté : lieu introuvable.",
       "food_basket": "Repas : une journée type d'alimentation pour un régime {{diet}} ({{kg_per_day}} kg par personne), comptée en entier.",
       "activities_partial": "Activités : seules les sorties en bateau, excursions en autocar et trajets en voiture sont estimés ; les autres ne sont pas comptées (pas de données).",
-      "activities_unmodelled": "Activités en avion ou hélicoptère non comptées (pas de facteur) : {{count}}."
+      "activities_unmodelled": "Activités en avion ou hélicoptère non comptées (pas de facteur) : {{count}}.",
+      "hotel_grid": "Pas de facteur hôtelier pour {{city}} : le réseau électrique du pays ({{g_per_kwh}} g CO₂e/kWh) × {{kwh}} kWh-équivalent par chambre et par nuit.",
+      "factors_newer": "Les facteurs ayant une valeur DESNZ {{year}} plus récente l'utilisent (via le robot d'exploration Voyager) ; les autres viennent de la table intégrée."
     }
   }
 }

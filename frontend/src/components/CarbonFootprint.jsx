@@ -4,6 +4,7 @@ import { Leaf, Info, X, TrainFront } from 'lucide-react'
 import { fetchTripCarbon } from '../services/api'
 import { useClientConfig, featureOn } from '../hooks/useClientConfig'
 import { fmtNumber } from '../i18n/format'
+import { SourceLine } from './OfficialData'
 import {
   DIETS, CATEGORY_KEYS, carbonRequestFromResults, carbonRequestFromSelections, pctLabel,
 } from '../utils/carbon'
@@ -42,6 +43,9 @@ const kg1 = (n) => fmtNumber(n, { maximumFractionDigits: n < 10 ? 1 : 0 })
  * sends the search result summary, `mode="plan"` the My Plan selections.
  * Hidden unless /api/config reports `features.carbon` (an older backend
  * never shows it), and hidden again if the endpoint answers 404.
+ * Numbers taken from the Voyager crawler (newer DESNZ factors, grid
+ * intensity) arrive with `crawler_sources` and a per-line `crawler_source`;
+ * an older or crawler-off backend sends neither, and nothing extra shows.
  */
 export default function CarbonFootprint({ mode = 'results', searchData, results, selections, itinerary, compact = false }) {
   const { t } = useTranslation('results')
@@ -90,6 +94,9 @@ export default function CarbonFootprint({ mode = 'results', searchData, results,
   const total = data?.total_kg || 0
   const hint = (data?.lower_carbon || []).filter((h) => h.saving_kg > 0).sort((a, b) => b.saving_kg - a.saving_kg)[0]
   const cmp = data?.comparisons || {}
+  const liveSources = Array.isArray(data?.crawler_sources)
+    ? data.crawler_sources.filter((s) => s && typeof s === 'object')
+    : []
   const lineLabel = (ln) => t(`carbon.line.${ln.kind}`, {
     ...ln.params,
     mode: ln.params?.mode ? t(`carbon.mode.${ln.params.mode}`, { defaultValue: ln.params.mode }) : undefined,
@@ -168,6 +175,13 @@ export default function CarbonFootprint({ mode = 'results', searchData, results,
             </ul>
           )}
 
+          {liveSources.length > 0 && (
+            <div data-testid="carbon-live-sources" className="mt-2">
+              <p className="text-[11px] text-gray-600">{t('carbon.liveData')}</p>
+              {liveSources.map((s) => <SourceLine key={s.id || s.name} source={s} />)}
+            </div>
+          )}
+
           {hint && (
             <p data-testid="carbon-rail-hint" className="mt-2 flex items-start gap-1.5 text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg px-2 py-1.5">
               <TrainFront size={13} className="mt-px shrink-0" aria-hidden="true" />
@@ -195,12 +209,17 @@ export default function CarbonFootprint({ mode = 'results', searchData, results,
                 <h4 className="font-semibold text-gray-800 mb-1">{t('carbon.linesTitle')}</h4>
                 <ul className="space-y-1">
                   {data.lines.map((ln, i) => (
-                    <li key={i} className="flex items-start gap-2">
-                      <span className={`shrink-0 px-1.5 rounded border text-[10px] font-medium ${METHOD_STYLE[ln.method] || ''}`}>
-                        {t(`carbon.method.${ln.method}`)}
-                      </span>
-                      <span className="flex-1">{lineLabel(ln)}</span>
-                      <span className="tabular-nums font-medium">{t('carbon.kg', { kg: kg1(ln.kg) })}</span>
+                    <li key={i}>
+                      <div className="flex items-start gap-2">
+                        <span className={`shrink-0 px-1.5 rounded border text-[10px] font-medium ${METHOD_STYLE[ln.method] || ''}`}>
+                          {t(`carbon.method.${ln.method}`)}
+                        </span>
+                        <span className="flex-1">{lineLabel(ln)}</span>
+                        <span className="tabular-nums font-medium">{t('carbon.kg', { kg: kg1(ln.kg) })}</span>
+                      </div>
+                      {ln.crawler_source && typeof ln.crawler_source === 'object' && (
+                        <SourceLine source={ln.crawler_source} className="ml-1 mt-0.5" />
+                      )}
                     </li>
                   ))}
                 </ul>

@@ -464,6 +464,7 @@
     "carKm": "So viel wie {{km}} km mit einem Durchschnittsauto",
     "budget": "{{pct}} eines Jahresbudgets von {{tonnes}} t pro Person",
     "railHint": "Klimafreundlicher: Ein Zug für {{route}} (etwa {{km}} km) könnte etwa {{kg}} kg CO₂e sparen. Prüfe, ob einer fährt.",
+    "liveData": "Enthält neuere amtliche Daten aus dem Voyager-Crawler:",
     "how": "So rechnen wir",
     "howIntro": "Flüge nutzen das Travel Impact Model von Google, wenn es den Flug kennt, sonst die Faktoren der britischen Regierung (DESNZ 2026) für Entfernung und Klasse, einschließlich Nicht-CO₂-Effekten. Unterkünfte, Verkehr und Aktivitäten nutzen DESNZ-Faktoren, Mahlzeiten Lebensmitteldaten von Our World in Data. Schätzungen sind gekennzeichnet.",
     "close": "Schließen",
@@ -528,7 +529,9 @@
       "intercity_unknown": "{{route}} nicht gezählt: Ort nicht gefunden.",
       "food_basket": "Mahlzeiten: ein typischer Ernährungstag bei {{diet}} ({{kg_per_day}} kg pro Person), voll gezählt.",
       "activities_partial": "Aktivitäten: Nur Bootsfahrten, Busausflüge und Autofahrten werden geschätzt; andere werden nicht gezählt (keine Daten).",
-      "activities_unmodelled": "Aktivitäten mit Flug nicht gezählt (kein Faktor): {{count}}."
+      "activities_unmodelled": "Aktivitäten mit Flug nicht gezählt (kein Faktor): {{count}}.",
+      "hotel_grid": "Kein Hotelfaktor für {{city}}: das Stromnetz des Landes ({{g_per_kwh}} g CO₂e/kWh) × {{kwh}} kWh-Äquivalent pro Zimmernacht.",
+      "factors_newer": "Faktoren mit einem neueren DESNZ-{{year}}-Wert nutzen diesen (aus dem Voyager-Crawler); die übrigen stammen aus der eingebauten Tabelle."
     }
   }
 }

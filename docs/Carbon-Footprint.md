@@ -2,7 +2,7 @@
 
 Voyager estimates the CO₂e (carbon dioxide equivalent) of a whole trip: flights, hotel nights, local transport, meals and some activities. The web app shows it as a card on the Results page and in the My Plan drawer (on the Results and Chat pages). The card has a breakdown bar, a diet picker, a "lower-carbon option" hint when a train could replace a short flight, and a "How we calculate" panel that lists every line with its method, the assumptions and the sources.
 
-The work is done by `POST /api/carbon/trip` (`backend/app/services/carbon.py`). It is **pure computation**: no LLM, no network call and nothing stored, so the same request always gets the same answer. It reads a committed factor table and the airport coordinates already in the database.
+The work is done by `POST /api/carbon/trip` (`backend/app/services/carbon.py`). It is **pure computation**: no LLM and nothing stored. It reads a committed factor table and the airport coordinates already in the database. The one optional network read is the Voyager crawler's carbon data (see [Crawler data](#crawler-data)), only when the crawler is configured; without it, the same request always gets the same answer.
 
 ## Methods
 
@@ -30,7 +30,7 @@ Every line of the answer says how it was worked out:
 
 ### Stays
 
-Room-nights × the DESNZ 2026 hotel-stay factor for the country (kg CO₂e per room per night). Rooms default to one per two travellers (`rooms` overrides). Multi-city trips split the nights per city (`destination_nights`, as the itinerary does) and use each city's country. A place without its own coordinates (Kyoto, Bali, Santorini) uses its resolved country, and its first airport for distances. A country DESNZ doesn't list gets the median of the listed countries, labelled `estimate`. In a plan, stays count only once a hotel is picked; on the Results page they always count.
+Room-nights × the DESNZ 2026 hotel-stay factor for the country (kg CO₂e per room per night). Rooms default to one per two travellers (`rooms` overrides). Multi-city trips split the nights per city (`destination_nights`, as the itinerary does) and use each city's country. A place without its own coordinates (Kyoto, Bali, Santorini) uses its resolved country, and its first airport for distances. A country DESNZ doesn't list gets the median of the listed countries, labelled `estimate`; with the crawler on, it gets the country's electricity grid intensity instead when the crawler has it (see [Crawler data](#crawler-data)). In a plan, stays count only once a hotel is picked; on the Results page they always count.
 
 ### Getting around
 
@@ -90,7 +90,22 @@ Attribution, shown in the card's "How we calculate" panel:
 - "Our World in Data, based on Poore & Nemecek (2018), CC BY 4.0"
 - "Emissions estimates: Google Travel Impact Model, CC BY-SA 4.0" (when a TIM figure is used)
 
-The Voyager crawler also collects these files (`emission_factor` records from its `factor_table` adapter, and `grid_carbon_intensity` observations from OWID and Ember). Its read API serves them through the generic `/v1/entities` and `/v1/observations` routes. The calculator stays static so that it is deterministic. Refreshing the table from the crawler (for example a build-script mode that reads `emission_factor` records instead of the files) is a follow-up.
+## Crawler data
+
+The Voyager crawler also collects these files: `emission_factor` records from its `factor_table` adapter (DESNZ, EPA, OWID and others) and `grid_carbon_intensity` observations from OWID and Ember. When the crawler is configured (`CRAWLER_ENABLED`, see [Crawler Data](Crawler-Data.md)), `backend/app/services/carbon_live.py` reads two of its endpoints before the calculation and hands `compute` an overlay:
+
+| Crawler read | Used for | Rule |
+|---|---|---|
+| `GET /v1/carbon/factors?source=od-desnz-ghg-factors` | Newer DESNZ factors | One probe (`limit=1`, newest year first). Only when the crawler's newest DESNZ year is **later** than the committed table's (2026), the rows of that year are read per category (flights, rail, bus, taxi, ferry, accommodation, average car). A newer row replaces the committed row with the same publisher label (the crawler's `activity` slug), the same unit and, for flights, the same gas basis (with radiative forcing). Hotel-stay rows match by country and may add a country the table lacks. Everything else (food, our assumptions) stays as committed. |
+| `GET /v1/carbon/grid?country=<ISO2>&period=annual` | Stays in a country with no hotel-stay factor (neither committed nor newer) | The newest `grid_ci:<ISO2>:annual:lifecycle` point: g CO₂e/kWh × **70 kWh-equivalent per room-night**, labelled `estimate` (assumption `hotel_grid`). The 70 is ours, not published: it is the DESNZ median hotel factor (33.5 kg) at a world-average grid of about 480 g/kWh, so a clean grid (Iceland, Norway) gives a low figure and a coal-heavy one a high figure. A country DESNZ lists keeps its hotel factor, which covers more than electricity. |
+
+Rules:
+
+- **Fallback is exact.** Crawler off, down, slow (4 s budget for all the reads, each read 1.5 s, circuit breaker as for every crawler read) or with nothing usable: the answer is byte for byte the committed-table answer. `backend/tests/test_carbon_crawler.py` checks exactly that.
+- **Licences.** Only open or API-terms rows without a conflict are used; share-alike rows are never mixed in.
+- **Sources on every number.** A line worked out from a crawler number carries `crawler_source` (`name`, `url`, `as_of`, `licence`, `attribution`, `licence_url`, `source_id`, `year`). The answer lists the crawler sources in `sources` (ids `crawler_desnz_<year>`, `crawler_grid_<source>`) and again in `crawler_sources`, and adds the assumption `factors_newer` when newer DESNZ factors were used. These keys appear only when a crawler number was used.
+- **Cache.** The carbon reads are cached for 6 hours (factors change once a year).
+- **Clients.** The web card shows "Includes newer official data from the Voyager crawler" with each source line (name, link, as-of date, attribution) when `crawler_sources` is present, and each line's source in "How we calculate". A response without these fields (an older backend, or the crawler off) renders as before.
 
 ## API
 
@@ -138,6 +153,8 @@ The answer:
   "factors_version": "2026.1"
 }
 ```
+
+With crawler data, lines that used it also carry `crawler_source`, and the answer has `crawler_sources` (see [Crawler data](#crawler-data)).
 
 Categories always come in the order `flights`, `stays`, `ground`, `food`, `activities`. `included` is false when nothing in the category was counted. Lines and assumptions carry an English `label` / `text` plus a stable `kind` / `code` and `params`, so clients can translate them (the web app does, in all 7 languages).
 
