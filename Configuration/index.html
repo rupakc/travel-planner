@@ -597,6 +597,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#trip-carbon-footprint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trip carbon footprint
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#crawler-data-optional" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -906,6 +917,34 @@
     
   
     Flight Emissions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Carbon-Footprint/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Carbon Footprint
   
 
     
@@ -2025,7 +2064,7 @@
 </tbody>
 </table>
 <h3 id="flight-emissions-google-travel-impact-model-optional">Flight emissions: Google Travel Impact Model (optional)</h3>
-<p>Per-flight CO₂e estimates from Google's Travel Impact Model, added to flight results after the flights section has streamed (it never delays it). Only results whose every leg is a non-stop flight with a flight number are estimated. See <a href="../Travel-Impact-Model/">Flight Emissions</a>.</p>
+<p>Per-flight CO₂e estimates from Google's Travel Impact Model, added to flight results after the flights section has streamed (it never delays it). Only results whose every leg can be matched to scheduled flights are estimated: a non-stop leg with a flight number, or a connecting leg whose every segment has one. See <a href="../Travel-Impact-Model/">Flight Emissions</a>.</p>
 <table>
 <thead>
 <tr>
@@ -2049,6 +2088,24 @@
 <td><code>TIM_DAILY_CAP</code></td>
 <td><code>2000</code></td>
 <td>Most flights sent to TIM per UTC day, counted in SQLite (<code>api_budget</code> row <code>google_tim:&lt;date&gt;</code>). Answers are cached per flight and date for 24 h; cache hits don't count.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="trip-carbon-footprint">Trip carbon footprint</h3>
+<p><code>POST /api/carbon/trip</code> works out a trip's CO₂e from the committed factor table <code>backend/app/data/carbon_factors.json</code> (UK DESNZ 2026, Our World in Data). No key, no network, no LLM. See <a href="../Carbon-Footprint/">Carbon Footprint</a>.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CARBON_FOOTPRINT_ENABLED</code></td>
+<td><code>true</code></td>
+<td>Feature flag (<code>features.carbon</code> in <code>/api/config</code>). Off: the endpoint answers <code>404</code> and the web app hides the card.</td>
 </tr>
 </tbody>
 </table>
@@ -2625,6 +2682,11 @@
 <td><code>RATE_LIMIT_TRIPADVISOR</code></td>
 <td><code>10</code></td>
 <td><code>POST /api/tripadvisor/attractions</code> per signed-in user (each lookup is billed by Tripadvisor; not an AI route).</td>
+</tr>
+<tr>
+<td><code>RATE_LIMIT_CARBON</code></td>
+<td><code>120</code></td>
+<td><code>POST /api/carbon/trip</code> per user or client IP (pure computation; not an AI route, never behind <code>ALLOW_ANONYMOUS_AI</code>).</td>
 </tr>
 <tr>
 <td><code>RATE_LIMIT_LIGHT_AI</code></td>

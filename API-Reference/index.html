@@ -636,6 +636,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../Carbon-Footprint/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Carbon Footprint
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../Crawler-Data/" class="md-nav__link">
         
   
@@ -2510,6 +2538,11 @@
 <td>10</td>
 </tr>
 <tr>
+<td>carbon</td>
+<td><code>POST /api/carbon/trip</code> (pure computation, anonymous-friendly; not an AI route)</td>
+<td>120</td>
+</tr>
+<tr>
 <td>light_ai</td>
 <td><code>POST /api/flights</code>, <code>/hotels</code>, <code>/activities</code> and their <code>/filtered</code> variants, <code>/flights/fare-calendar</code>, <code>/visa</code>, <code>/sim</code>, <code>/tips</code>, <code>/getting-around</code>, <code>/forex</code>, <code>/itinerary</code>, <code>/events</code>, <code>/walking-tours</code>, <code>/layover</code>, <code>/stress-test</code>, <code>/nearby</code>, <code>/live-check</code>, <code>/fare-watches</code> (create), <code>/fare-watches/{id}/check</code>, <code>/price-watches</code> (create), <code>/price-watches/{id}/check</code>, <code>PUT /auth/email</code></td>
 <td>60</td>
@@ -3101,6 +3134,12 @@
 <td><code>/api/admin/tripadvisor/budget</code></td>
 <td>admin</td>
 <td>Tripadvisor billable entities used / cap</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/carbon/trip</code></td>
+<td>none</td>
+<td>Trip carbon footprint from a plan's <code>selections</code> or a search <code>results</code> summary: <code>total_kg</code>, <code>categories</code>, <code>lines</code> (method <code>measured_tim</code> / <code>factor</code> / <code>estimate</code>), <code>sources</code>, <code>assumptions</code>, <code>comparisons</code>, <code>lower_carbon</code>. Pure and deterministic, no LLM (<code>features.carbon</code>; 404 when off, 413 over 512 KB; see <a href="../Carbon-Footprint/">Carbon Footprint</a>)</td>
 </tr>
 <tr>
 <td>POST</td>

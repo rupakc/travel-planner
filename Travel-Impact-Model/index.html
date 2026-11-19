@@ -14,7 +14,7 @@
         <link rel="prev" href="../Tripadvisor/">
       
       
-        <link rel="next" href="../Crawler-Data/">
+        <link rel="next" href="../Carbon-Footprint/">
       
       
         
@@ -709,6 +709,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Carbon-Footprint/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Carbon Footprint
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -1592,8 +1620,8 @@
 <h2 id="how-it-works">How it works</h2>
 <ul>
 <li>After the flights section has streamed, <code>FlightsAgent.enrich</code> calls <code>services/travel_impact.annotate</code>, which sends <strong>one batched request</strong> (<code>POST https://travelimpactmodel.googleapis.com/v1/flights:computeFlightEmissions</code>) for every flight in the result set that it doesn't already have cached. The flights section then streams again with <code>emissions</code> added. A failure, timeout (8 s) or the daily cap leaves the results unchanged.</li>
-<li><strong>Exact flights only.</strong> TIM estimates one scheduled flight: carrier, flight number, airports and date. A result is estimated only when every leg is non-stop with a parseable flight number (<code>AF1115</code>, <code>AF 12</code>). Connecting legs carry only their first segment's number, so they get no estimate rather than a partial one.</li>
-<li>Round trips add the outbound and return legs.</li>
+<li><strong>Exact flights only.</strong> TIM estimates one scheduled flight: carrier, flight number, airports and date. A non-stop leg is one flight (<code>AF1115</code>, <code>AF 12</code>). A connecting leg is the sum of its <code>segments</code> (live SerpAPI results list each flown segment with its own number and date) when every segment has a parseable flight number and the segments chain from the leg's origin to its destination. A connecting leg without that (an AI result carries only the first segment's number) gets no estimate rather than a partial one, and a result is estimated only when every leg is.</li>
+<li>Round trips add the outbound and return legs. Each estimated leg also carries its own <code>emissions</code> (same shape), so the <a href="../Carbon-Footprint/">trip carbon footprint</a> can count one direction or one multi-city leg on its own.</li>
 <li><strong>Budget.</strong> At most <code>TIM_DAILY_CAP</code> flights are sent per UTC day (SQLite <code>api_budget</code>, row <code>google_tim:&lt;date&gt;</code>). Answers, including "no estimate", are cached per flight and date for 24 h, and cache hits don't count. <code>/health</code> reports <code>travel_impact_model: {configured, enabled, used_today, cap, paused}</code>.</li>
 <li><strong>The key</strong> is sent in the <code>X-Goog-Api-Key</code> header, never in a URL, and is masked in logs.</li>
 </ul>
