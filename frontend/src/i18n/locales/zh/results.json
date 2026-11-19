@@ -426,5 +426,17 @@
     "regional": "地区性",
     "holidaysNote": "商店、博物馆和交通可能关闭或缩短营业时间。",
     "typicalFare": "{{month}} 的典型缓存票价：{{price}}，并非实时价格"
+  },
+  "emissions": {
+    "chip": "≈ {{kg}} 千克 CO₂e",
+    "perPassenger": "每位乘客的估计 CO₂e：",
+    "classLine": "{{cls}}：{{kg}} 千克",
+    "attribution": "排放估算：Google Travel Impact Model",
+    "class": {
+      "economy": "经济舱",
+      "premiumEconomy": "超级经济舱",
+      "business": "商务舱",
+      "first": "头等舱"
+    }
   }
 }

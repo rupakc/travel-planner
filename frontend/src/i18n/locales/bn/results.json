@@ -434,5 +434,17 @@
     "regional": "আঞ্চলিক",
     "holidaysNote": "দোকান, জাদুঘর ও যানবাহন বন্ধ থাকতে পারে বা কম সময় চলতে পারে।",
     "typicalFare": "{{month}}-এর সাধারণ ক্যাশ করা ভাড়া: {{price}} — লাইভ দাম নয়"
+  },
+  "emissions": {
+    "chip": "≈ {{kg}} কেজি CO₂e",
+    "perPassenger": "যাত্রীপ্রতি আনুমানিক CO₂e:",
+    "classLine": "{{cls}}: {{kg}} কেজি",
+    "attribution": "নির্গমনের অনুমান: Google Travel Impact Model",
+    "class": {
+      "economy": "ইকোনমি",
+      "premiumEconomy": "প্রিমিয়াম ইকোনমি",
+      "business": "বিজনেস",
+      "first": "ফার্স্ট"
+    }
   }
 }

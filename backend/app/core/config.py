@@ -59,6 +59,12 @@ class Settings(BaseSettings):
     # (services/tripadvisor.py, docs/Tripadvisor.md). On only when
     # TRIPADVISOR_ENABLED=true AND a key is set. The budget is a hard cap on
     # billable entities (the first 1,000 per account lifetime are free).
+    # Google Travel Impact Model: per-flight CO2e added to flight results
+    # (services/travel_impact.py, docs/Travel-Impact-Model.md). On only when
+    # TIM_ENABLED=true AND a key is set; TIM_DAILY_CAP flights sent per UTC day.
+    tim_enabled: bool = False
+    tim_api_key: str = ""
+    tim_daily_cap: int = 2000
     tripadvisor_enabled: bool = False
     tripadvisor_api_key: str = ""
     tripadvisor_base_url: str = "https://terra.tripadvisor.com/api"

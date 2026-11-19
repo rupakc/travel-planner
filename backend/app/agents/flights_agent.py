@@ -4,6 +4,7 @@ from urllib.parse import urlparse
 
 from ..core.config import settings
 from ..schemas.request import TravelSearchRequest
+from ..services import travel_impact
 from ..services.serp_flights import SerpAPIError
 from ..services.serp_flights import search as serp_search
 from ..services.serp_flights import search_multi_city as serp_search_multi_city
@@ -70,10 +71,14 @@ class FlightsAgent(ToolAgent, _URLSearchMixin):
     def __init__(self, agents_dir: str):
         super().__init__(load_agent_definition(agents_dir, "flights"))
 
-    async def enrich(self, data: dict) -> dict:
-        if any(r.get("source") == "google_flights" for r in data.get("results", [])):
-            return data  # SerpAPI results already have authoritative booking URLs
-        return await self._enrich_urls(data)
+    async def enrich(self, data: dict, cabin: str | None = None) -> dict:
+        if not any(
+            r.get("source") == "google_flights" for r in data.get("results", [])
+        ):
+            # SerpAPI results already have authoritative booking URLs
+            data = await self._enrich_urls(data)
+        # Per-flight CO2e from Google's Travel Impact Model (no-op when off)
+        return await travel_impact.annotate(data, cabin)
 
     async def run(
         self, request: TravelSearchRequest, filters: dict | None = None

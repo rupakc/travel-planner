@@ -434,5 +434,17 @@
     "regional": "regional",
     "holidaysNote": "Shops, museums and transport may close or run reduced hours.",
     "typicalFare": "Typical cached fare for {{month}}: {{price}} — not a live price"
+  },
+  "emissions": {
+    "chip": "≈ {{kg}} kg CO₂e",
+    "perPassenger": "Estimated CO₂e per passenger:",
+    "classLine": "{{cls}}: {{kg}} kg",
+    "attribution": "Emissions estimates: Google Travel Impact Model",
+    "class": {
+      "economy": "Economy",
+      "premiumEconomy": "Premium economy",
+      "business": "Business",
+      "first": "First"
+    }
   }
 }

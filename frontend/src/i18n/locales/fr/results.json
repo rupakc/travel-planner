@@ -442,5 +442,17 @@
     "regional": "régional",
     "holidaysNote": "Commerces, musées et transports peuvent fermer ou fonctionner en horaires réduits.",
     "typicalFare": "Tarif type en cache pour {{month}} : {{price}}, pas un prix en direct"
+  },
+  "emissions": {
+    "chip": "≈ {{kg}} kg CO₂e",
+    "perPassenger": "CO₂e estimé par passager :",
+    "classLine": "{{cls}} : {{kg}} kg",
+    "attribution": "Estimations des émissions : Google Travel Impact Model",
+    "class": {
+      "economy": "Économique",
+      "premiumEconomy": "Premium économique",
+      "business": "Affaires",
+      "first": "Première"
+    }
   }
 }
