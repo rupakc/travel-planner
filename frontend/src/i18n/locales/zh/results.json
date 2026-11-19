@@ -458,7 +458,7 @@
     "railHint": "更低碳的选择：{{route}} 改乘火车（约 {{km}} 公里）可减少约 {{kg}} 千克 CO₂e。请确认是否有车次。",
     "liveData": "包含来自 Voyager 爬虫的较新官方数据：",
     "how": "计算方法",
-    "howIntro": "航班在 Google Travel Impact Model 有该航班数据时使用其数值，否则按距离和舱位使用英国政府（DESNZ 2026）的排放因子，并计入非 CO₂ 影响。住宿、交通和活动使用 DESNZ 因子；饮食使用 Our World in Data 的食物数据。估算值均已标注。",
+    "howIntro": "航班在 Google Travel Impact Model 有该航班数据时使用其数值，否则按距离和舱位使用英国政府（DESNZ）的排放因子，并计入非 CO₂ 影响。住宿、交通和活动使用 DESNZ 因子；饮食使用 Our World in Data 的食物数据。估算值均已标注。",
     "close": "关闭",
     "linesTitle": "计入的项目",
     "assumptionsTitle": "假设",

@@ -442,7 +442,7 @@ class _Run:
             facs.append(fac)
         self.assume(
             "flight_desnz",
-            "Flights without a TIM figure: great-circle distance × DESNZ 2026 "
+            "Flights without a TIM figure: great-circle distance × the DESNZ "
             "factor for the distance band and cabin, with radiative forcing.",
         )
         ln = self.line(

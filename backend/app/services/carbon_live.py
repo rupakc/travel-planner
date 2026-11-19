@@ -26,6 +26,7 @@ share-alike). Every number taken from the crawler carries its source object
 from __future__ import annotations
 
 import asyncio
+import collections
 import logging
 import math
 import re
@@ -68,12 +69,20 @@ _FACTOR_READS = (
 
 def slug(label: str) -> str:
     """The crawler's activity slug of a publisher label (its
-    ``factor_table::slug``): ASCII-folded, lower case, ``&`` → ``and``,
-    apostrophes dropped, every other run of non-alphanumerics → ``_``."""
+    ``factor_table::slug`` over ``countries::fold``): ASCII-folded, lower
+    case, ``&`` → ``and``, apostrophes dropped, a leading word "the"
+    dropped, the word "st" → "saint", every other run of non-alphanumerics
+    → ``_``."""
     text = unicodedata.normalize("NFKD", str(label or ""))
     text = "".join(c for c in text if not unicodedata.combining(c)).lower()
-    text = text.replace("&", " and ").replace("'", "").replace("’", "")
-    return re.sub(r"[^a-z0-9]+", "_", text).strip("_")[:160]
+    text = text.replace("&", " and ")
+    for apostrophe in ("'", "\u2019", "\u2018"):
+        text = text.replace(apostrophe, "")
+    words = re.sub(r"[^a-z0-9]+", " ", text).split()
+    if words and words[0] == "the":
+        words = words[1:]
+    words = ["saint" if w == "st" else w for w in words]
+    return "_".join(words)[:160]
 
 
 def unit_key(unit: str) -> str | None:
@@ -111,7 +120,6 @@ def _source_obj(src: dict, *, publisher=None, year=None, dataset=None) -> dict:
         "licence_url": src.get("licence_url"),
         "attribution": src.get("attribution"),
         "source_id": src.get("source_id"),
-        "via": "crawler",
     }
     return {k: v for k, v in out.items() if v is not None}
 
@@ -212,23 +220,44 @@ async def _newer_factors(static: dict, names_task) -> dict | None:
         found = match(entry, cat, ("co2e", None)) if cat else None
         if found:
             out["ground"][key] = take(entry, *found)
+    static_hotels = static.get("hotel", {}).get("by_country", {})
+    hotel_rows = []
     for data, src in rows:
         cc = data.get("country_code")
         if (
-            data.get("category") != "accommodation"
-            or not isinstance(cc, str)
-            or not _ISO2.match(cc)
-            or not str(data.get("activity") or "").startswith("hotel_stay")
-            or unit_key(data.get("unit")) != "room.night"
-            or data.get("gas_basis") not in ("co2e", None)
-            or cc in out["hotel"]
+            data.get("category") == "accommodation"
+            and isinstance(cc, str)
+            and _ISO2.match(cc)
+            and str(data.get("activity") or "").startswith("hotel_stay")
+            and unit_key(data.get("unit")) == "room.night"
+            and data.get("gas_basis") in ("co2e", None)
         ):
+            hotel_rows.append((cc, data, src))
+    per_country = collections.Counter(cc for cc, _, _ in hotel_rows)
+    for cc, data, src in hotel_rows:
+        if cc in out["hotel"]:
             continue
-        entry = static.get("hotel", {}).get("by_country", {}).get(cc) or {
-            "unit": "kg CO2e per room.night",
-            "label": data.get("activity_label")
-            or f"Hotel stay / {data.get('geography') or cc}",
-        }
+        entry = static_hotels.get(cc)
+        if entry:
+            # Same row as the committed one: DESNZ also lists sub-national
+            # rows mapped to the same country ("UK (London)" → GB)
+            if data.get("activity") != slug(entry.get("label", "")):
+                continue
+        else:
+            # A new country: only its national row, "Hotel stay / <country>",
+            # and only when it is the country's one row (no telling a
+            # national row from a regional one otherwise)
+            if per_country[cc] != 1:
+                continue
+            geo = data.get("geography")
+            if not isinstance(geo, str) or not geo.strip():
+                continue
+            if data.get("activity") != slug(f"Hotel stay / {geo}"):
+                continue
+            entry = {
+                "unit": "kg CO2e per room.night",
+                "label": data.get("activity_label") or f"Hotel stay / {geo}",
+            }
         out["hotel"][cc] = take(entry, data, src)
     if not (out["flight"] or out["ground"] or out["hotel"]):
         return None
@@ -292,9 +321,10 @@ async def _fetch(static: dict, stay_countries) -> dict | None:
             pt = _grid_point(points or [], cc, names) if points else None
             if not pt:
                 continue
-            sid = (
-                f"crawler_grid_{slug(pt['crawler_source'].get('source_id') or 'grid')}"
-            )
+            # One id per country: each country's point has its own year
+            # and as-of, so the line and the source list show the right one
+            base = slug(pt["crawler_source"].get("source_id") or "grid")
+            sid = f"crawler_grid_{base}_{cc.lower()}"
             pt["source"] = sid
             sources.setdefault(sid, dict(pt["crawler_source"]))
             grid[cc] = pt

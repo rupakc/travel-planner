@@ -301,7 +301,7 @@ async def carbon_grid(
     country: str,
     *,
     period: str | None = "annual",
-    basis: str | None = None,
+    basis: str | None = "lifecycle",
     limit: int = 10,
 ) -> list[dict] | None:
     """Grid carbon intensity points of one country (``/v1/carbon/grid``:

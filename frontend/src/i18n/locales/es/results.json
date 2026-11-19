@@ -474,7 +474,7 @@
     "railHint": "Opción con menos carbono: un tren para {{route}} (unos {{km}} km) podría ahorrar unos {{kg}} kg de CO₂e. Comprueba si hay servicio.",
     "liveData": "Incluye datos oficiales más recientes del rastreador de Voyager:",
     "how": "Cómo lo calculamos",
-    "howIntro": "Los vuelos usan el Travel Impact Model de Google cuando tiene el vuelo; si no, los factores del Gobierno del Reino Unido (DESNZ 2026) según la distancia y la clase, con los efectos distintos del CO₂. El alojamiento, el transporte y las actividades usan factores DESNZ; las comidas, datos de alimentos de Our World in Data. Las estimaciones van indicadas.",
+    "howIntro": "Los vuelos usan el Travel Impact Model de Google cuando tiene el vuelo; si no, los factores del Gobierno del Reino Unido (DESNZ) según la distancia y la clase, con los efectos distintos del CO₂. El alojamiento, el transporte y las actividades usan factores DESNZ; las comidas, datos de alimentos de Our World in Data. Las estimaciones van indicadas.",
     "close": "Cerrar",
     "linesTitle": "Qué hemos contado",
     "assumptionsTitle": "Supuestos",

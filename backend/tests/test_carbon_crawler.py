@@ -431,7 +431,7 @@ def test_grid_intensity_for_a_country_without_hotel_factor(client, crawler_on):
 
     hotel = lines(out, "hotel_nights")[0]
     assert hotel["method"] == "estimate"
-    assert hotel["source"] == "crawler_grid_carbon_ember_grid"
+    assert hotel["source"] == "crawler_grid_carbon_ember_grid_is"
     assert hotel["params"]["grid_g_per_kwh"] == 28
     assert hotel["params"]["grid_year"] == 2025
     # 4 nights × 1 room × 28.4 g/kWh × 70 kWh
@@ -452,11 +452,35 @@ def test_grid_intensity_for_a_country_without_hotel_factor(client, crawler_on):
         ln for ln in base["lines"] if ln["category"] != "stays"
     ]
     assert [s["id"] for s in out["crawler_sources"]] == [
-        "crawler_grid_carbon_ember_grid"
+        "crawler_grid_carbon_ember_grid_is"
     ]
     grid_calls = [c for c in fake.calls if c.url.path == "/v1/carbon/grid"]
     assert [c.url.params["country"] for c in grid_calls] == ["IS"]
     assert grid_calls[0].url.params["period"] == "annual"
+    assert grid_calls[0].url.params["basis"] == "lifecycle"
+    # The source object is shown through SourceLine, where "via" is the
+    # forex pivot currency: a crawler source must never carry one
+    assert "via" not in src
+    assert all("via" not in s for s in out["crawler_sources"])
+
+
+def test_each_grid_country_keeps_its_own_year(crawler_on, monkeypatch):
+    static = carbon.factors()
+    assert not {"KE", "MN"} & set(static["hotel"]["by_country"])
+    ke = grid_point("KE", 2025, 100)
+    mn = grid_point("MN", 2019, 700)
+    mn["value"]["as_of"] = "2020-03-01"
+    crawler_on(Crawler(grid={"KE": [ke], "MN": [mn]}))
+    live = asyncio.run(carbon_live.fetch(static, ["KE", "MN"]))
+    assert live is not None
+    for cc, year, as_of in (("KE", 2025, "2026-10-01"), ("MN", 2019, "2020-03-01")):
+        pt = live["grid"][cc]
+        assert pt["year"] == year
+        assert pt["source"] == f"crawler_grid_carbon_ember_grid_{cc.lower()}"
+        obj = live["sources"][pt["source"]]
+        assert obj["year"] == year and obj["as_of"] == as_of
+        assert pt["crawler_source"] == obj
+    assert len(live["sources"]) == 2
 
 
 def test_grid_is_not_used_where_desnz_lists_the_country(client, crawler_on):
@@ -488,6 +512,103 @@ def test_newer_hotel_row_adds_a_country(client, crawler_on):
     assert "/v1/carbon/grid" not in fake.paths()
 
 
+def _hotel_row(fid, activity, label, value, geography, cc):
+    return factor(
+        fid,
+        {
+            "activity": activity,
+            "activity_label": label,
+            "category": "accommodation",
+            "unit": "kg CO2e per Room per night",
+            "value": value,
+            "geography": geography,
+            "country_code": cc,
+        },
+    )
+
+
+def test_london_row_never_replaces_the_uk_hotel_factor(client, crawler_on):
+    # The crawler maps every "UK…" Level-3 name to GB, so "UK (London)"
+    # also arrives as a GB row, and its order is arbitrary: London first here
+    london = _hotel_row(
+        "29_600_4100_13_1",
+        "hotel_stay_uk_london",
+        "Hotel stay / UK (London)",
+        13.9,
+        "United Kingdom",
+        "GB",
+    )
+    uk = _hotel_row(
+        "29_600_4099_13_1",
+        "hotel_stay_uk",
+        "Hotel stay / UK",
+        9.9,
+        "United Kingdom",
+        "GB",
+    )
+    static_gb = carbon.factors()["hotel"]["by_country"]["GB"]
+    assert carbon_live.slug(static_gb["label"]) == "hotel_stay_uk"
+    crawler_on(Crawler([london, uk]))
+    hotel = lines(post(client, plan(hotel_cc="GB")), "hotel_nights")[0]
+    assert hotel["source"] == "crawler_desnz_2027"
+    assert hotel["params"]["per_room_night_kg"] == 9.9
+
+
+def test_london_alone_leaves_the_static_uk_factor(client, crawler_on):
+    london = _hotel_row(
+        "29_600_4100_13_1",
+        "hotel_stay_uk_london",
+        "Hotel stay / UK (London)",
+        13.9,
+        "United Kingdom",
+        "GB",
+    )
+    crawler_on(Crawler([london, LONG_ECO_2027]))
+    body = plan(hotel_cc="GB")
+    out = post(client, body)
+    hotel = lines(out, "hotel_nights")[0]
+    assert hotel == lines(static_answer(body), "hotel_nights")[0]
+
+
+def test_a_new_country_with_several_rows_is_skipped(client, crawler_on):
+    # No telling a national row from a regional one: keep today's answer
+    region = _hotel_row(
+        "29_600_9998_13_1",
+        "hotel_stay_iceland_reykjavik",
+        "Hotel stay / Iceland (Reykjavik)",
+        9.0,
+        "Iceland (Reykjavik)",
+        "IS",
+    )
+    national = _hotel_row(
+        "29_600_9999_13_1",
+        "hotel_stay_iceland",
+        "Hotel stay / Iceland",
+        3.1,
+        "Iceland",
+        "IS",
+    )
+    crawler_on(Crawler([region, national]))
+    body = plan(hotel_cc="IS")
+    hotel = lines(post(client, body), "hotel_nights")[0]
+    assert hotel == lines(static_answer(body), "hotel_nights")[0]
+
+
+def test_a_new_country_row_must_be_its_national_label(client, crawler_on):
+    odd = _hotel_row(
+        "29_600_9998_13_1",
+        "hotel_stay_iceland_reykjavik",
+        "Hotel stay / Iceland (Reykjavik)",
+        9.0,
+        "Iceland",
+        "IS",
+    )
+    crawler_on(Crawler([odd]))
+    body = plan(hotel_cc="IS")
+    hotel = lines(post(client, body), "hotel_nights")[0]
+    assert hotel == lines(static_answer(body), "hotel_nights")[0]
+
+
 # ── helpers ──────────────────────────────────────────────────────────────────
 
 
@@ -501,6 +622,12 @@ def test_newer_hotel_row_adds_a_country(client, crawler_on):
         ("Hotel stay / Côte d'Ivoire", "hotel_stay_cote_divoire"),
         ("Berries & Grapes", "berries_and_grapes"),
         ("Cars (by size) / Average car / Unknown", "cars_by_size_average_car_unknown"),
+        # countries::fold drops a leading "the" and spells "st" as "saint"
+        ("The Gambia", "gambia"),
+        ("Hotel stay / The Gambia", "hotel_stay_the_gambia"),
+        ("St Lucia", "saint_lucia"),
+        ("Hotel stay / St. Kitts", "hotel_stay_saint_kitts"),
+        ("Bahrain’s", "bahrains"),
     ],
 )
 def test_slug_matches_the_crawler(label, slug):

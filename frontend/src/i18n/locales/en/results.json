@@ -466,7 +466,7 @@
     "railHint": "Lower-carbon option: a train for {{route}} (about {{km}} km) could save about {{kg}} kg CO₂e. Check whether one runs.",
     "liveData": "Includes newer official data from the Voyager crawler:",
     "how": "How we calculate",
-    "howIntro": "Flights use Google's Travel Impact Model when it has the flight, otherwise UK government (DESNZ 2026) factors for the distance and cabin, including non-CO₂ effects. Stays, transport and activities use DESNZ factors; meals use Our World in Data food figures. Estimates are labelled.",
+    "howIntro": "Flights use Google's Travel Impact Model when it has the flight, otherwise UK government (DESNZ) factors for the distance and cabin, including non-CO₂ effects. Stays, transport and activities use DESNZ factors; meals use Our World in Data food figures. Estimates are labelled.",
     "close": "Close",
     "linesTitle": "What we counted",
     "assumptionsTitle": "Assumptions",

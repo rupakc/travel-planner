@@ -474,7 +474,7 @@
     "railHint": "Option moins carbonée : un train pour {{route}} (environ {{km}} km) pourrait économiser environ {{kg}} kg CO₂e. Vérifiez qu'il existe une liaison.",
     "liveData": "Inclut des données officielles plus récentes du robot d'exploration Voyager :",
     "how": "Notre méthode",
-    "howIntro": "Les vols utilisent le Travel Impact Model de Google quand il connaît le vol, sinon les facteurs du gouvernement britannique (DESNZ 2026) selon la distance et la classe, effets hors CO₂ compris. L'hébergement, les transports et les activités utilisent des facteurs DESNZ ; les repas, les données alimentaires d'Our World in Data. Les estimations sont signalées.",
+    "howIntro": "Les vols utilisent le Travel Impact Model de Google quand il connaît le vol, sinon les facteurs du gouvernement britannique (DESNZ) selon la distance et la classe, effets hors CO₂ compris. L'hébergement, les transports et les activités utilisent des facteurs DESNZ ; les repas, les données alimentaires d'Our World in Data. Les estimations sont signalées.",
     "close": "Fermer",
     "linesTitle": "Ce que nous avons compté",
     "assumptionsTitle": "Hypothèses",

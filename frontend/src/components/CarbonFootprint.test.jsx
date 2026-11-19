@@ -171,9 +171,9 @@ describe('CarbonFootprint', () => {
 
   it('shows the source of crawler numbers on the card and on their lines', async () => {
     const grid = {
-      id: 'crawler_grid_carbon_ember_grid', name: 'Ember yearly electricity data',
+      id: 'crawler_grid_carbon_ember_grid_is', name: 'Ember yearly electricity data',
       url: 'https://ember-energy.org/data/yearly-electricity-data/', as_of: '2026-10-01',
-      licence: 'CC-BY-4.0', attribution: 'Ember, CC BY 4.0', via: 'crawler',
+      licence: 'CC-BY-4.0', attribution: 'Ember, CC BY 4.0',
     }
     fetchTripCarbon.mockResolvedValue({
       ...ANSWER,
@@ -193,6 +193,8 @@ describe('CarbonFootprint', () => {
     expect(live.querySelector('a').getAttribute('href')).toBe(grid.url)
     await act(async () => q('[data-tid="carbon.how"]').click())
     expect(container.querySelectorAll('[data-testid="official-source"]')).toHaveLength(2)
+    // "via" is SourceLine's forex pivot currency, never shown for carbon
+    expect(container.textContent).not.toMatch(/\bvia\b/)
     expect(container.textContent).toContain(
       "No hotel-stay factor for Reykjavik: the country's electricity grid (28 g CO₂e/kWh) × 70 kWh-equivalent per room-night.",
     )
