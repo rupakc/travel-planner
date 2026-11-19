@@ -1716,6 +1716,12 @@
 <td>"Public holidays during your trip" in Events and above the itinerary (<code>public_holidays</code>). Open-licence holidays are also given to the events and itinerary agents as closure context.</td>
 </tr>
 <tr>
+<td>Trip carbon footprint</td>
+<td><code>emission_factor</code> (<code>/v1/carbon/factors</code>), <code>grid_ci:&lt;ISO2&gt;:annual:lifecycle</code> observations (<code>/v1/carbon/grid</code>)</td>
+<td>UK DESNZ conversion factors (open); Ember / Our World in Data grid intensity (open)</td>
+<td>A DESNZ factor set <strong>newer</strong> than the committed table's year replaces the matching rows (same label and unit); a stay in a country with no hotel-stay factor uses the country's grid intensity instead of the median. Lines worked out from them carry <code>crawler_source</code>; the answer lists them in <code>crawler_sources</code>. See <a href="../Carbon-Footprint/#crawler-data">Carbon Footprint</a>.</td>
+</tr>
+<tr>
 <td>Pricing advisor</td>
 <td><code>fare:&lt;O&gt;:&lt;D&gt;:&lt;YYYY-MM&gt;</code> observations (<code>cheapest_fare</code>)</td>
 <td>Travelpayouts fare cache (API terms)</td>
@@ -1767,9 +1773,9 @@
 </tr>
 </tbody>
 </table>
-<p>Answers, including empty ones, are cached in process for <code>CRAWLER_CACHE_TTL_S</code> (15 min). <code>/v1/sources</code> (display names) is cached for 6 hours and <code>/v1/stats</code> (health) for 60 s. Complete search results are also cached for 30 min as before.</p>
+<p>Answers, including empty ones, are cached in process for <code>CRAWLER_CACHE_TTL_S</code> (15 min). <code>/v1/sources</code> (display names) and the carbon reads (<code>/v1/carbon/factors</code>, <code>/v1/carbon/grid</code>) are cached for 6 hours, <code>/v1/stats</code> (health) for 60 s. Complete search results are also cached for 30 min as before.</p>
 <h2 id="client">Client</h2>
-<p><code>backend/app/services/crawler_client.py</code> handles transport only: an async httpx client per request, bearer token, pinned TLS, timeouts, cache and breaker. It never raises. <code>backend/app/services/crawler_facts.py</code> fetches, maps, attributes and applies the facts for each section. The agents (<code>forex</code>, <code>emergency_card</code>, <code>visa</code>, <code>events</code>, <code>itinerary</code>, <code>pricing_advisor</code>) call it only when <code>crawler_client.configured()</code>. The single-agent routes and the chat specialist fallback get the same data because they run the same agents.</p>
+<p><code>backend/app/services/crawler_client.py</code> handles transport only: an async httpx client per request, bearer token, pinned TLS, timeouts, cache and breaker. It never raises. <code>backend/app/services/crawler_facts.py</code> fetches, maps, attributes and applies the facts for each section. The agents (<code>forex</code>, <code>emergency_card</code>, <code>visa</code>, <code>events</code>, <code>itinerary</code>, <code>pricing_advisor</code>) call it only when <code>crawler_client.configured()</code>. The carbon calculator's reads and mapping live in <code>backend/app/services/carbon_live.py</code> (no agent, no model). The single-agent routes and the chat specialist fallback get the same data because they run the same agents.</p>
 <p>TLS: the crawler serves a self-signed certificate for its internal IP. The client trusts <strong>only</strong> that certificate: <code>CRAWLER_CA_PEM</code> (the secret <code>crawler-api-tls-cert</code>) or <code>CRAWLER_CA_FILE</code>. A PEM holding two certificates (current and next) is accepted during a rotation.</p>
 <h2 id="status-and-feature-detection">Status and feature detection</h2>
 <ul>
@@ -1785,7 +1791,8 @@
 <li>share-alike data never merged and never in a prompt;</li>
 <li>flag off and crawler down: prompts and responses identical to today.</li>
 </ul>
-<p>The web side is covered by <code>frontend/src/components/OfficialData.test.jsx</code>.</p>
+<p><code>backend/tests/test_carbon_crawler.py</code> covers the carbon reads, including byte-identical answers with the crawler off, down or answering nothing usable.</p>
+<p>The web side is covered by <code>frontend/src/components/OfficialData.test.jsx</code> and <code>frontend/src/components/CarbonFootprint.test.jsx</code>.</p>
 <p>Configuration: <a href="../Configuration/#crawler-data-optional">Configuration</a>. Production steps: <a href="../Deployment-GCP/#crawler-data">Deployment on GCP</a>.</p>
 
 
