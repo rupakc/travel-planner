@@ -97,6 +97,7 @@
     "points_other": "{{count}} Punkte",
     "mine_one": "Du bist auf Platz {{rank}} mit {{count}} Punkt",
     "mine_other": "Du bist auf Platz {{rank}} mit {{count}} Punkten",
+    "profilePrivate": "Dein Profil ist privat, daher bist du nicht in der globalen Rangliste. Stelle es auf „Nur Follower“ oder „Öffentlich“, um einen Rang zu bekommen.",
     "unranked": "Du hast noch keinen Rang. Spiele das Tagesquiz, um in die Rangliste zu kommen."
   },
   "home": {
