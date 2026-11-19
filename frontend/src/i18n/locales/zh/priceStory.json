@@ -33,6 +33,7 @@
     "help": "使用左右方向键逐次查看各次检查。",
     "point": "{{date}}：{{price}}",
     "typical": "常见区间",
+    "typicalRange": "常见区间：{{low}}–{{high}}",
     "lowest": "最低：{{price}}",
     "target": "目标：{{price}}",
     "baseline": "首次价格：{{price}}",

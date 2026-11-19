@@ -2,6 +2,7 @@
   "title": "Bajada de precio detectada",
   "titleTarget": "Tu precio objetivo ya está aquí",
   "caught": "Hemos detectado una bajada de {{amount}} ({{percent}})",
+  "percentInline": "({{percent}})",
   "nowPrice": "ahora",
   "xp": "+{{xp}} XP",
   "note": "Es la bajada entre dos precios que hemos observado. Los precios pueden cambiar antes de que reserves.",

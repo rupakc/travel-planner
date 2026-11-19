@@ -41,6 +41,7 @@
     "help": "Usa las flechas izquierda y derecha para recorrer las comprobaciones.",
     "point": "{{price}} el {{date}}",
     "typical": "Rango habitual",
+    "typicalRange": "Rango habitual: {{low}}–{{high}}",
     "lowest": "Más bajo: {{price}}",
     "target": "Objetivo: {{price}}",
     "baseline": "Primer precio: {{price}}",

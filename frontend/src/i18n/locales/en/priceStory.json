@@ -37,6 +37,7 @@
     "help": "Use the left and right arrow keys to step through the checks.",
     "point": "{{price}} on {{date}}",
     "typical": "Typical range",
+    "typicalRange": "Typical range: {{low}}–{{high}}",
     "lowest": "Lowest: {{price}}",
     "target": "Target: {{price}}",
     "baseline": "First seen: {{price}}",
