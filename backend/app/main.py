@@ -475,6 +475,15 @@ def _tripadvisor_health() -> dict:
     return {k: s[k] for k in ("configured", "enabled", "used", "cap", "paused")}
 
 
+def _tim_health() -> dict:
+    from .services import travel_impact
+
+    try:
+        return travel_impact.status()
+    except Exception:  # health must answer even if the table is missing
+        return {"configured": travel_impact.configured(), "enabled": False}
+
+
 def _tripadvisor_budget_ok() -> bool:
     from .services import tripadvisor
 
@@ -502,6 +511,8 @@ async def health():
         # content-match "tripadvisor_budget_ok":true (false from 80 % on)
         "tripadvisor": _tripadvisor_health(),
         "tripadvisor_budget_ok": _tripadvisor_budget_ok(),
+        # Google Travel Impact Model: flights sent today / daily cap
+        "travel_impact_model": _tim_health(),
         # Crawler read API (docs/Crawler-Data.md): configured + answering
         "crawler": await crawler_client.health(),
     }

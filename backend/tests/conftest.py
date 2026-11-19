@@ -86,6 +86,21 @@ def _no_tripadvisor_network(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
+def _no_tim_network(monkeypatch):
+    """Google TIM is never called from tests: a test that needs it installs an
+    httpx.MockTransport on ``travel_impact._transport`` (test_travel_impact.py)."""
+    import httpx
+
+    from app.services import travel_impact
+
+    def refuse(request):
+        raise AssertionError(f"TIM network call in a test: {request.url.path}")
+
+    monkeypatch.setattr(travel_impact, "_transport", httpx.MockTransport(refuse))
+    travel_impact._cache.clear()
+
+
+@pytest.fixture(autouse=True)
 def _no_crawler_network(monkeypatch):
     """The crawler read API is never called from tests: a test that needs it
     turns the flag on and installs an httpx.MockTransport on

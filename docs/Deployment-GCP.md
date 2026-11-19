@@ -220,6 +220,14 @@ Off by default (`TRIPADVISOR_ENABLED=false`). The Terra key lives in the existin
 
 **Budget alerts.** The VM has no logging agent, so the `tripadvisor_budget` WARNING lines stay in Docker's local logs (`sudo docker compose -f /opt/voyager/compose.yaml --project-directory /opt/voyager logs app | grep tripadvisor_budget`) and a log-based alert would never fire. Use an uptime check on `/health` matching `"tripadvisor_budget_ok":true` (false from 80 % of the cap on) with the existing email channel; with `SMTP_HOST` and `ADMIN_EMAIL` set, the app also emails the owner at 80 % and at the cap. After adding payment details in the Terra dashboard, raise `TRIPADVISOR_BUDGET_CAP` and restart.
 
+## Flight emissions (Google Travel Impact Model)
+
+Off by default (`TIM_ENABLED=false`). The key is an API key in `voyager-prod-ohzkl` restricted to `travelimpactmodel.googleapis.com` (the API is enabled there), stored in the secret `crawler-src-google-tim-key`; bootstrap.sh grants the VM's service account `secretAccessor` on it. To turn it on:
+
+1. Check the grant **first** (a secret the VM can't read stops the app from starting): `gcloud secrets get-iam-policy crawler-src-google-tim-key --project=voyager-prod-ohzkl` lists `vm-runtime`.
+2. In `/opt/voyager/app.env`: append `,TIM_API_KEY=crawler-src-google-tim-key` to `SECRET_MANAGER_SECRETS`, and set `TIM_ENABLED=true` (optionally `TIM_DAILY_CAP=2000`).
+3. Restart the app. `/health` then shows `travel_impact_model.enabled: true`.
+
 ## Crawler data
 
 Off by default (`CRAWLER_ENABLED=false`). The app reads official facts from the crawler VM's private read API ([Crawler Data](Crawler-Data.md)). Both VMs are in `voyager-prod-ohzkl`, on the default VPC. The crawler's `infrastructure/bootstrap.sh` creates everything the app needs:

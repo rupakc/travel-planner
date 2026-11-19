@@ -22,13 +22,13 @@ class JSONFormatter(logging.Formatter):
 
 class RedactSecrets(logging.Filter):
     """Masks third-party API keys sent in request headers (Tripadvisor's
-    ``X-API-Key``) should one ever reach a log line, e.g. via an exception
+    ``X-API-Key``, Google TIM's ``X-Goog-Api-Key``) should one ever reach a log line, e.g. via an exception
     that echoes request headers."""
 
     def filter(self, record: logging.LogRecord) -> bool:
         from .config import settings
 
-        secrets = [s for s in (settings.tripadvisor_api_key,) if s and len(s) >= 8]
+        secrets = [s for s in (settings.tripadvisor_api_key, settings.tim_api_key) if s and len(s) >= 8]
         if not secrets:
             return True
         msg = record.getMessage()

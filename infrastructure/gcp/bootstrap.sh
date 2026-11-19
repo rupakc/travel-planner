@@ -83,7 +83,7 @@ AI_SERVICE_ID="${AI_SERVICE_ID:-C7E2-9256-1C43}"
 # No anthropic-api-key: production uses Gemini on Vertex AI via the VM's SA
 SECRETS=(jwt-secret-key admin-password serpapi-key serper-key smtp-password
   google-client-secret github-client-secret facebook-app-secret apple-private-key
-  crawler-src-tripadvisor-content-key)
+  crawler-src-tripadvisor-content-key crawler-src-google-tim-key)
 RUNTIME_SA="vm-runtime@$PROJECT_ID.iam.gserviceaccount.com"
 # Custom roles (least privilege). Gemini generateContent/streamGenerateContent
 # on publishers/google/models/* are authorised by aiplatform.endpoints.predict

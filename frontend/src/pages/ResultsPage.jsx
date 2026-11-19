@@ -30,6 +30,7 @@ import { defaultAllocation, reallocate, withTotal, fitResults, capsFromFit, flig
 import { buildEmergencyCardHtml } from '../utils/emergencyCardPrint'
 import WalkingToursSection, { WalkingTourPlanRow } from '../components/WalkingToursSection'
 import TripadvisorBlock from '../components/TripadvisorBlock'
+import EmissionsChip from '../components/EmissionsChip'
 import { RateSource, EmergencyOfficial, PhoneUnverified, VisaOfficial, HolidayNotice, TypicalFares } from '../components/OfficialData'
 import { orderSectionByCity } from '../utils/orderSectionByCity'
 import AirportSearch from '../components/ui/AirportSearch'
@@ -552,7 +553,7 @@ function FlightResults({ data, selections, onSelect, onLayover, budget = null, h
                       {isSelected && <div className="w-2 h-2 bg-white rounded-full" />}
                     </div>
                   </td>
-                  <td className={`px-4 py-3 font-medium${dimCell}`}>{f.airline} {f.flight_number && <span className="text-xs text-gray-400 ml-1">{f.flight_number}</span>}</td>
+                  <td className={`px-4 py-3 font-medium${dimCell}`}>{f.airline} {f.flight_number && <span className="text-xs text-gray-400 ml-1">{f.flight_number}</span>}{f.emissions && <div className="mt-1"><EmissionsChip emissions={f.emissions} /></div>}</td>
                   <td className="px-4 py-3 text-right font-bold text-teal-700"><span className={dimCell.trim() || undefined}>{f.price_usd ? `$${fmtNumber(f.price_usd)}` : '—'}</span>{over && <div className="font-normal"><OverBudgetTag>{t('budget.overFlight')}</OverBudgetTag></div>}</td>
                   <td className={`px-4 py-3 text-center${dimCell}`}>
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${f.stops === 0 ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
@@ -600,6 +601,7 @@ function FlightResults({ data, selections, onSelect, onLayover, budget = null, h
                     {isOneWay ? t('flights.oneWay') : t('flights.roundTrip')}
                   </span>
                   {f.source && <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-sky-50 text-sky-600 border border-sky-200">{f.source.replace(/_/g,' ')}</span>}
+                  <EmissionsChip emissions={f.emissions} />
                 </div>
                 <div className="text-right">
                   <p className="text-lg font-bold text-teal-700">{f.price_usd ? `$${fmtNumber(f.price_usd)}` : '—'}</p>

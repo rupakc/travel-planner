@@ -434,5 +434,17 @@
     "regional": "क्षेत्रीय",
     "holidaysNote": "दुकानें, संग्रहालय और परिवहन बंद हो सकते हैं या कम समय चल सकते हैं।",
     "typicalFare": "{{month}} का सामान्य कैश्ड किराया: {{price}} — लाइव कीमत नहीं"
+  },
+  "emissions": {
+    "chip": "≈ {{kg}} किग्रा CO₂e",
+    "perPassenger": "प्रति यात्री अनुमानित CO₂e:",
+    "classLine": "{{cls}}: {{kg}} किग्रा",
+    "attribution": "उत्सर्जन अनुमान: Google Travel Impact Model",
+    "class": {
+      "economy": "इकॉनमी",
+      "premiumEconomy": "प्रीमियम इकॉनमी",
+      "business": "बिज़नेस",
+      "first": "फ़र्स्ट"
+    }
   }
 }

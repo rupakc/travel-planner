@@ -434,5 +434,17 @@
     "regional": "regional",
     "holidaysNote": "Geschäfte, Museen und Verkehrsmittel können geschlossen sein oder eingeschränkt fahren.",
     "typicalFare": "Typischer zwischengespeicherter Preis für {{month}}: {{price}} – kein Live-Preis"
+  },
+  "emissions": {
+    "chip": "≈ {{kg}} kg CO₂e",
+    "perPassenger": "Geschätztes CO₂e pro Person:",
+    "classLine": "{{cls}}: {{kg}} kg",
+    "attribution": "Emissionsschätzungen: Google Travel Impact Model",
+    "class": {
+      "economy": "Economy",
+      "premiumEconomy": "Premium Economy",
+      "business": "Business",
+      "first": "First"
+    }
   }
 }
