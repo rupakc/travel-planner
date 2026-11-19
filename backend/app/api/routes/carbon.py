@@ -1,19 +1,22 @@
 """Trip carbon footprint (docs/Carbon-Footprint.md).
 
 ``POST /api/carbon/trip`` — pure computation (services/carbon.py): no LLM, no
-network, no storage. Anonymous calls are fine; its own ``carbon`` rate bucket
+storage. The one network read is the crawler's carbon data
+(services/carbon_live.py: newer DESNZ factors, grid intensity), only when
+``CRAWLER_ENABLED`` and cached; off, down or slow, the answer is exactly the
+committed-table one. Anonymous calls are fine; its own ``carbon`` rate bucket
 (per user or client IP), body capped at 512 KB in main.py. 404 when
-``CARBON_FOOTPRINT_ENABLED`` is false. The same body always gives the same
-answer.
+``CARBON_FOOTPRINT_ENABLED`` is false.
 """
 
 from typing import Any, Literal
 
 from fastapi import APIRouter, HTTPException
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field, model_validator
 
 from ...core.config import settings
-from ...services import carbon
+from ...services import carbon, carbon_live, crawler_client
 
 router = APIRouter()
 
@@ -40,7 +43,13 @@ class CarbonTripRequest(BaseModel):
 
 
 @router.post("/carbon/trip")
-def carbon_trip(body: CarbonTripRequest) -> dict:
+async def carbon_trip(body: CarbonTripRequest) -> dict:
     if not settings.carbon_footprint_enabled:
         raise HTTPException(status_code=404, detail="Not Found")
-    return carbon.compute(body.model_dump())
+    req = body.model_dump()
+    live = None
+    if crawler_client.configured():
+        countries = await run_in_threadpool(carbon.stay_countries, req)
+        live = await carbon_live.fetch(carbon.factors(), countries)
+    # Local DB lookups (airports, places): off the event loop
+    return await run_in_threadpool(carbon.compute, req, live)

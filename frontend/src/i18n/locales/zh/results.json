@@ -456,8 +456,9 @@
     "carKm": "相当于一辆普通汽车行驶 {{km}} 公里",
     "budget": "相当于每人每年 {{tonnes}} 吨预算的 {{pct}}",
     "railHint": "更低碳的选择：{{route}} 改乘火车（约 {{km}} 公里）可减少约 {{kg}} 千克 CO₂e。请确认是否有车次。",
+    "liveData": "包含来自 Voyager 爬虫的较新官方数据：",
     "how": "计算方法",
-    "howIntro": "航班在 Google Travel Impact Model 有该航班数据时使用其数值，否则按距离和舱位使用英国政府（DESNZ 2026）的排放因子，并计入非 CO₂ 影响。住宿、交通和活动使用 DESNZ 因子；饮食使用 Our World in Data 的食物数据。估算值均已标注。",
+    "howIntro": "航班在 Google Travel Impact Model 有该航班数据时使用其数值，否则按距离和舱位使用英国政府（DESNZ）的排放因子，并计入非 CO₂ 影响。住宿、交通和活动使用 DESNZ 因子；饮食使用 Our World in Data 的食物数据。估算值均已标注。",
     "close": "关闭",
     "linesTitle": "计入的项目",
     "assumptionsTitle": "假设",
@@ -520,7 +521,9 @@
       "intercity_unknown": "{{route}} 未计入：找不到地点。",
       "food_basket": "饮食：按{{diet}}的典型一天饮食（每人 {{kg_per_day}} 千克）全额计入。",
       "activities_partial": "活动：只估算乘船、大巴游和自驾；其他活动未计入（没有数据）。",
-      "activities_unmodelled": "涉及飞行的活动未计入（没有因子）：{{count}} 项。"
+      "activities_unmodelled": "涉及飞行的活动未计入（没有因子）：{{count}} 项。",
+      "hotel_grid": "{{city}} 没有酒店住宿因子：按该国电网（{{g_per_kwh}} g CO₂e/kWh）× 每间夜 {{kwh}} kWh 当量计算。",
+      "factors_newer": "有较新 DESNZ {{year}} 数值的因子采用该数值（来自 Voyager 爬虫）；其余来自内置表。"
     }
   }
 }

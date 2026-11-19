@@ -162,6 +162,51 @@ describe('CarbonFootprint', () => {
     expect(body.selections.activities).toEqual([{ name: 'Seine cruise' }])
   })
 
+  it('an answer without crawler data shows no source line (older or crawler-off backend)', async () => {
+    await render()
+    expect(q('[data-testid="carbon-live-sources"]')).toBeNull()
+    await act(async () => q('[data-tid="carbon.how"]').click())
+    expect(q('[data-testid="official-source"]')).toBeNull()
+  })
+
+  it('shows the source of crawler numbers on the card and on their lines', async () => {
+    const grid = {
+      id: 'crawler_grid_carbon_ember_grid_is', name: 'Ember yearly electricity data',
+      url: 'https://ember-energy.org/data/yearly-electricity-data/', as_of: '2026-10-01',
+      licence: 'CC-BY-4.0', attribution: 'Ember, CC BY 4.0',
+    }
+    fetchTripCarbon.mockResolvedValue({
+      ...ANSWER,
+      lines: [
+        ...ANSWER.lines.filter((ln) => ln.kind !== 'hotel_nights'),
+        { category: 'stays', kind: 'hotel_nights', label: 'Hotel', kg: 7.8, method: 'estimate', source: grid.id, crawler_source: grid, params: { city: 'Reykjavik', nights: 4, rooms: 1, grid_g_per_kwh: 28 } },
+      ],
+      assumptions: [{ code: 'hotel_grid', text: 'x', params: { city: 'Reykjavik', g_per_kwh: 28, kwh: 70 } }],
+      sources: [...ANSWER.sources, grid],
+      crawler_sources: [grid],
+    })
+    await render()
+    const live = q('[data-testid="carbon-live-sources"]')
+    expect(live.textContent).toContain('Includes newer official data from the Voyager crawler:')
+    expect(live.textContent).toContain('Source: Ember yearly electricity data')
+    expect(live.textContent).toContain('Ember, CC BY 4.0')
+    expect(live.querySelector('a').getAttribute('href')).toBe(grid.url)
+    await act(async () => q('[data-tid="carbon.how"]').click())
+    expect(container.querySelectorAll('[data-testid="official-source"]')).toHaveLength(2)
+    // "via" is SourceLine's forex pivot currency, never shown for carbon
+    expect(container.textContent).not.toMatch(/\bvia\b/)
+    expect(container.textContent).toContain(
+      "No hotel-stay factor for Reykjavik: the country's electricity grid (28 g CO₂e/kWh) × 70 kWh-equivalent per room-night.",
+    )
+  })
+
+  it('tolerates a malformed crawler_sources field', async () => {
+    fetchTripCarbon.mockResolvedValue({ ...ANSWER, crawler_sources: 'x' })
+    await render()
+    expect(q('[data-testid="carbon-total"]')).not.toBeNull()
+    expect(q('[data-testid="carbon-live-sources"]')).toBeNull()
+  })
+
   it('shows a quiet error on other failures', async () => {
     fetchTripCarbon.mockRejectedValue({ response: { status: 500 } })
     await render()

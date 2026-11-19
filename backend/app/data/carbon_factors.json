@@ -838,6 +838,7 @@
   "rooms_per_traveller": 0.5,
   "default_nights": 7,
   "annual_budget_kg_per_person": 2000,
+  "hotel_grid_kwh_per_room_night": 70,
   "activities": [
    {
     "key": "boat",

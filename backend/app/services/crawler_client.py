@@ -250,3 +250,69 @@ async def health() -> dict:
         return {"configured": False, "ok": False}
     stats = await get_json("/v1/stats", ttl=60)
     return {"configured": True, "ok": stats is not None}
+
+
+# Emission factors change once a year: a long cache keeps the calculator's
+# extra cost to one round of requests per 6 h per filter set.
+CARBON_TTL_S = 6 * 3600
+
+
+async def carbon_factors(
+    *,
+    category: str | None = None,
+    country: str | None = None,
+    year: int | None = None,
+    activity: str | None = None,
+    source: str | None = None,
+    limit: int = 100,
+    pages: int = 1,
+) -> list[dict] | None:
+    """Published emission factors (``/v1/carbon/factors``: kind
+    ``emission_factor``, newest factor-set year first), following up to
+    ``pages`` pages. ``None`` when the crawler did not answer. Never raises."""
+    items: list[dict] = []
+    cursor = None
+    for _ in range(max(1, pages)):
+        page = await get_json(
+            "/v1/carbon/factors",
+            {
+                "category": category,
+                "country": country,
+                "year": year,
+                "activity": activity,
+                "source": source,
+                "limit": limit,
+                "cursor": cursor,
+            },
+            ttl=CARBON_TTL_S,
+        )
+        if page is None:
+            return None if not items else items
+        got = page.get("items")
+        if isinstance(got, list):
+            items.extend(i for i in got if isinstance(i, dict))
+        cursor = page.get("next_cursor")
+        if not cursor:
+            break
+    return items
+
+
+async def carbon_grid(
+    country: str,
+    *,
+    period: str | None = "annual",
+    basis: str | None = "lifecycle",
+    limit: int = 10,
+) -> list[dict] | None:
+    """Grid carbon intensity points of one country (``/v1/carbon/grid``:
+    series ``grid_ci:<ISO2>:<period>:<basis>``, newest first). ``None`` when
+    the crawler did not answer. Never raises."""
+    page = await get_json(
+        "/v1/carbon/grid",
+        {"country": country, "period": period, "basis": basis, "limit": limit},
+        ttl=CARBON_TTL_S,
+    )
+    if page is None:
+        return None
+    got = page.get("items")
+    return [i for i in got if isinstance(i, dict)] if isinstance(got, list) else []

@@ -334,6 +334,12 @@ VOYAGER = {
     "rooms_per_traveller": 0.5,
     "default_nights": 7,
     "annual_budget_kg_per_person": 2000,
+    # Stays in a country without a DESNZ hotel-stay factor, when the crawler
+    # has the country's grid intensity (services/carbon_live.py): g CO2e/kWh
+    # × this kWh-equivalent per room-night. Calibrated, not published: the
+    # DESNZ median hotel factor (33.5 kg) at a world-average grid of about
+    # 480 g CO2e/kWh (Ember, life-cycle) is about 70 kWh.
+    "hotel_grid_kwh_per_room_night": 70,
     # Transport-heavy activities: mode, assumed km (per traveller for
     # public modes, per vehicle for car). Everything else is omitted. Terms
     # match whole words (plurals too); ``exclude`` vetoes a match (a place
