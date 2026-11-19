@@ -97,6 +97,7 @@
     "points_other": "{{count}} points",
     "mine_one": "You are #{{rank}} with {{count}} point",
     "mine_other": "You are #{{rank}} with {{count}} points",
+    "profilePrivate": "Your profile is private, so you are not on the global board. Make it followers-only or public to be ranked.",
     "unranked": "You are not ranked yet. Play the daily quiz to get on the board."
   },
   "home": {

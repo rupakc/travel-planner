@@ -2,6 +2,7 @@
   "title": "Baisse de prix repérée",
   "titleTarget": "Votre prix cible est atteint",
   "caught": "Baisse de {{amount}} ({{percent}}) repérée",
+  "percentInline": "({{percent}})",
   "nowPrice": "maintenant",
   "xp": "+{{xp}} XP",
   "note": "Il s’agit de l’écart entre deux prix que nous avons observés. Les prix peuvent changer avant votre réservation.",

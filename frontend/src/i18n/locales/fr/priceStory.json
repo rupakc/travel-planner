@@ -41,6 +41,7 @@
     "help": "Utilisez les flèches gauche et droite pour parcourir les vérifications.",
     "point": "{{price}} le {{date}}",
     "typical": "Fourchette habituelle",
+    "typicalRange": "Fourchette habituelle : {{low}}–{{high}}",
     "lowest": "Plus bas : {{price}}",
     "target": "Cible : {{price}}",
     "baseline": "Premier prix : {{price}}",

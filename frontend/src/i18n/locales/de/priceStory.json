@@ -37,6 +37,7 @@
     "help": "Mit den Pfeiltasten links und rechts wechselst du zwischen den Prüfungen.",
     "point": "{{price}} am {{date}}",
     "typical": "Üblicher Bereich",
+    "typicalRange": "Üblicher Bereich: {{low}}–{{high}}",
     "lowest": "Niedrigster: {{price}}",
     "target": "Ziel: {{price}}",
     "baseline": "Erster Preis: {{price}}",

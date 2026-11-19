@@ -89,6 +89,7 @@
     "you": "（你）",
     "points_other": "{{count}} 分",
     "mine_other": "你排第 {{rank}} 名，{{count}} 分",
+    "profilePrivate": "你的资料是私密的，所以不会出现在全球榜单上。设为仅关注者可见或公开即可获得排名。",
     "unranked": "你还没有排名。参与每日答题即可上榜。"
   },
   "home": {
