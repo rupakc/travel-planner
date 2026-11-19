@@ -4,10 +4,13 @@ results after the flights section has streamed (``FlightsAgent.enrich``).
 What this module encodes (docs/Travel-Impact-Model.md has the full list):
 
 - **Exact flights only.** TIM estimates a single scheduled flight (carrier +
-  flight number + airports + date). A result gets ``emissions`` only when every
-  leg is a non-stop flight with a parseable flight number; a connecting leg
-  carries only its first segment's number, and a partial estimate would read as
-  the whole trip's, so those results get none.
+  flight number + airports + date). A non-stop leg is one flight; a connecting
+  leg is estimated as the sum of its ``segments`` (SerpAPI results list each
+  flown segment) when every segment has a parseable flight number and the
+  segments chain from the leg's origin to its destination. A connecting leg
+  without that (an AI result with only the first segment's number) gets no
+  estimate rather than a partial one. A result gets ``emissions`` only when
+  every leg is estimated; each estimated leg also gets its own ``emissions``.
 - **Never blocks the flights section.** One batched call per result set, a
   short timeout, and any failure leaves the results as they were.
 - **Daily cap.** Flights sent to TIM count against ``TIM_DAILY_CAP`` per UTC
@@ -93,8 +96,9 @@ def status() -> dict:
 
 
 def _leg_key(leg: dict) -> tuple | None:
-    """The TIM lookup key of one leg, or None when the leg can't be estimated
-    exactly (connection, missing or odd flight number, airports, date)."""
+    """The TIM lookup key of one non-stop flight, or None when it can't be
+    estimated exactly (connection, missing or odd flight number, airports,
+    date)."""
     if not isinstance(leg, dict):
         return None
     if (leg.get("stops") or 0) != 0 or leg.get("layovers"):
@@ -106,6 +110,35 @@ def _leg_key(leg: dict) -> tuple | None:
     if not m or not d or not _IATA.match(origin) or not _IATA.match(dest):
         return None
     return (m.group(1), int(m.group(2)), origin, dest, d.group(0))
+
+
+def _leg_keys(leg: dict) -> list[tuple] | None:
+    """TIM keys for every flight of one leg: one for a non-stop leg, one per
+    segment for a connecting leg whose segments all have flight numbers and
+    chain origin -> ... -> destination. None when any part can't be
+    estimated (a partial sum would read as the whole leg's)."""
+    if not isinstance(leg, dict):
+        return None
+    if (leg.get("stops") or 0) == 0 and not leg.get("layovers"):
+        key = _leg_key(leg)
+        return [key] if key else None
+    segments = leg.get("segments")
+    if not isinstance(segments, list) or len(segments) < 2:
+        return None
+    if leg.get("stops") is not None and leg.get("stops") != len(segments) - 1:
+        return None
+    keys = [
+        _leg_key({**s, "stops": 0}) if isinstance(s, dict) else None for s in segments
+    ]
+    if not all(keys):
+        return None
+    if keys[0][2] != str(leg.get("origin") or "").upper():
+        return None
+    if keys[-1][3] != str(leg.get("destination") or "").upper():
+        return None
+    if any(a[3] != b[2] for a, b in zip(keys, keys[1:])):
+        return None
+    return keys
 
 
 def _legs(result: dict) -> list[dict] | None:
@@ -199,7 +232,7 @@ def _summarise(entries: list[dict], cabin: str, version: str | None) -> dict | N
         "cabin": cabin,
         "by_class": by_class,
         "contrails_bucket": buckets[0] if buckets else None,
-        "legs": len(entries),
+        "legs": len(entries),  # flights summed (segments, both directions)
         "model_version": version,
         "source": SOURCE,
         "attribution_url": ATTRIBUTION_URL,
@@ -216,17 +249,26 @@ async def annotate(data: dict, cabin: str | None = None) -> dict:
     if not isinstance(results, list) or not results:
         return data
     try:
-        plans: list[tuple[dict, list[tuple]]] = []
+        # (result, [(leg, [keys of that leg's flights])])
+        plans: list[tuple[dict, list[tuple[dict, list[tuple]]]]] = []
         for r in results:
             legs = _legs(r)
             if not legs:
                 continue
-            keys = [_leg_key(leg) for leg in legs]
-            if all(keys):
-                plans.append((r, keys))
+            per_leg = [(leg, _leg_keys(leg)) for leg in legs]
+            if all(ks for _, ks in per_leg):
+                plans.append((r, per_leg))
         if not plans:
             return data
-        wanted = sorted({k for _, ks in plans for k in ks if k not in _cache})
+        wanted = sorted(
+            {
+                k
+                for _, per_leg in plans
+                for _, ks in per_leg
+                for k in ks
+                if k not in _cache
+            }
+        )
         version = _cache.get(("__version__",))
         if wanted:
             granted = api_budget_db.reserve(_provider_today(), len(wanted), cap())
@@ -246,12 +288,22 @@ async def annotate(data: dict, cabin: str | None = None) -> dict:
                 for k in ask:
                     _cache[k] = found.get(k)
         cabin_key = _cabin_key(cabin)
-        for r, keys in plans:
+        for r, per_leg in plans:
+            keys = [k for _, ks in per_leg for k in ks]
             if any(k not in _cache or _cache[k] is None for k in keys):
                 continue
             summary = _summarise([_cache[k] for k in keys], cabin_key, version)
-            if summary:
-                r["emissions"] = summary
+            if not summary:
+                continue
+            r["emissions"] = summary
+            if len(per_leg) > 1 or r is not per_leg[0][0]:
+                # Per-leg figures let a footprint count one direction only
+                for leg, ks in per_leg:
+                    leg_summary = _summarise(
+                        [_cache[k] for k in ks], cabin_key, version
+                    )
+                    if leg_summary:
+                        leg["emissions"] = leg_summary
     except Exception as exc:  # emissions are a bonus; never break flights
         logger.warning("tim_failed: %s", type(exc).__name__)
     return data

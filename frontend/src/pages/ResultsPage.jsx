@@ -37,6 +37,8 @@ import AirportSearch from '../components/ui/AirportSearch'
 import NationalitySearch from '../components/ui/NationalitySearch'
 import TagInput from '../components/ui/TagInput'
 import CostBreakdown from '../components/CostBreakdown'
+import CarbonFootprint from '../components/CarbonFootprint'
+import { selectionsHaveTravel } from '../utils/carbon'
 import PlanExport from '../components/PlanExport'
 import { toRecentSearch } from '../utils/recentSearches'
 import { apiReturnDate } from '../utils/compare'
@@ -2651,6 +2653,10 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
           <CompletenessMeter selections={selections} searchData={searchData} surface="drawer"
             visaChecked={!!results?.visa && !results.visa.error} />
           <CostBreakdown selections={selections} searchData={searchData} />
+          {selectionsHaveTravel(selections) && (
+            <CarbonFootprint mode="plan" compact searchData={searchData} selections={selections}
+              itinerary={liveItinerary || selections?.itinerary} />
+          )}
           <PlanExport planName={planName} planId={loadedPlanId} searchData={searchData} selections={selections} itinerary={liveItinerary} source="results" />
           <WatchTripButton plan={loadedPlanId ? { id: loadedPlanId, name: planName, search_data: searchData, selections } : null} showHint savedNote source="my_plan" />
 
@@ -4275,6 +4281,12 @@ export default function ResultsPage() {
               onFindCheaperHotels={handleFindCheaperHotels}
               findingCheaperHotels={isHotelFilterLoading}
             />
+          </div>
+        )}
+
+        {isDone && (
+          <div id="section-carbon" className="mb-5">
+            <CarbonFootprint mode="results" searchData={searchData} results={results} />
           </div>
         )}
 

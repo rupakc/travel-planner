@@ -446,5 +446,89 @@
       "business": "Business",
       "first": "First"
     }
+  },
+  "carbon": {
+    "title": "Trip carbon footprint",
+    "loading": "Working out the footprint…",
+    "error": "The footprint isn't available right now.",
+    "total": "≈ {{kg}} kg CO₂e",
+    "perPerson": "{{kg}} kg per person",
+    "kg": "{{kg}} kg",
+    "cat": {
+      "flights": "Flights",
+      "stays": "Stays",
+      "ground": "Getting around",
+      "food": "Food",
+      "activities": "Activities"
+    },
+    "carKm": "Like driving {{km}} km in an average car",
+    "budget": "{{pct}} of a {{tonnes}} t yearly budget per person",
+    "railHint": "Lower-carbon option: a train for {{route}} (about {{km}} km) could save about {{kg}} kg CO₂e. Check whether one runs.",
+    "how": "How we calculate",
+    "howIntro": "Flights use Google's Travel Impact Model when it has the flight, otherwise UK government (DESNZ 2026) factors for the distance and cabin, including non-CO₂ effects. Stays, transport and activities use DESNZ factors; meals use Our World in Data food figures. Estimates are labelled.",
+    "close": "Close",
+    "linesTitle": "What we counted",
+    "assumptionsTitle": "Assumptions",
+    "sourcesTitle": "Sources",
+    "method": {
+      "measured_tim": "Google TIM",
+      "factor": "Factor",
+      "estimate": "Estimate"
+    },
+    "diet": {
+      "label": "Meals",
+      "mixed": "Mixed diet",
+      "meat_heavy": "Lots of meat",
+      "pescatarian": "Pescatarian",
+      "vegetarian": "Vegetarian",
+      "vegan": "Vegan"
+    },
+    "cabin": {
+      "economy": "economy",
+      "premium_economy": "premium economy",
+      "business": "business",
+      "first": "first"
+    },
+    "mode": {
+      "rail_national": "train",
+      "rail_international": "international train",
+      "light_rail_tram": "tram",
+      "metro": "metro",
+      "bus_local": "bus",
+      "coach": "coach",
+      "taxi_vehicle": "taxi",
+      "car_average": "car",
+      "ferry_foot": "boat"
+    },
+    "line": {
+      "flight_tim": "Flight {{route}}",
+      "flight_factor": "Flight {{route}} ({{km}} km)",
+      "hotel_nights": "Stay in {{city}}: nights {{nights}}, rooms {{rooms}}",
+      "local_measured": "Local trips between itinerary stops: {{km}} km",
+      "local_estimate": "Local trips (estimated): {{km}} km",
+      "intercity": "{{route}} by {{mode}} ({{km}} km)",
+      "meals": "Meals ({{diet}}): days {{days}}, travellers {{travellers}}",
+      "activity_estimate": "{{name}} (about {{km}} km by {{mode}})"
+    },
+    "assume": {
+      "travellers_default": "One traveller (none given).",
+      "nights_default": "{{nights}} nights (no return date).",
+      "flights_cheapest": "Flights: the cheapest listed option.",
+      "flights_cabin": "Cabin: {{cabin}}.",
+      "flights_none": "No flight in the plan, so flights are left out.",
+      "flight_desnz": "Flights without a Google TIM figure: great-circle distance × the DESNZ factor for the distance band and cabin, with radiative forcing.",
+      "flight_unknown_airport": "Flight {{route}} left out: airport not found.",
+      "rooms_default": "Rooms: {{rooms}} (one per two travellers).",
+      "hotel_default": "No DESNZ hotel factor for {{city}}: the median of the DESNZ countries ({{kg}} kg per room-night).",
+      "stays_none": "No hotel in the plan, so stays are left out.",
+      "ground_default_mix": "Local trips: 40% metro, 40% bus, 20% taxi (no transport picked).",
+      "ground_straight_line": "Local trips: straight-line distance between itinerary stops.",
+      "ground_per_day": "Days without itinerary stops: {{km_per_day}} km of local transport a day.",
+      "intercity_rail": "Moves between cities without a picked flight: by train.",
+      "intercity_unknown": "{{route}} left out: place not found.",
+      "food_basket": "Meals: a typical day of food for a {{diet}} diet ({{kg_per_day}} kg per person), counted in full.",
+      "activities_partial": "Activities: only boat trips, coach tours and drives are estimated; others are left out (no data).",
+      "activities_unmodelled": "Flight-based activities left out (no factor): {{count}}."
+    }
   }
 }

@@ -357,6 +357,14 @@ export async function liveCheckWatch(kind, watchId, token) {
   return (await api.post('/live-check', { kind, watch_id: watchId }, authHeaders(token))).data
 }
 
+// ── Trip carbon footprint (pure computation; needs features.carbon) ─────────
+
+/** CO2e of a trip from a plan's selections or a search result summary
+ * (body: utils/carbon.js). Anonymous-friendly; 404 on an older backend. */
+export async function fetchTripCarbon(body) {
+  return (await api.post('/carbon/trip', body)).data
+}
+
 // ── Tripadvisor ratings (live, on demand) ───────────────────────────────────
 // Tripadvisor's terms forbid storing or caching its content: callers keep the
 // answer in component state only (never in plans, shares, storage, telemetry

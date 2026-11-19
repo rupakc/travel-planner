@@ -32,6 +32,8 @@ import { useAlertsV2 } from '../hooks/useAlertsV2'
 import { tripFromPlan, tripFromSearch } from '../utils/fareWatch'
 import TripMap from '../components/TripMap'
 import CostBreakdown from '../components/CostBreakdown'
+import CarbonFootprint from '../components/CarbonFootprint'
+import { selectionsHaveTravel } from '../utils/carbon'
 import PlanExport from '../components/PlanExport'
 import { enumLabel } from '../utils/enumLabel'
 import { generatePlanName, computePlanCost, getBudgetStatus, countSelections, EMPTY_SELECTIONS } from '../utils/planHelpers'
@@ -777,6 +779,10 @@ export function ChatPlanDrawer({ isOpen, onClose, selections, searchContext, pla
           </div>
 
           <CostBreakdown selections={selections} searchData={searchContext} />
+          {selectionsHaveTravel(selections) && (
+            <CarbonFootprint mode="plan" compact searchData={searchContext} selections={selections}
+              itinerary={selections?.itinerary} />
+          )}
           <CompletenessMeter selections={selections} searchData={searchContext} surface="drawer" />
           {journeyOn && (loadedPlanId || savedTripId) && onOpenTrip && (
             <button type="button" data-tid="chat.open-trip" onClick={() => onOpenTrip(loadedPlanId || savedTripId)}

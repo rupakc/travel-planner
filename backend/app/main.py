@@ -30,6 +30,7 @@ from .api.routes.alerts import router as alerts_router
 from .api.routes.analytics import router as analytics_router
 from .api.routes.auth import router as auth_router
 from .api.routes.avatars import router as avatars_router
+from .api.routes.carbon import router as carbon_router
 from .api.routes.chat import router as chat_router
 from .api.routes.client_config import router as client_config_router
 from .api.routes.compare import router as compare_router
@@ -251,6 +252,13 @@ app.add_middleware(
 
 app.add_middleware(
     BodySizeLimit,
+    prefix="/api/carbon/",
+    max_bytes=512 * 1024,
+    message="That trip is too big to work out — send fewer results.",
+)
+
+app.add_middleware(
+    BodySizeLimit,
     prefix="/api/account/avatar",
     max_bytes=2 * 1024 * 1024 + 64 * 1024,
     message="That image is too big — use one under 2 MB.",
@@ -306,6 +314,13 @@ app.include_router(
 app.include_router(client_config_router, prefix="/api", tags=["config"])
 # Tripadvisor ratings: not an AI route (no LLM); auth + its own bucket per route
 app.include_router(tripadvisor_router, prefix="/api", tags=["tripadvisor"])
+# Trip carbon footprint: pure computation (no LLM), anonymous-friendly, own bucket
+app.include_router(
+    carbon_router,
+    prefix="/api",
+    tags=["carbon"],
+    dependencies=[Depends(rate_limit("carbon"))],
+)
 app.include_router(
     chat_router, prefix="/api", tags=["chat"], dependencies=_limited("chat")
 )

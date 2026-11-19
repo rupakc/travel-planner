@@ -72,13 +72,21 @@ Live, on-demand Tripadvisor ratings (Terra Discover API). On only when `TRIPADVI
 
 ### Flight emissions: Google Travel Impact Model (optional)
 
-Per-flight CO₂e estimates from Google's Travel Impact Model, added to flight results after the flights section has streamed (it never delays it). Only results whose every leg is a non-stop flight with a flight number are estimated. See [Flight Emissions](Travel-Impact-Model.md).
+Per-flight CO₂e estimates from Google's Travel Impact Model, added to flight results after the flights section has streamed (it never delays it). Only results whose every leg can be matched to scheduled flights are estimated: a non-stop leg with a flight number, or a connecting leg whose every segment has one. See [Flight Emissions](Travel-Impact-Model.md).
 
 | Variable | Default | Description |
 |---|---|---|
 | `TIM_ENABLED` | `false` | Feature flag. Off: no call is made and results carry no `emissions`. |
 | `TIM_API_KEY` | `""` | Google Cloud API key restricted to `travelimpactmodel.googleapis.com`, sent as `X-Goog-Api-Key`; never logged or returned. In production it comes from the Secret Manager secret `crawler-src-google-tim-key` (`SECRET_MANAGER_SECRETS=…,TIM_API_KEY=crawler-src-google-tim-key`). |
 | `TIM_DAILY_CAP` | `2000` | Most flights sent to TIM per UTC day, counted in SQLite (`api_budget` row `google_tim:<date>`). Answers are cached per flight and date for 24 h; cache hits don't count. |
+
+### Trip carbon footprint
+
+`POST /api/carbon/trip` works out a trip's CO₂e from the committed factor table `backend/app/data/carbon_factors.json` (UK DESNZ 2026, Our World in Data). No key, no network, no LLM. See [Carbon Footprint](Carbon-Footprint.md).
+
+| Variable | Default | Description |
+|---|---|---|
+| `CARBON_FOOTPRINT_ENABLED` | `true` | Feature flag (`features.carbon` in `/api/config`). Off: the endpoint answers `404` and the web app hides the card. |
 
 ### Crawler data (optional)
 
@@ -240,6 +248,7 @@ AI-calling endpoints are rate-limited per signed-in user, or per client IP for a
 | `RATE_LIMIT_IMPORT` | `20` | `/api/import/extract` (plan from a link, text or screenshots) |
 | `RATE_LIMIT_TELEMETRY` | `120` | `POST /api/telemetry` (batches per caller; a real web client sends about 40 per 10 minutes; not an AI route, so never behind `ALLOW_ANONYMOUS_AI`). The total across callers is bounded by `TELEMETRY_MAX_DB_MB` and `TELEMETRY_MAX_EVENTS_PER_DAY`. |
 | `RATE_LIMIT_TRIPADVISOR` | `10` | `POST /api/tripadvisor/attractions` per signed-in user (each lookup is billed by Tripadvisor; not an AI route). |
+| `RATE_LIMIT_CARBON` | `120` | `POST /api/carbon/trip` per user or client IP (pure computation; not an AI route, never behind `ALLOW_ANONYMOUS_AI`). |
 | `RATE_LIMIT_LIGHT_AI` | `60` | Single-agent routes, `/*/filtered`, `/api/flights/fare-calendar`, `/api/stress-test`, `/api/layover`, `/api/events`, `/api/walking-tours`, creating a fare watch, its "Check now", `/api/nearby`, `/api/live-check` and changing the account email |
 | `RATE_LIMIT_SOCIAL_WRITE` | `30` | Phase 5: social writes per user (profile, follow, block, ideas, comments, reports); not an AI route. |
 | `RATE_LIMIT_SOCIAL_READ` | `120` | Phase 5: social reads per user (profiles, lists, feed). |
