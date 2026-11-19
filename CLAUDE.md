@@ -105,7 +105,7 @@ backend/
     main.py             FastAPI app, lifespan (restore → seed → tables → admin → backup loop), routers, /health
     agents/             loader, base_agent, orchestrator, chat_agent, chat_itinerary_agent,
                         *_agent.py specialists, static_results.py, web_tools.py
-    api/routes/         one router per domain (53): search, chat, compare, discover, flights,
+    api/routes/         one router per domain (54): search, chat, compare, discover, flights,
                         hotels, activities, visa, sim, tips, getting_around, forex, itinerary,
                         events, walking_tours, layover, stress_test, plans, preferences,
                         recent_searches, taste, airports, nationalities, auth, admin,
@@ -113,7 +113,7 @@ backend/
                         notifications, devices, nearby, live_check, telemetry, client_config,
                         signup, sessions, oauth, account, avatars, account_data, quota,
                         game, admin_invites, social, social_ideas, admin_social, play, trips, trip_prep, trip_money, trip_journal,
-                        trip_offline, trip_today, trip_recap, tripadvisor
+                        trip_offline, trip_today, trip_recap, tripadvisor, carbon
     game/               engine, rules, hooks, rules.json (XP rules, badges, levels, streaks)
                         quiz/ (bank.json, pure engine); social + play (Phase 5): db/social_db,
                         social_ideas_db, quiz_db, play_db; services/social_profile, moderation,
@@ -252,7 +252,7 @@ All endpoints are under `/api` (Swagger UI at `/docs`). Full list: `docs/API-Ref
 | `/api/social/*`, `/api/play/*`, `/api/admin/social/*` | Social and Play (Phase 5, flags `SOCIAL_ENABLED` / `PLAY_ENABLED`): `docs/Social-API.md` |
 | `GET /health`, `GET /health/agents` | Health (reports `serpapi_configured`, `push_configured`, `crawler`); deep LLM check on the configured provider (`llm`, `llm_provider`) |
 
-**Rate limits.** Every AI-calling endpoint is rate-limited per signed-in user (or per client IP when anonymous) in an in-process sliding window (`backend/app/core/rate_limit.py`, wired as router dependencies in `main.py`). Account buckets per 10 min: login 10, auth_email 10, email_address 3, signup 5, oauth 30, refresh 60, account 30. AI defaults per 10 minutes: search 10 (`/search`, `/search/sync`), chat 30, compare 30, discover 10, light_ai 60 (every single-agent route, `/*/filtered`, `/flights/fare-calendar`, `/stress-test`, `/layover`, `/nearby`, `/live-check`). Over the limit → `429` with `Retry-After` and a string `detail` the frontend shows as-is. Chat-triggered full plans also count against the search bucket (`ChatAgent._full_plan_refusal` calls `try_consume` before any full plan — at the top of `_run_comprehensive_planning`, or up front for refinements that rebuild the itinerary; over it, a friendly in-stream message instead of a 429). `/telemetry` has its own `telemetry` bucket (`RATE_LIMIT_TELEMETRY`, 120). `/auth/login` has its own `login` bucket (10 per IP) plus a per-username failure lock (20). `ALLOW_ANONYMOUS_AI=false` (production) makes every AI router require sign-in. Settings: `RATE_LIMIT_*` (see docs/Configuration.md); tests run with `RATE_LIMIT_ENABLED=false`.
+**Rate limits.** Every AI-calling endpoint is rate-limited per signed-in user (or per client IP when anonymous) in an in-process sliding window (`backend/app/core/rate_limit.py`, wired as router dependencies in `main.py`). Account buckets per 10 min: login 10, auth_email 10, email_address 3, signup 5, oauth 30, refresh 60, account 30. AI defaults per 10 minutes: search 10 (`/search`, `/search/sync`), chat 30, compare 30, discover 10, light_ai 60 (every single-agent route, `/*/filtered`, `/flights/fare-calendar`, `/stress-test`, `/layover`, `/nearby`, `/live-check`). Over the limit → `429` with `Retry-After` and a string `detail` the frontend shows as-is. Chat-triggered full plans also count against the search bucket (`ChatAgent._full_plan_refusal` calls `try_consume` before any full plan — at the top of `_run_comprehensive_planning`, or up front for refinements that rebuild the itinerary; over it, a friendly in-stream message instead of a 429). `/telemetry` has its own `telemetry` bucket (`RATE_LIMIT_TELEMETRY`, 120), and `/carbon/trip` its own `carbon` bucket (`RATE_LIMIT_CARBON`, 120; no AI, anonymous allowed). `/auth/login` has its own `login` bucket (10 per IP) plus a per-username failure lock (20). `ALLOW_ANONYMOUS_AI=false` (production) makes every AI router require sign-in. Settings: `RATE_LIMIT_*` (see docs/Configuration.md); tests run with `RATE_LIMIT_ENABLED=false`.
 
 **Production runtime.** The image runs `python -m app.entrypoint`: optional Secret Manager secrets (`SECRET_MANAGER_SECRETS`) into the process env only, refuses an empty `JWT_SECRET_KEY`, execs uvicorn (1 worker, `--timeout-graceful-shutdown 5`, proxy headers only from `FORWARDED_ALLOW_IPS`, never `*`). `/search` and `/chat` stream through `core/sse.guarded_stream` (15 s keepalives; every task the stream started is cancelled when the client disconnects). Push can use ADC (`FCM_USE_ADC`). `GET /internal/streams` (`{"active_streams": n}`, 404 when forwarded, not routed by Caddy) lets the VM's deployer drain before recreating Caddy.
 

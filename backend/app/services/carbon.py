@@ -23,6 +23,7 @@ translate them; ``assumptions`` work the same way (``code`` + ``params``).
 from __future__ import annotations
 
 import json
+import logging
 import math
 import re
 from datetime import date
@@ -31,6 +32,8 @@ from pathlib import Path
 
 from ..schemas.request import allocate_city_days
 from ..utils.geo import haversine_km
+
+logger = logging.getLogger(__name__)
 
 FACTORS_FILE = Path(__file__).resolve().parent.parent / "data" / "carbon_factors.json"
 
@@ -117,43 +120,80 @@ def _point(lat, lng) -> tuple[float, float] | None:
     return la, lo
 
 
+class _Missing(LookupError):
+    """Not in the local data. Raised (never returned) inside the cached
+    lookups so only real answers are cached: a DB error escapes the cache too
+    and the next call tries again."""
+
+
 @lru_cache(maxsize=4096)
-def airport(code: str) -> tuple[float, float, str | None] | None:
-    """(lat, lng, country_code) of an IATA airport from the airports table."""
+def _airport_row(code: str) -> tuple[float, float, str | None]:
     from ..db.database import get_connection
 
+    with get_connection() as conn:
+        row = conn.execute(
+            "SELECT latitude, longitude, country_code FROM airports "
+            "WHERE iata_code = ?",
+            (code,),
+        ).fetchone()
+    p = _point(row[0], row[1]) if row else None
+    if not p:
+        raise _Missing(code)
+    return p[0], p[1], row[2] or None
+
+
+def airport(code: str) -> tuple[float, float, str | None] | None:
+    """(lat, lng, country_code) of an IATA airport from the airports table."""
     try:
-        with get_connection() as conn:
-            row = conn.execute(
-                "SELECT latitude, longitude, country_code FROM airports "
-                "WHERE iata_code = ?",
-                (code,),
-            ).fetchone()
+        return _airport_row(code)
+    except _Missing:
+        return None
     except Exception:
+        logger.warning("carbon_airport_lookup_failed", exc_info=True)
         return None
-    if not row:
-        return None
-    p = _point(row[0], row[1])
-    return (p[0], p[1], row[2] or None) if p else None
 
 
 @lru_cache(maxsize=2048)
-def place(name: str) -> tuple[float, float, str | None] | None:
-    """(lat, lng, country_code) of a typed city, from the local place data."""
+def _place_row(name: str) -> tuple[float | None, float | None, str | None]:
     from ..db.places_db import resolve_place
 
+    found = resolve_place(name)
+    if not found:
+        raise _Missing(name)
+    p = _point(found.lat, found.lng)
+    cc = found.country_code or None
+    if not p:
+        # Places without coordinates of their own (resolved through a hint or
+        # a nearby airport: Kyoto, Bali, Santorini): their first airport.
+        for code in found.airports or ():
+            try:
+                a = _airport_row(code)
+            except _Missing:
+                continue
+            p = a[:2]
+            cc = cc or a[2]
+            break
+    if not p and not cc:
+        raise _Missing(name)
+    return (p[0], p[1], cc) if p else (None, None, cc)
+
+
+def place(name: str) -> tuple[float | None, float | None, str | None] | None:
+    """(lat, lng, country_code) of a typed city, from the local place data.
+    lat/lng can be None when only the country is known."""
     if not isinstance(name, str) or not name.strip():
         return None
     try:
-        found = resolve_place(name)
+        return _place_row(name)
+    except _Missing:
+        return None
     except Exception:
+        logger.warning("carbon_place_lookup_failed", exc_info=True)
         return None
-    if not found:
-        return None
-    p = _point(found.lat, found.lng)
-    if not p:
-        return None
-    return p[0], p[1], found.country_code or None
+
+
+def _has_point(p) -> bool:
+    return bool(p) and p[0] is not None and p[1] is not None
 
 
 def _km(a: tuple, b: tuple) -> float:
@@ -617,7 +657,7 @@ class _Run:
                 continue
             pa, pb = place(a), place(b)
             route = f"{a} – {b}"
-            if not pa or not pb:
+            if not _has_point(pa) or not _has_point(pb):
                 self.assume(
                     "intercity_unknown",
                     f"{route} left out: place not found.",
@@ -667,19 +707,22 @@ class _Run:
         )
 
     # ── activities
-    def activities(self, names: list[str], n: int) -> None:
+    def activities(self, names: list[tuple[str, bool]], n: int) -> None:
         if not names:
             return
         rules = self.a["activities"]
-        unmodelled = self.a["activities_unmodelled"]
+        unmodelled = _words(tuple(self.a["activities_unmodelled"]), prefix=True)
         skipped = 0
-        for name in names[:100]:
+        for name, measured in names[:100]:
             text = name.lower()
-            if any(u in text for u in unmodelled):
+            if unmodelled.search(text):
                 skipped += 1
                 continue
-            rule = next((r for r in rules if any(m in text for m in r["match"])), None)
+            rule = next((r for r in rules if _rule_matches(r, text)), None)
             if not rule:
+                continue
+            if measured and rule.get("skip_if_measured"):
+                # The trip there is already a measured local hop
                 continue
             kg = self.mode_kg(rule["mode"], rule["km"], n)
             self.line(
@@ -708,29 +751,73 @@ class _Run:
             )
 
 
-def _activity_names(itinerary, selected: list) -> list[str]:
-    names: list[str] = []
+@lru_cache(maxsize=64)
+def _words(terms: tuple[str, ...], prefix: bool = False) -> re.Pattern:
+    """Whole-word (and plural) match of any of ``terms``; ``prefix`` lets a
+    term be a word's start ("skydiv" → skydiving)."""
+    alts = "|".join(re.escape(t) for t in sorted(terms, key=len, reverse=True))
+    tail = r"\w*" if prefix else r"(?:s|es)?\b"
+    return re.compile(rf"\b(?:{alts}){tail}")
+
+
+def _rule_matches(rule: dict, text: str) -> bool:
+    if not _words(tuple(rule["match"])).search(text):
+        return False
+    ex = rule.get("exclude") or ()
+    return not (ex and _words(tuple(ex)).search(text))
+
+
+def _activity_names(itinerary, selected: list) -> list[tuple[str, bool]]:
+    """(name, measured) per distinct activity: the itinerary's slots, then
+    picked activities it doesn't mention. ``measured``: the slot has its own
+    coordinates on a day with measured local hops."""
+    names: list[tuple[str, bool]] = []
+    seen: set[str] = set()
+
+    def add(nm: str, measured: bool) -> None:
+        key = " ".join(nm.lower().split())
+        if key and key not in seen:
+            seen.add(key)
+            names.append((nm, measured))
+
     days = itinerary.get("days") if isinstance(itinerary, dict) else None
     if isinstance(days, list):
         for d in days:
-            for s in (d.get("slots") or []) if isinstance(d, dict) else []:
-                if isinstance(s, dict) and isinstance(s.get("activity"), str):
-                    names.append(s["activity"])
-    # Picked activities the itinerary doesn't already mention
-    slots = [n.lower() for n in names]
+            slots = [
+                s
+                for s in ((d.get("slots") or []) if isinstance(d, dict) else [])
+                if isinstance(s, dict)
+            ]
+            day_measured = (
+                sum(1 for s in slots if _point(s.get("lat"), s.get("lng"))) >= 2
+            )
+            for s in slots:
+                if isinstance(s.get("activity"), str):
+                    has_pt = _point(s.get("lat"), s.get("lng")) is not None
+                    add(s["activity"], day_measured and has_pt)
+    slots = list(seen)
     for a in selected or []:
         if isinstance(a, dict):
             nm = a.get("name") or a.get("title")
             if isinstance(nm, str) and not any(nm.lower() in t for t in slots):
-                names.append(nm)
+                add(nm, False)
     return names
 
 
+def _price(r: dict) -> float:
+    v = _num(r.get("price_usd"))
+    if v is None:
+        v = _num(r.get("price"))
+    return v if v is not None and v > 0 else math.inf
+
+
 def _cheapest(results) -> dict | None:
+    """The lowest-priced result (the first among equals; a missing or 0
+    price, which SerpAPI gives when it has none, sorts last)."""
     if not isinstance(results, list):
         return None
     rs = [r for r in results if isinstance(r, dict)]
-    return rs[0] if rs else None
+    return min(rs, key=_price) if rs else None
 
 
 def compute(req: dict) -> dict:

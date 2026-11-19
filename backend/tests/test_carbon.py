@@ -603,3 +603,143 @@ def test_picked_activities_join_the_itinerary_without_double_counting():
         "boat",
         "coach_tour",
     ]
+
+
+# ── Review fixes ─────────────────────────────────────────────────────────────
+
+
+@pytest.mark.parametrize(
+    "name,cc", [("Kyoto", "JP"), ("Bali", "ID"), ("Santorini", "GR")]
+)
+def test_place_without_own_coordinates_keeps_country_and_borrows_airport(name, cc):
+    p = carbon.place(name)
+    assert p is not None and p[2] == cc
+    assert p[0] is not None and p[1] is not None
+
+
+def test_kyoto_stay_uses_the_japan_factor():
+    out = carbon.compute(
+        {
+            "search": {**TRIP, "destination": "Kyoto", "num_travelers": 2},
+            "selections": {"hotel": {"name": "Ryokan"}},
+        }
+    )
+    (ln,) = lines(out, "hotel_nights")
+    jp = carbon.factors()["hotel"]["by_country"]["JP"]["value"]
+    assert ln["method"] == "factor" and ln["params"]["country"] == "JP"
+    assert ln["kg"] == pytest.approx(jp * 4 * 1)
+    assert "hotel_default" not in codes(out)
+
+
+def test_tokyo_to_kyoto_intercity_is_counted():
+    out = carbon.compute(
+        {
+            "search": {**TRIP, "num_travelers": 1, "destinations": ["Tokyo", "Kyoto"]},
+            "selections": {"flights": [{"leg_index": 0, **leg("LHR", "HND")}]},
+        }
+    )
+    (ln,) = lines(out, "intercity")
+    assert ln["params"]["route"] == "Tokyo – Kyoto"
+    assert 300 < ln["params"]["km"] < 700
+    assert "intercity_unknown" not in codes(out)
+
+
+def test_lookup_errors_are_not_cached(monkeypatch):
+    import app.db.database as database
+
+    carbon._airport_row.cache_clear()
+    real = database.get_connection
+
+    def boom():
+        raise RuntimeError("db locked")
+
+    monkeypatch.setattr(database, "get_connection", boom)
+    assert carbon.airport("CDG") is None
+    monkeypatch.setattr(database, "get_connection", real)
+    assert carbon.airport("CDG") is not None
+    assert carbon.airport("ZZZ") is None
+
+
+@pytest.mark.parametrize(
+    "activity",
+    [
+        "Shopping on Rodeo Drive",
+        "Stroll the Quadrilatero della Moda",
+        "Lunch at the Ferry Building",
+        "Coffee at the Boathouse cafe",
+        "Drinks on Boat Quay",
+        "Hidden Gems Walk",
+    ],
+)
+def test_activity_rules_match_whole_words_only(activity):
+    itin = {"days": [{"slots": [{"activity": activity}]}]}
+    out = carbon.compute({"search": TRIP, "selections": {}, "itinerary": itin})
+    assert lines(out, category="activities") == []
+
+
+@pytest.mark.parametrize(
+    "activity,rule",
+    [
+        ("Sunset boat trips", "boat"),
+        ("Quad biking in the dunes", "car_tour"),
+        ("ATVs at the canyon", "car_tour"),
+        ("Morning game drive", "car_tour"),
+        ("Bus tours of the city", "coach_tour"),
+    ],
+)
+def test_activity_rules_still_match_real_ones(activity, rule):
+    itin = {"days": [{"slots": [{"activity": activity}]}]}
+    out = carbon.compute({"search": TRIP, "selections": {}, "itinerary": itin})
+    assert [a["params"]["rule"] for a in lines(out, category="activities")] == [rule]
+
+
+def test_measured_day_trip_is_not_counted_twice_and_slots_dedupe():
+    itin = {
+        "days": [
+            {
+                "slots": [
+                    {"activity": "Hotel", "lat": 35.0116, "lng": 135.7681},
+                    {"activity": "Day trip to Nara", "lat": 34.6851, "lng": 135.8048},
+                ]
+            },
+            {
+                "slots": [
+                    {"activity": "Arashiyama boat ride"},
+                    {"activity": "Arashiyama  Boat ride"},
+                    {"activity": "Excursion to Himeji"},
+                ]
+            },
+        ]
+    }
+    out = carbon.compute(
+        {
+            "search": {**TRIP, "destination": "Kyoto"},
+            "selections": {},
+            "itinerary": itin,
+        }
+    )
+    assert lines(out, "local_measured")
+    acts = lines(out, category="activities")
+    assert [a["params"]["name"] for a in acts] == [
+        "Arashiyama boat ride",
+        "Excursion to Himeji",
+    ]
+
+
+def test_results_mode_picks_the_lowest_price_per_leg():
+    results = {
+        "flights": {
+            "legs": [
+                {
+                    "results": [
+                        {"leg_index": 0, "price_usd": 0, **leg("LHR", "JFK")},
+                        {"leg_index": 0, "price_usd": 500, **leg("LHR", "BCN")},
+                        {"leg_index": 0, "price_usd": 120, **leg("LHR", "CDG")},
+                    ]
+                }
+            ]
+        }
+    }
+    out = carbon.compute({"search": TRIP, "results": results})
+    (ln,) = lines(out, category="flights")
+    assert ln["params"]["route"] == "LHR–CDG"

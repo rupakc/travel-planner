@@ -30,7 +30,7 @@ Every line of the answer says how it was worked out:
 
 ### Stays
 
-Room-nights × the DESNZ 2026 hotel-stay factor for the country (kg CO₂e per room per night). Rooms default to one per two travellers (`rooms` overrides). Multi-city trips split the nights per city (`destination_nights`, as the itinerary does) and use each city's country. A country DESNZ doesn't list gets the median of the listed countries, labelled `estimate`. In a plan, stays count only once a hotel is picked; on the Results page they always count.
+Room-nights × the DESNZ 2026 hotel-stay factor for the country (kg CO₂e per room per night). Rooms default to one per two travellers (`rooms` overrides). Multi-city trips split the nights per city (`destination_nights`, as the itinerary does) and use each city's country. A place without its own coordinates (Kyoto, Bali, Santorini) uses its resolved country, and its first airport for distances. A country DESNZ doesn't list gets the median of the listed countries, labelled `estimate`. In a plan, stays count only once a hotel is picked; on the Results page they always count.
 
 ### Getting around
 
@@ -55,7 +55,7 @@ Meals are counted in full, not as the difference from eating at home.
 
 ### Activities
 
-Only transport-heavy activities are estimated, from the itinerary's slots (or the picked activities when there is no itinerary): boat trips and cruises (20 km by ferry), day trips and coach tours (100 km by coach) and jeep, safari or road-trip drives (60 km by car). Helicopter, seaplane and balloon flights are left out (no factor), and everything else is left out because there is no data. Each one is labelled `estimate`.
+Only transport-heavy activities are estimated, from the itinerary's slots plus any picked activities the itinerary doesn't mention (each distinct name once): boat trips and cruises (20 km by ferry), day trips and coach tours (100 km by coach) and jeep, safari, quad-bike, game or scenic drives (60 km by car). Keywords match whole words ("Rodeo Drive" or "the Ferry Building" is not a trip). A day trip or excursion whose slot has coordinates on a day with measured stops is left to the local-transport line, so it is not counted twice. Helicopter, seaplane and balloon flights are left out (no factor), and everything else is left out because there is no data. Each one is labelled `estimate`.
 
 ### Lower-carbon hint
 
@@ -116,7 +116,7 @@ Send exactly one of `selections` or `results` (`422` otherwise):
 ```
 
 - `selections`: My Plan's `flight`, `flights` (multi-city, with `leg_index`), `hotel`, `getting_around`, `activities`.
-- `results`: a search summary, `{"flights": <flights section>, "hotels": <hotels section>, "itinerary": <itinerary section>}`. The cheapest flight (per leg on multi-city trips) is used, and stays always count.
+- `results`: a search summary, `{"flights": <flights section>, "hotels": <hotels section>, "itinerary": <itinerary section>}`. The lowest-priced flight (per leg on multi-city trips; a missing or 0 price sorts last) is used, and stays always count.
 - `diet`: `mixed` (default), `meat_heavy`, `pescatarian`, `vegetarian` or `vegan`. `cabin`: `economy` (default), `premium_economy`, `business` or `first`. `rooms`: 1–20.
 
 The answer:

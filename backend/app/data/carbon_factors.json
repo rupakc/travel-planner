@@ -843,11 +843,18 @@
     "key": "boat",
     "match": [
      "boat",
+     "boat trip",
+     "boat tour",
      "cruise",
      "ferry",
      "sailing",
      "catamaran",
      "yacht"
+    ],
+    "exclude": [
+     "ferry building",
+     "ferry terminal",
+     "boat quay"
     ],
     "mode": "ferry_foot",
     "km": 20
@@ -862,7 +869,8 @@
      "bus tour"
     ],
     "mode": "coach",
-    "km": 100
+    "km": 100,
+    "skip_if_measured": true
    },
    {
     "key": "car_tour",
@@ -870,10 +878,12 @@
      "jeep",
      "safari",
      "atv",
-     "quad",
+     "quad bike",
+     "quad biking",
      "4x4",
      "road trip",
-     "drive"
+     "scenic drive",
+     "game drive"
     ],
     "mode": "car_average",
     "km": 60

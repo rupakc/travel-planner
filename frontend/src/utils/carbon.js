@@ -45,14 +45,31 @@ export function trimItinerary(it) {
   }
 }
 
+const priceOf = (r) => {
+  const v = Number(r?.price_usd ?? r?.price)
+  return r && (r.price_usd ?? r.price) != null && Number.isFinite(v) && v > 0 ? v : Infinity
+}
+
+/** The lowest-priced result (the first among equals; a missing or 0 price,
+ * which SerpAPI gives when it has none, sorts last). */
+export function cheapest(list) {
+  const rs = (Array.isArray(list) ? list : []).filter((r) => r && typeof r === 'object')
+  return rs.reduce((best, r) => (best == null || priceOf(r) < priceOf(best) ? r : best), null)
+}
+
+const cheapestTrimmed = (list) => {
+  const c = trimFlight(cheapest(list))
+  return c ? [c] : []
+}
+
 /** Body for a whole search result (the Results page card). */
 export function carbonRequestFromResults({ searchData, results, diet }) {
   const fl = results?.flights
   let flights = {}
   if (Array.isArray(fl?.legs) && fl.legs.length) {
-    flights = { legs: fl.legs.map((l) => ({ results: (l?.results || []).slice(0, 1).map(trimFlight).filter(Boolean) })) }
+    flights = { legs: fl.legs.map((l) => ({ results: cheapestTrimmed(l?.results) })) }
   } else if (Array.isArray(fl?.results)) {
-    flights = { results: fl.results.slice(0, 1).map(trimFlight).filter(Boolean) }
+    flights = { results: cheapestTrimmed(fl.results) }
   }
   const hotel = trimHotel(results?.hotels?.results?.[0])
   const body = {

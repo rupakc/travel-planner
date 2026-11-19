@@ -335,11 +335,24 @@ VOYAGER = {
     "default_nights": 7,
     "annual_budget_kg_per_person": 2000,
     # Transport-heavy activities: mode, assumed km (per traveller for
-    # public modes, per vehicle for car). Everything else is omitted.
+    # public modes, per vehicle for car). Everything else is omitted. Terms
+    # match whole words (plurals too); ``exclude`` vetoes a match (a place
+    # named after a boat), ``skip_if_measured`` drops the estimate when the
+    # itinerary already measures the trip there as a local hop.
     "activities": [
         {
             "key": "boat",
-            "match": ["boat", "cruise", "ferry", "sailing", "catamaran", "yacht"],
+            "match": [
+                "boat",
+                "boat trip",
+                "boat tour",
+                "cruise",
+                "ferry",
+                "sailing",
+                "catamaran",
+                "yacht",
+            ],
+            "exclude": ["ferry building", "ferry terminal", "boat quay"],
             "mode": "ferry_foot",
             "km": 20,
         },
@@ -348,10 +361,21 @@ VOYAGER = {
             "match": ["day trip", "excursion", "tour bus", "coach tour", "bus tour"],
             "mode": "coach",
             "km": 100,
+            "skip_if_measured": True,
         },
         {
             "key": "car_tour",
-            "match": ["jeep", "safari", "atv", "quad", "4x4", "road trip", "drive"],
+            "match": [
+                "jeep",
+                "safari",
+                "atv",
+                "quad bike",
+                "quad biking",
+                "4x4",
+                "road trip",
+                "scenic drive",
+                "game drive",
+            ],
             "mode": "car_average",
             "km": 60,
         },
