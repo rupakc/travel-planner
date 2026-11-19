@@ -608,6 +608,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../Travel-Impact-Model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Flight Emissions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../Crawler-Data/" class="md-nav__link">
         
   
@@ -3788,7 +3816,7 @@
 <hr />
 <h2 id="health">Health</h2>
 <h3 id="get-health">GET /health</h3>
-<p><code>{"status": "ok", "service": "travel-planner-backend", "serpapi_configured": true|false, "fare_watch_available": true|false, "email_alerts_available": true|false, "push_configured": true|false}</code>. No auth. The frontend reads it once per page load: <code>serpapi_configured</code> offers the fare calendar, <code>fare_watch_available</code> (SerpAPI set and <code>FARE_WATCH_ENABLED</code>) offers "Watch fare", <code>email_alerts_available</code> (<code>SMTP_HOST</code> set) offers "Also email me". <code>push_configured</code> (<code>FCM_SERVICE_ACCOUNT_FILE</code> names an existing file) tells the Android app that alerts are pushed, so it can poll less. <code>tripadvisor</code> is <code>{configured, enabled, used, cap, paused}</code> (billable Tripadvisor entities against <code>TRIPADVISOR_BUDGET_CAP</code>) and <code>tripadvisor_budget_ok</code> is false from 80 % of the cap on, for an uptime-check content match (<a href="../Tripadvisor/#budget">Tripadvisor Ratings</a>). <code>crawler</code> is <code>{configured, ok}</code>: the crawler read API is configured and answered a cached <code>/v1/stats</code> call (<a href="../Crawler-Data/">Crawler Data</a>). Docker Compose uses this endpoint as the backend healthcheck.</p>
+<p><code>{"status": "ok", "service": "travel-planner-backend", "serpapi_configured": true|false, "fare_watch_available": true|false, "email_alerts_available": true|false, "push_configured": true|false}</code>. No auth. The frontend reads it once per page load: <code>serpapi_configured</code> offers the fare calendar, <code>fare_watch_available</code> (SerpAPI set and <code>FARE_WATCH_ENABLED</code>) offers "Watch fare", <code>email_alerts_available</code> (<code>SMTP_HOST</code> set) offers "Also email me". <code>push_configured</code> (<code>FCM_SERVICE_ACCOUNT_FILE</code> names an existing file) tells the Android app that alerts are pushed, so it can poll less. <code>tripadvisor</code> is <code>{configured, enabled, used, cap, paused}</code> (billable Tripadvisor entities against <code>TRIPADVISOR_BUDGET_CAP</code>) and <code>tripadvisor_budget_ok</code> is false from 80 % of the cap on, for an uptime-check content match (<a href="../Tripadvisor/#budget">Tripadvisor Ratings</a>). <code>travel_impact_model</code> is <code>{configured, enabled, used_today, cap, paused}</code> (flights sent to Google's Travel Impact Model today against <code>TIM_DAILY_CAP</code>; <a href="../Travel-Impact-Model/">Flight Emissions</a>). <code>crawler</code> is <code>{configured, ok}</code>: the crawler read API is configured and answered a cached <code>/v1/stats</code> call (<a href="../Crawler-Data/">Crawler Data</a>). Docker Compose uses this endpoint as the backend healthcheck.</p>
 <h3 id="get-healthagents">GET /health/agents</h3>
 <p>A deep check: one tiny call (15 s timeout, no retries) to the configured provider, cached for 5 minutes. Reports <code>llm</code> (<code>ok</code>, <code>empty-response</code>, <code>spend-cap</code>, <code>billing-disabled</code> or <code>error: &lt;ExceptionType&gt;</code>), <code>llm_provider</code> (<code>gemini</code> or <code>anthropic</code>), <code>llm_provider_reason</code> (how <code>LLM_PROVIDER</code> resolved, e.g. <code>auto: GCP_PROJECT set</code>), <code>serpapi_configured</code> and <code>backup_configured</code>.</p>
 

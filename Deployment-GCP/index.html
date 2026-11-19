@@ -608,6 +608,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../Travel-Impact-Model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Flight Emissions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../Crawler-Data/" class="md-nav__link">
         
   
@@ -1523,6 +1551,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#flight-emissions-google-travel-impact-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Flight emissions (Google Travel Impact Model)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#crawler-data" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1971,6 +2010,13 @@ cat /tmp/voyager-migration/migration-report.md     # per-table counts must match
 <li>Restart the app. <code>/health</code> then shows <code>tripadvisor.enabled: true</code>.</li>
 </ol>
 <p><strong>Budget alerts.</strong> The VM has no logging agent, so the <code>tripadvisor_budget</code> WARNING lines stay in Docker's local logs (<code>sudo docker compose -f /opt/voyager/compose.yaml --project-directory /opt/voyager logs app | grep tripadvisor_budget</code>) and a log-based alert would never fire. Use an uptime check on <code>/health</code> matching <code>"tripadvisor_budget_ok":true</code> (false from 80 % of the cap on) with the existing email channel; with <code>SMTP_HOST</code> and <code>ADMIN_EMAIL</code> set, the app also emails the owner at 80 % and at the cap. After adding payment details in the Terra dashboard, raise <code>TRIPADVISOR_BUDGET_CAP</code> and restart.</p>
+<h2 id="flight-emissions-google-travel-impact-model">Flight emissions (Google Travel Impact Model)</h2>
+<p>Off by default (<code>TIM_ENABLED=false</code>). The key is an API key in <code>voyager-prod-ohzkl</code> restricted to <code>travelimpactmodel.googleapis.com</code> (the API is enabled there), stored in the secret <code>crawler-src-google-tim-key</code>; bootstrap.sh grants the VM's service account <code>secretAccessor</code> on it. To turn it on:</p>
+<ol>
+<li>Check the grant <strong>first</strong> (a secret the VM can't read stops the app from starting): <code>gcloud secrets get-iam-policy crawler-src-google-tim-key --project=voyager-prod-ohzkl</code> lists <code>vm-runtime</code>.</li>
+<li>In <code>/opt/voyager/app.env</code>: append <code>,TIM_API_KEY=crawler-src-google-tim-key</code> to <code>SECRET_MANAGER_SECRETS</code>, and set <code>TIM_ENABLED=true</code> (optionally <code>TIM_DAILY_CAP=2000</code>).</li>
+<li>Restart the app. <code>/health</code> then shows <code>travel_impact_model.enabled: true</code>.</li>
+</ol>
 <h2 id="crawler-data">Crawler data</h2>
 <p>Off by default (<code>CRAWLER_ENABLED=false</code>). The app reads official facts from the crawler VM's private read API (<a href="../Crawler-Data/">Crawler Data</a>). Both VMs are in <code>voyager-prod-ohzkl</code>, on the default VPC. The crawler's <code>infrastructure/bootstrap.sh</code> creates everything the app needs:</p>
 <ul>

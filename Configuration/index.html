@@ -586,6 +586,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#flight-emissions-google-travel-impact-model-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Flight emissions: Google Travel Impact Model (optional)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#crawler-data-optional" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -867,6 +878,34 @@
     
   
     Tripadvisor Ratings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Travel-Impact-Model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Flight Emissions
   
 
     
@@ -1982,6 +2021,34 @@
 <td><code>TRIPADVISOR_LOGO_URL</code></td>
 <td>Tripadvisor's hosted horizontal lockup (<code>static.tacdn.com</code>)</td>
 <td>Logo shown on the card.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="flight-emissions-google-travel-impact-model-optional">Flight emissions: Google Travel Impact Model (optional)</h3>
+<p>Per-flight CO₂e estimates from Google's Travel Impact Model, added to flight results after the flights section has streamed (it never delays it). Only results whose every leg is a non-stop flight with a flight number are estimated. See <a href="../Travel-Impact-Model/">Flight Emissions</a>.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TIM_ENABLED</code></td>
+<td><code>false</code></td>
+<td>Feature flag. Off: no call is made and results carry no <code>emissions</code>.</td>
+</tr>
+<tr>
+<td><code>TIM_API_KEY</code></td>
+<td><code>""</code></td>
+<td>Google Cloud API key restricted to <code>travelimpactmodel.googleapis.com</code>, sent as <code>X-Goog-Api-Key</code>; never logged or returned. In production it comes from the Secret Manager secret <code>crawler-src-google-tim-key</code> (<code>SECRET_MANAGER_SECRETS=…,TIM_API_KEY=crawler-src-google-tim-key</code>).</td>
+</tr>
+<tr>
+<td><code>TIM_DAILY_CAP</code></td>
+<td><code>2000</code></td>
+<td>Most flights sent to TIM per UTC day, counted in SQLite (<code>api_budget</code> row <code>google_tim:&lt;date&gt;</code>). Answers are cached per flight and date for 24 h; cache hits don't count.</td>
 </tr>
 </tbody>
 </table>
