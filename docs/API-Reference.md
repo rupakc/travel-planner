@@ -23,6 +23,7 @@ Endpoints that call the AI agents are rate-limited per caller (the signed-in use
 | discover | `POST /api/discover` | 10 |
 | import | `POST /api/import/extract`, `POST /api/import/resolve-place` | 20 |
 | tripadvisor | `POST /api/tripadvisor/attractions` (signed-in only; not an AI route) | 10 |
+| carbon | `POST /api/carbon/trip` (pure computation, anonymous-friendly; not an AI route) | 120 |
 | light_ai | `POST /api/flights`, `/hotels`, `/activities` and their `/filtered` variants, `/flights/fare-calendar`, `/visa`, `/sim`, `/tips`, `/getting-around`, `/forex`, `/itinerary`, `/events`, `/walking-tours`, `/layover`, `/stress-test`, `/nearby`, `/live-check`, `/fare-watches` (create), `/fare-watches/{id}/check`, `/price-watches` (create), `/price-watches/{id}/check`, `PUT /auth/email` | 60 |
 
 Each bucket is counted separately, with one exception: a chat turn that starts a full trip plan (including a refinement that rebuilds the itinerary) also takes one token from the caller's **search** bucket, so searches and chat-planned trips share one budget; over it, the already-open chat stream answers with a friendly `delta` saying roughly how many minutes to wait, then `done` (no `429`, no `error`). Over the limit the API answers `429 Too Many Requests` with a `Retry-After` header (seconds) and:
@@ -134,6 +135,7 @@ Limits are configurable (see [Configuration](Configuration.md#rate-limits)). The
 | POST | `/api/nearby` | user | Near me: nearest known place to a coordinate and things to do there (v1), or places to see / eat / shop / stay from Google Maps grounding (`sections: true`) |
 | POST | `/api/tripadvisor/attractions` | user | Live Tripadvisor ratings for the top attractions near a destination, on demand (`features.tripadvisor`; never stored; see [Tripadvisor Ratings](Tripadvisor.md)) |
 | GET | `/api/admin/tripadvisor/budget` | admin | Tripadvisor billable entities used / cap |
+| POST | `/api/carbon/trip` | none | Trip carbon footprint from a plan's `selections` or a search `results` summary: `total_kg`, `categories`, `lines` (method `measured_tim` / `factor` / `estimate`), `sources`, `assumptions`, `comparisons`, `lower_carbon`. Pure and deterministic, no LLM (`features.carbon`; 404 when off, 413 over 512 KB; see [Carbon Footprint](Carbon-Footprint.md)) |
 | POST | `/api/live-check` | user | "Search the web now" for one of the caller's watches (Google Search grounding; never stored) |
 | GET | `/health` | none | Liveness and capability flags |
 | GET | `/health/agents` | none | Deep check with one tiny call to the configured LLM provider (cached 5 min) |

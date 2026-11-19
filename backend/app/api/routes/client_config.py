@@ -52,5 +52,7 @@ def client_config(response: Response) -> dict:
             "tripadvisor": tripadvisor.enabled(),
             # Official facts from the crawler with attribution (docs/Crawler-Data.md)
             "crawler_data": crawler_client.configured(),
+            # Trip carbon footprint, POST /carbon/trip (docs/Carbon-Footprint.md)
+            "carbon": 1 if settings.carbon_footprint_enabled else 0,
         },
     }

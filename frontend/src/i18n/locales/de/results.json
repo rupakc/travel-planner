@@ -446,5 +446,89 @@
       "business": "Business",
       "first": "First"
     }
+  },
+  "carbon": {
+    "title": "CO₂-Fußabdruck der Reise",
+    "loading": "Fußabdruck wird berechnet…",
+    "error": "Der Fußabdruck ist gerade nicht verfügbar.",
+    "total": "≈ {{kg}} kg CO₂e",
+    "perPerson": "{{kg}} kg pro Person",
+    "kg": "{{kg}} kg",
+    "cat": {
+      "flights": "Flüge",
+      "stays": "Unterkünfte",
+      "ground": "Unterwegs vor Ort",
+      "food": "Essen",
+      "activities": "Aktivitäten"
+    },
+    "carKm": "So viel wie {{km}} km mit einem Durchschnittsauto",
+    "budget": "{{pct}} eines Jahresbudgets von {{tonnes}} t pro Person",
+    "railHint": "Klimafreundlicher: Ein Zug für {{route}} (etwa {{km}} km) könnte etwa {{kg}} kg CO₂e sparen. Prüfe, ob einer fährt.",
+    "how": "So rechnen wir",
+    "howIntro": "Flüge nutzen das Travel Impact Model von Google, wenn es den Flug kennt, sonst die Faktoren der britischen Regierung (DESNZ 2026) für Entfernung und Klasse, einschließlich Nicht-CO₂-Effekten. Unterkünfte, Verkehr und Aktivitäten nutzen DESNZ-Faktoren, Mahlzeiten Lebensmitteldaten von Our World in Data. Schätzungen sind gekennzeichnet.",
+    "close": "Schließen",
+    "linesTitle": "Was wir gezählt haben",
+    "assumptionsTitle": "Annahmen",
+    "sourcesTitle": "Quellen",
+    "method": {
+      "measured_tim": "Google TIM",
+      "factor": "Faktor",
+      "estimate": "Schätzung"
+    },
+    "diet": {
+      "label": "Mahlzeiten",
+      "mixed": "Mischkost",
+      "meat_heavy": "Viel Fleisch",
+      "pescatarian": "Pescetarisch",
+      "vegetarian": "Vegetarisch",
+      "vegan": "Vegan"
+    },
+    "cabin": {
+      "economy": "Economy",
+      "premium_economy": "Premium Economy",
+      "business": "Business",
+      "first": "First"
+    },
+    "mode": {
+      "rail_national": "Zug",
+      "rail_international": "internationalem Zug",
+      "light_rail_tram": "Straßenbahn",
+      "metro": "U-Bahn",
+      "bus_local": "Bus",
+      "coach": "Reisebus",
+      "taxi_vehicle": "Taxi",
+      "car_average": "Auto",
+      "ferry_foot": "Boot"
+    },
+    "line": {
+      "flight_tim": "Flug {{route}}",
+      "flight_factor": "Flug {{route}} ({{km}} km)",
+      "hotel_nights": "Aufenthalt in {{city}}: Nächte {{nights}}, Zimmer {{rooms}}",
+      "local_measured": "Wege zwischen den Stationen des Reiseplans: {{km}} km",
+      "local_estimate": "Wege vor Ort (geschätzt): {{km}} km",
+      "intercity": "{{route}} mit {{mode}} ({{km}} km)",
+      "meals": "Mahlzeiten ({{diet}}): Tage {{days}}, Reisende {{travellers}}",
+      "activity_estimate": "{{name}} (etwa {{km}} km mit {{mode}})"
+    },
+    "assume": {
+      "travellers_default": "Eine reisende Person (keine Angabe).",
+      "nights_default": "{{nights}} Nächte (kein Rückreisedatum).",
+      "flights_cheapest": "Flüge: die günstigste aufgeführte Option.",
+      "flights_cabin": "Klasse: {{cabin}}.",
+      "flights_none": "Kein Flug im Plan, daher werden Flüge nicht gezählt.",
+      "flight_desnz": "Flüge ohne Google-TIM-Wert: Großkreisentfernung × DESNZ-Faktor für Entfernungsband und Klasse, mit Strahlungsantrieb.",
+      "flight_unknown_airport": "Flug {{route}} nicht gezählt: Flughafen nicht gefunden.",
+      "rooms_default": "Zimmer: {{rooms}} (eines pro zwei Reisende).",
+      "hotel_default": "Kein DESNZ-Hotelfaktor für {{city}}: der Median der DESNZ-Länder ({{kg}} kg pro Zimmernacht).",
+      "stays_none": "Kein Hotel im Plan, daher werden Unterkünfte nicht gezählt.",
+      "ground_default_mix": "Wege vor Ort: 40 % U-Bahn, 40 % Bus, 20 % Taxi (kein Verkehrsmittel gewählt).",
+      "ground_straight_line": "Wege vor Ort: Luftlinie zwischen den Stationen des Reiseplans.",
+      "ground_per_day": "Tage ohne Stationen im Reiseplan: {{km_per_day}} km Nahverkehr pro Tag.",
+      "intercity_rail": "Fahrten zwischen Städten ohne gewählten Flug: mit dem Zug.",
+      "intercity_unknown": "{{route}} nicht gezählt: Ort nicht gefunden.",
+      "food_basket": "Mahlzeiten: ein typischer Ernährungstag bei {{diet}} ({{kg_per_day}} kg pro Person), voll gezählt.",
+      "activities_partial": "Aktivitäten: Nur Bootsfahrten, Busausflüge und Autofahrten werden geschätzt; andere werden nicht gezählt (keine Daten).",
+      "activities_unmodelled": "Aktivitäten mit Flug nicht gezählt (kein Faktor): {{count}}."
+    }
   }
 }

@@ -136,6 +136,23 @@ def _map_leg(flights_arr: list, layovers: list, date_str: str) -> dict:
             }
             for lv in (layovers or [])
         ],
+        # Every flown segment, so a connecting leg can be estimated segment by
+        # segment (services/travel_impact.py); additive, clients ignore it
+        "segments": [_segment(seg, date_str) for seg in flights_arr],
+    }
+
+
+def _segment(seg: dict, date_str: str) -> dict:
+    dep = seg.get("departure_airport") or {}
+    arr = seg.get("arrival_airport") or {}
+    when = str(dep.get("time") or "")
+    return {
+        "flight_number": seg.get("flight_number"),
+        "origin": dep.get("id"),
+        "destination": arr.get("id"),
+        # SerpAPI times are "YYYY-MM-DD HH:MM" in local time; later segments
+        # of an overnight connection depart on a later date
+        "departure_date": when[:10] if len(when) >= 10 else date_str,
     }
 
 

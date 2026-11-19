@@ -262,3 +262,116 @@ def test_budget_rows_are_per_day(tim):
     _annotate({"results": [{"outbound": _leg()}]})
     s = api_budget_db.status(f"google_tim:{travel_impact._today()}", 2000)
     assert s["used"] == 1
+
+
+def _connecting(segments, o="ZRH", d="JFK", date="2027-01-15"):
+    return {
+        **_leg(o=o, d=d, date=date, stops=len(segments) - 1),
+        "flight_number": segments[0][0],
+        "segments": [
+            {
+                "flight_number": no,
+                "origin": so,
+                "destination": sd,
+                "departure_date": sdate,
+            }
+            for no, so, sd, sdate in segments
+        ],
+    }
+
+
+def test_connecting_leg_sums_its_segments(tim):
+    out = _connecting(
+        [("LX318", "ZRH", "LHR", "2027-01-15"), ("BA117", "LHR", "JFK", "2027-01-15")]
+    )
+    ret = _leg("LX17", "JFK", "ZRH", "2027-01-22")
+    data = {"results": [_rt(out, ret)]}
+    _annotate(data)
+    assert len(tim.calls[0]["flights"]) == 3
+    r = data["results"][0]
+    assert r["emissions"]["legs"] == 3
+    assert r["emissions"]["kg_co2e_per_pax"] == round(
+        (100_318 + 100_117 + 100_017) / 1000
+    )
+    # Each leg carries its own figure, so a footprint can count one way only
+    assert r["outbound"]["emissions"]["kg_co2e_per_pax"] == round(
+        (100_318 + 100_117) / 1000
+    )
+    assert r["outbound"]["emissions"]["legs"] == 2
+    assert r["return"]["emissions"]["kg_co2e_per_pax"] == round(100_017 / 1000)
+
+
+def test_connecting_leg_needs_every_segment_chained(tim):
+    broken = [
+        # a segment without a flight number
+        _connecting(
+            [("LX318", "ZRH", "LHR", "2027-01-15"), ("", "LHR", "JFK", "2027-01-15")]
+        ),
+        # segments that don't chain (LHR -> LGW gap)
+        _connecting(
+            [
+                ("LX318", "ZRH", "LHR", "2027-01-15"),
+                ("BA117", "LGW", "JFK", "2027-01-15"),
+            ]
+        ),
+        # segments that don't end at the leg's destination
+        _connecting(
+            [
+                ("LX318", "ZRH", "LHR", "2027-01-15"),
+                ("BA117", "LHR", "EWR", "2027-01-15"),
+            ]
+        ),
+        # stops disagree with the segment count
+        {
+            **_connecting(
+                [
+                    ("LX318", "ZRH", "LHR", "2027-01-15"),
+                    ("BA117", "LHR", "JFK", "2027-01-15"),
+                ]
+            ),
+            "stops": 2,
+        },
+    ]
+    data = {"results": [{"outbound": leg} for leg in broken]}
+    _annotate(data)
+    assert tim.calls == []
+    assert all("emissions" not in r for r in data["results"])
+
+
+def test_serp_leg_lists_segments_with_their_own_dates():
+    from app.services.serp_flights import _map_leg
+
+    leg = _map_leg(
+        [
+            {
+                "flight_number": "LX 318",
+                "departure_airport": {"id": "ZRH", "time": "2027-01-15 21:10"},
+                "arrival_airport": {"id": "LHR", "time": "2027-01-15 21:55"},
+            },
+            {
+                "flight_number": "BA 117",
+                "departure_airport": {"id": "LHR", "time": "2027-01-16 08:20"},
+                "arrival_airport": {"id": "JFK", "time": "2027-01-16 11:05"},
+            },
+        ],
+        [{"id": "LHR", "name": "Heathrow", "duration": 625}],
+        "2027-01-15",
+    )
+    assert leg["segments"] == [
+        {
+            "flight_number": "LX 318",
+            "origin": "ZRH",
+            "destination": "LHR",
+            "departure_date": "2027-01-15",
+        },
+        {
+            "flight_number": "BA 117",
+            "origin": "LHR",
+            "destination": "JFK",
+            "departure_date": "2027-01-16",
+        },
+    ]
+    assert travel_impact._leg_keys(leg) == [
+        ("LX", 318, "ZRH", "LHR", "2027-01-15"),
+        ("BA", 117, "LHR", "JFK", "2027-01-16"),
+    ]

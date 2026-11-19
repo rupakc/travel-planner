@@ -32,6 +32,7 @@ def test_config_shape(client, monkeypatch):
         "live_prices": False,
         "tripadvisor": False,
         "crawler_data": False,
+        "carbon": 1,
     }
     assert r.headers["cache-control"] == "max-age=300"
 

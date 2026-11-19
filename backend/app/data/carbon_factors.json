@@ -1,0 +1,890 @@
+{
+ "version": "2026.1",
+ "sources": {
+  "desnz_2026": {
+   "name": "UK Government GHG Conversion Factors for Company Reporting 2026 (flat file, revised)",
+   "publisher": "Department for Energy Security and Net Zero (DESNZ)",
+   "year": 2026,
+   "url": "https://assets.publishing.service.gov.uk/media/6a6c9748862aaf18d9c62ac9/ghg-conversion-factors-2026-flat-format-revised.xlsx",
+   "column": "GHG Conversion Factor 2026",
+   "licence": "Open Government Licence v3.0",
+   "licence_url": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+   "attribution": "Contains public sector information licensed under the Open Government Licence v3.0"
+  },
+  "owid_food": {
+   "name": "Greenhouse gas emissions per kilogram of food product",
+   "publisher": "Our World in Data, based on Poore & Nemecek (2018)",
+   "year": 2018,
+   "url": "https://ourworldindata.org/grapher/ghg-per-kg-poore.csv?v=1&csvType=full&useColumnShortNames=true",
+   "licence": "CC BY 4.0",
+   "licence_url": "https://creativecommons.org/licenses/by/4.0/",
+   "attribution": "Our World in Data, based on Poore & Nemecek (2018), CC BY 4.0"
+  },
+  "google_tim": {
+   "name": "Travel Impact Model",
+   "publisher": "Google",
+   "url": "https://travelimpactmodel.org",
+   "licence": "CC BY-SA 4.0",
+   "attribution": "Emissions estimates: Google Travel Impact Model, CC BY-SA 4.0"
+  },
+  "voyager": {
+   "name": "Voyager assumptions",
+   "publisher": "Voyager",
+   "url": "https://github.com/rupakc/travel-planner/blob/main/docs/Carbon-Footprint.md",
+   "licence": "MIT"
+  }
+ },
+ "flight": {
+  "domestic.average": {
+   "value": 0.22928,
+   "unit": "kg CO2e per passenger.km",
+   "source": "desnz_2026",
+   "year": 2026,
+   "factor_id": "21_316_3160_11_1",
+   "label": "Flights / Domestic, to/from UK / Average passenger / With RF",
+   "basis": "co2e_with_rf"
+  },
+  "short_haul.average": {
+   "value": 0.12786,
+   "unit": "kg CO2e per passenger.km",
+   "source": "desnz_2026",
+   "year": 2026,
+   "factor_id": "21_316_3162_11_1",
+   "label": "Flights / Short-haul, to/from UK / Average passenger / With RF",
+   "basis": "co2e_with_rf"
+  },
+  "short_haul.economy": {
+   "value": 0.12576,
+   "unit": "kg CO2e per passenger.km",
+   "source": "desnz_2026",
+   "year": 2026,
+   "factor_id": "21_316_3164_11_1",
+   "label": "Flights / Short-haul, to/from UK / Economy class / With RF",
+   "basis": "co2e_with_rf"
+  },
+  "short_haul.business": {
+   "value": 0.18863,
+   "unit": "kg CO2e per passenger.km",
+   "source": "desnz_2026",
+   "year": 2026,
+   "factor_id": "21_316_3166_11_1",
+   "label": "Flights / Short-haul, to/from UK / Business class / With RF",
+   "basis": "co2e_with_rf"
+  },
+  "long_haul.average": {
+   "value": 0.15282,
+   "unit": "kg CO2e per passenger.km",
+   "source": "desnz_2026",
+   "year": 2026,
+   "factor_id": "21_316_3168_11_1",
+   "label": "Flights / Long-haul, to/from UK / Average passenger / With RF",
+   "basis": "co2e_with_rf"
+  },
+  "long_haul.economy": {
+   "value": 0.11704,
+   "unit": "kg CO2e per passenger.km",
+   "source": "desnz_2026",
+   "year": 2026,
+   "factor_id": "21_316_3170_11_1",
+   "label": "Flights / Long-haul, to/from UK / Economy class / With RF",
+   "basis": "co2e_with_rf"
+  },
+  "long_haul.premium_economy": {
+   "value": 0.18726,
+   "unit": "kg CO2e per passenger.km",
+   "source": "desnz_2026",
+   "year": 2026,
+   "factor_id": "21_316_3172_11_1",
+   "label": "Flights / Long-haul, to/from UK / Premium economy class / With RF",
+   "basis": "co2e_with_rf"
+  },
+  "long_haul.business": {
+   "value": 0.3394,
+   "unit": "kg CO2e per passenger.km",
+   "source": "desnz_2026",
+   "year": 2026,
+   "factor_id": "21_316_3174_11_1",
+   "label": "Flights / Long-haul, to/from UK / Business class / With RF",
+   "basis": "co2e_with_rf"
+  },
+  "long_haul.first": {
+   "value": 0.46814,
+   "unit": "kg CO2e per passenger.km",
+   "source": "desnz_2026",
+   "year": 2026,
+   "factor_id": "21_316_3176_11_1",
+   "label": "Flights / Long-haul, to/from UK / First class / With RF",
+   "basis": "co2e_with_rf"
+  }
+ },
+ "ground": {
+  "rail_national": {
+   "value": 0.03092,
+   "unit": "kg CO2e per passenger.km",
+   "source": "desnz_2026",
+   "year": 2026,
+   "factor_id": "25_315_3147_11_1",
+   "label": "Rail / National rail"
+  },
+  "rail_international": {
+   "value": 0.01135,
+   "unit": "kg CO2e per passenger.km",
+   "source": "desnz_2026",
+   "year": 2026,
+   "factor_id": "25_315_3148_11_1",
+   "label": "Rail / International rail"
+  },
+  "light_rail_tram": {
+   "value": 0.02121,
+   "unit": "kg CO2e per passenger.km",
+   "source": "desnz_2026",
+   "year": 2026,
+   "factor_id": "25_315_3149_11_1",
+   "label": "Rail / Light rail and tram"
+  },
+  "metro": {
+   "value": 0.01549,
+   "unit": "kg CO2e per passenger.km",
+   "source": "desnz_2026",
+   "year": 2026,
+   "factor_id": "25_315_3150_11_1",
+   "label": "Rail / London Underground"
+  },
+  "bus_local": {
+   "value": 0.10151,
+   "unit": "kg CO2e per passenger.km",
+   "source": "desnz_2026",
+   "year": 2026,
+   "factor_id": "25_314_3145_11_1",
+   "label": "Bus / Average local bus"
+  },
+  "coach": {
+   "value": 0.03948,
+   "unit": "kg CO2e per passenger.km",
+   "source": "desnz_2026",
+   "year": 2026,
+   "factor_id": "25_314_3146_11_1",
+   "label": "Bus / Coach"
+  },
+  "taxi_vehicle": {
+   "value": 0.20806,
+   "unit": "kg CO2e per vehicle.km",
+   "source": "desnz_2026",
+   "year": 2026,
+   "factor_id": "25_313_3141_4_1",
+   "label": "Taxis / Regular taxi"
+  },
+  "car_average": {
+   "value": 0.16591,
+   "unit": "kg CO2e per vehicle.km",
+   "source": "desnz_2026",
+   "year": 2026,
+   "factor_id": "4_301_3074_4_1",
+   "label": "Cars (by size) / Average car / Unknown"
+  },
+  "ferry_foot": {
+   "value": 0.01871,
+   "unit": "kg CO2e per passenger.km",
+   "source": "desnz_2026",
+   "year": 2026,
+   "factor_id": "23_318_3188_11_1",
+   "label": "Ferry / Foot passenger"
+  }
+ },
+ "hotel": {
+  "by_country": {
+   "AE": {
+    "value": 63.8,
+    "unit": "kg CO2e per room.night",
+    "source": "desnz_2026",
+    "year": 2026,
+    "factor_id": "29_600_4052_13_1",
+    "label": "Hotel stay / United Arab Emirates"
+   },
+   "AU": {
+    "value": 35.0,
+    "unit": "kg CO2e per room.night",
+    "source": "desnz_2026",
+    "year": 2026,
+    "factor_id": "29_600_4003_13_1",
+    "label": "Hotel stay / Australia"
+   },
+   "BE": {
+    "value": 12.2,
+    "unit": "kg CO2e per room.night",
+    "source": "desnz_2026",
+    "year": 2026,
+    "factor_id": "29_600_4005_13_1",
+    "label": "Hotel stay / Belgium"
+   },
+   "BR": {
+    "value": 8.7,
+    "unit": "kg CO2e per room.night",
+    "source": "desnz_2026",
+    "year": 2026,
+    "factor_id": "29_600_4006_13_1",
+    "label": "Hotel stay / Brazil"
+   },
+   "CA": {
+    "value": 7.4,
+    "unit": "kg CO2e per room.night",
+    "source": "desnz_2026",
+    "year": 2026,
+    "factor_id": "29_600_4007_13_1",
+    "label": "Hotel stay / Canada"
+   },
+   "CH": {
+    "value": 6.6,
+    "unit": "kg CO2e per room.night",
+    "source": "desnz_2026",
+    "year": 2026,
+    "factor_id": "29_600_4048_13_1",
+    "label": "Hotel stay / Switzerland"
+   },
+   "CL": {
+    "value": 27.6,
+    "unit": "kg CO2e per room.night",
+    "source": "desnz_2026",
+    "year": 2026,
+    "factor_id": "29_600_4008_13_1",
+    "label": "Hotel stay / Chile"
+   },
+   "CN": {
+    "value": 53.5,
+    "unit": "kg CO2e per room.night",
+    "source": "desnz_2026",
+    "year": 2026,
+    "factor_id": "29_600_4009_13_1",
+    "label": "Hotel stay / China"
+   },
+   "CO": {
+    "value": 14.7,
+    "unit": "kg CO2e per room.night",
+    "source": "desnz_2026",
+    "year": 2026,
+    "factor_id": "29_600_4010_13_1",
+    "label": "Hotel stay / Colombia"
+   },
+   "CR": {
+    "value": 4.7,
+    "unit": "kg CO2e per room.night",
+    "source": "desnz_2026",
+    "year": 2026,
+    "factor_id": "29_600_4011_13_1",
+    "label": "Hotel stay / Costa Rica"
+   },
+   "DE": {
+    "value": 13.2,
+    "unit": "kg CO2e per room.night",
+    "source": "desnz_2026",
+    "year": 2026,
+    "factor_id": "29_600_4017_13_1",
+    "label": "Hotel stay / Germany"
+   },
+   "EG": {
+    "value": 44.2,
+    "unit": "kg CO2e per room.night",
+    "source": "desnz_2026",
+    "year": 2026,
+    "factor_id": "29_600_4013_13_1",
+    "label": "Hotel stay / Egypt"
+   },
+   "ES": {
+    "value": 7.0,
+    "unit": "kg CO2e per room.night",
+    "source": "desnz_2026",
+    "year": 2026,
+    "factor_id": "29_600_4047_13_1",
+    "label": "Hotel stay / Spain"
+   },
+   "FR": {
+    "value": 6.7,
+    "unit": "kg CO2e per room.night",
+    "source": "desnz_2026",
+    "year": 2026,
+    "factor_id": "29_600_4016_13_1",
+    "label": "Hotel stay / France"
+   },
+   "GB": {
+    "value": 10.4,
+    "unit": "kg CO2e per room.night",
+    "source": "desnz_2026",
+    "year": 2026,
+    "factor_id": "29_600_4000_13_1",
+    "label": "Hotel stay / UK"
+   },
+   "HK": {
+    "value": 51.5,
+    "unit": "kg CO2e per room.night",
+    "source": "desnz_2026",
+    "year": 2026,
+    "factor_id": "29_600_4019_13_1",
+    "label": "Hotel stay / Hong Kong, China"
+   },
+   "ID": {
+    "value": 62.7,
+    "unit": "kg CO2e per room.night",
+    "source": "desnz_2026",
+    "year": 2026,
+    "factor_id": "29_600_4021_13_1",
+    "label": "Hotel stay / Indonesia"
+   },
+   "IN": {
+    "value": 58.9,
+    "unit": "kg CO2e per room.night",
+    "source": "desnz_2026",
+    "year": 2026,
+    "factor_id": "29_600_4020_13_1",
+    "label": "Hotel stay / India"
+   },
+   "IT": {
+    "value": 14.3,
+    "unit": "kg CO2e per room.night",
+    "source": "desnz_2026",
+    "year": 2026,
+    "factor_id": "29_600_4024_13_1",
+    "label": "Hotel stay / Italy"
+   },
+   "JO": {
+    "value": 68.9,
+    "unit": "kg CO2e per room.night",
+    "source": "desnz_2026",
+    "year": 2026,
+    "factor_id": "29_600_4026_13_1",
+    "label": "Hotel stay / Jordan"
+   },
+   "JP": {
+    "value": 39.0,
+    "unit": "kg CO2e per room.night",
+    "source": "desnz_2026",
+    "year": 2026,
+    "factor_id": "29_600_4025_13_1",
+    "label": "Hotel stay / Japan"
+   },
+   "KR": {
+    "value": 55.8,
+    "unit": "kg CO2e per room.night",
+    "source": "desnz_2026",
+    "year": 2026,
+    "factor_id": "29_600_4028_13_1",
+    "label": "Hotel stay / Korea"
+   },
+   "MV": {
+    "value": 152.2,
+    "unit": "kg CO2e per room.night",
+    "source": "desnz_2026",
+    "year": 2026,
+    "factor_id": "29_600_4031_13_1",
+    "label": "Hotel stay / Maldives"
+   },
+   "MX": {
+    "value": 19.3,
+    "unit": "kg CO2e per room.night",
+    "source": "desnz_2026",
+    "year": 2026,
+    "factor_id": "29_600_4032_13_1",
+    "label": "Hotel stay / Mexico"
+   },
+   "MY": {
+    "value": 61.5,
+    "unit": "kg CO2e per room.night",
+    "source": "desnz_2026",
+    "year": 2026,
+    "factor_id": "29_600_4030_13_1",
+    "label": "Hotel stay / Malaysia"
+   },
+   "NL": {
+    "value": 14.8,
+    "unit": "kg CO2e per room.night",
+    "source": "desnz_2026",
+    "year": 2026,
+    "factor_id": "29_600_4033_13_1",
+    "label": "Hotel stay / Netherlands"
+   },
+   "OM": {
+    "value": 90.3,
+    "unit": "kg CO2e per room.night",
+    "source": "desnz_2026",
+    "year": 2026,
+    "factor_id": "29_600_4035_13_1",
+    "label": "Hotel stay / Oman"
+   },
+   "PH": {
+    "value": 54.3,
+    "unit": "kg CO2e per room.night",
+    "source": "desnz_2026",
+    "year": 2026,
+    "factor_id": "29_600_4038_13_1",
+    "label": "Hotel stay / Philippines"
+   },
+   "PT": {
+    "value": 19.0,
+    "unit": "kg CO2e per room.night",
+    "source": "desnz_2026",
+    "year": 2026,
+    "factor_id": "29_600_4040_13_1",
+    "label": "Hotel stay / Portugal"
+   },
+   "QA": {
+    "value": 86.2,
+    "unit": "kg CO2e per room.night",
+    "source": "desnz_2026",
+    "year": 2026,
+    "factor_id": "29_600_4041_13_1",
+    "label": "Hotel stay / Qatar"
+   },
+   "RU": {
+    "value": 24.2,
+    "unit": "kg CO2e per room.night",
+    "source": "desnz_2026",
+    "year": 2026,
+    "factor_id": "29_600_4043_13_1",
+    "label": "Hotel stay / Russian Federation"
+   },
+   "SA": {
+    "value": 106.4,
+    "unit": "kg CO2e per room.night",
+    "source": "desnz_2026",
+    "year": 2026,
+    "factor_id": "29_600_4044_13_1",
+    "label": "Hotel stay / Saudi Arabia"
+   },
+   "SG": {
+    "value": 24.5,
+    "unit": "kg CO2e per room.night",
+    "source": "desnz_2026",
+    "year": 2026,
+    "factor_id": "29_600_4045_13_1",
+    "label": "Hotel stay / Singapore"
+   },
+   "TH": {
+    "value": 43.4,
+    "unit": "kg CO2e per room.night",
+    "source": "desnz_2026",
+    "year": 2026,
+    "factor_id": "29_600_4050_13_1",
+    "label": "Hotel stay / Thailand"
+   },
+   "TR": {
+    "value": 32.1,
+    "unit": "kg CO2e per room.night",
+    "source": "desnz_2026",
+    "year": 2026,
+    "factor_id": "29_600_4051_13_1",
+    "label": "Hotel stay / Turkey"
+   },
+   "US": {
+    "value": 16.1,
+    "unit": "kg CO2e per room.night",
+    "source": "desnz_2026",
+    "year": 2026,
+    "factor_id": "29_600_4053_13_1",
+    "label": "Hotel stay / United States"
+   },
+   "VN": {
+    "value": 38.5,
+    "unit": "kg CO2e per room.night",
+    "source": "desnz_2026",
+    "year": 2026,
+    "factor_id": "29_600_4054_13_1",
+    "label": "Hotel stay / Vietnam"
+   },
+   "ZA": {
+    "value": 51.4,
+    "unit": "kg CO2e per room.night",
+    "source": "desnz_2026",
+    "year": 2026,
+    "factor_id": "29_600_4046_13_1",
+    "label": "Hotel stay / South Africa"
+   }
+  },
+  "default": {
+   "value": 33.5,
+   "unit": "kg CO2e per room.night",
+   "source": "voyager",
+   "year": 2026,
+   "label": "Median of the DESNZ 2026 hotel-stay countries"
+  }
+ },
+ "food": {
+  "products": {
+   "bananas": {
+    "value": 0.86,
+    "unit": "kg CO2e per kg",
+    "source": "owid_food",
+    "year": 2010,
+    "label": "Bananas"
+   },
+   "beef_dairy": {
+    "value": 33.3,
+    "unit": "kg CO2e per kg",
+    "source": "owid_food",
+    "year": 2010,
+    "label": "Beef (dairy herd)"
+   },
+   "beef_herd": {
+    "value": 99.48,
+    "unit": "kg CO2e per kg",
+    "source": "owid_food",
+    "year": 2010,
+    "label": "Beef (beef herd)"
+   },
+   "cane_sugar": {
+    "value": 3.2,
+    "unit": "kg CO2e per kg",
+    "source": "owid_food",
+    "year": 2010,
+    "label": "Cane Sugar"
+   },
+   "cheese": {
+    "value": 23.88,
+    "unit": "kg CO2e per kg",
+    "source": "owid_food",
+    "year": 2010,
+    "label": "Cheese"
+   },
+   "coffee": {
+    "value": 28.53,
+    "unit": "kg CO2e per kg",
+    "source": "owid_food",
+    "year": 2010,
+    "label": "Coffee"
+   },
+   "eggs": {
+    "value": 4.67,
+    "unit": "kg CO2e per kg",
+    "source": "owid_food",
+    "year": 2010,
+    "label": "Eggs"
+   },
+   "fish_farmed": {
+    "value": 13.63,
+    "unit": "kg CO2e per kg",
+    "source": "owid_food",
+    "year": 2010,
+    "label": "Fish (farmed)"
+   },
+   "fruit": {
+    "value": 1.05,
+    "unit": "kg CO2e per kg",
+    "source": "owid_food",
+    "year": 2010,
+    "label": "Other Fruit"
+   },
+   "groundnuts": {
+    "value": 3.23,
+    "unit": "kg CO2e per kg",
+    "source": "owid_food",
+    "year": 2010,
+    "label": "Groundnuts"
+   },
+   "lamb": {
+    "value": 39.72,
+    "unit": "kg CO2e per kg",
+    "source": "owid_food",
+    "year": 2010,
+    "label": "Lamb & Mutton"
+   },
+   "milk": {
+    "value": 3.15,
+    "unit": "kg CO2e per kg",
+    "source": "owid_food",
+    "year": 2010,
+    "label": "Milk"
+   },
+   "nuts": {
+    "value": 0.43,
+    "unit": "kg CO2e per kg",
+    "source": "owid_food",
+    "year": 2010,
+    "label": "Nuts"
+   },
+   "pig": {
+    "value": 12.31,
+    "unit": "kg CO2e per kg",
+    "source": "owid_food",
+    "year": 2010,
+    "label": "Pig Meat"
+   },
+   "potatoes": {
+    "value": 0.46,
+    "unit": "kg CO2e per kg",
+    "source": "owid_food",
+    "year": 2010,
+    "label": "Potatoes"
+   },
+   "poultry": {
+    "value": 9.87,
+    "unit": "kg CO2e per kg",
+    "source": "owid_food",
+    "year": 2010,
+    "label": "Poultry Meat"
+   },
+   "prawns_farmed": {
+    "value": 26.87,
+    "unit": "kg CO2e per kg",
+    "source": "owid_food",
+    "year": 2010,
+    "label": "Prawns (farmed)"
+   },
+   "pulses": {
+    "value": 1.79,
+    "unit": "kg CO2e per kg",
+    "source": "owid_food",
+    "year": 2010,
+    "label": "Other Pulses"
+   },
+   "rice": {
+    "value": 4.45,
+    "unit": "kg CO2e per kg",
+    "source": "owid_food",
+    "year": 2010,
+    "label": "Rice"
+   },
+   "soy_milk": {
+    "value": 0.98,
+    "unit": "kg CO2e per kg",
+    "source": "owid_food",
+    "year": 2010,
+    "label": "Soy milk"
+   },
+   "tofu": {
+    "value": 3.16,
+    "unit": "kg CO2e per kg",
+    "source": "owid_food",
+    "year": 2010,
+    "label": "Tofu"
+   },
+   "tomatoes": {
+    "value": 2.09,
+    "unit": "kg CO2e per kg",
+    "source": "owid_food",
+    "year": 2010,
+    "label": "Tomatoes"
+   },
+   "vegetables": {
+    "value": 0.53,
+    "unit": "kg CO2e per kg",
+    "source": "owid_food",
+    "year": 2010,
+    "label": "Other Vegetables"
+   },
+   "wheat_rye": {
+    "value": 1.57,
+    "unit": "kg CO2e per kg",
+    "source": "owid_food",
+    "year": 2010,
+    "label": "Wheat & Rye"
+   }
+  },
+  "diets": {
+   "mixed": {
+    "basket_g_per_day": {
+     "beef_herd": 25,
+     "pig": 40,
+     "poultry": 60,
+     "fish_farmed": 25,
+     "cheese": 30,
+     "milk": 250,
+     "eggs": 30,
+     "rice": 75,
+     "wheat_rye": 150,
+     "potatoes": 100,
+     "vegetables": 300,
+     "tomatoes": 50,
+     "fruit": 150,
+     "bananas": 50,
+     "cane_sugar": 40,
+     "coffee": 15,
+     "pulses": 20
+    },
+    "kg_per_day": 7.227,
+    "unit": "kg CO2e per person.day",
+    "source": "voyager",
+    "year": 2026
+   },
+   "meat_heavy": {
+    "basket_g_per_day": {
+     "beef_herd": 45,
+     "lamb": 15,
+     "pig": 60,
+     "poultry": 80,
+     "cheese": 40,
+     "milk": 250,
+     "eggs": 40,
+     "rice": 60,
+     "wheat_rye": 150,
+     "potatoes": 120,
+     "vegetables": 250,
+     "tomatoes": 50,
+     "fruit": 150,
+     "cane_sugar": 50,
+     "coffee": 15
+    },
+    "kg_per_day": 10.07,
+    "unit": "kg CO2e per person.day",
+    "source": "voyager",
+    "year": 2026
+   },
+   "pescatarian": {
+    "basket_g_per_day": {
+     "fish_farmed": 80,
+     "prawns_farmed": 15,
+     "cheese": 40,
+     "milk": 250,
+     "eggs": 40,
+     "pulses": 40,
+     "rice": 90,
+     "wheat_rye": 170,
+     "potatoes": 120,
+     "vegetables": 350,
+     "tomatoes": 60,
+     "fruit": 200,
+     "bananas": 50,
+     "nuts": 20,
+     "cane_sugar": 40,
+     "coffee": 15
+    },
+    "kg_per_day": 5.346,
+    "unit": "kg CO2e per person.day",
+    "source": "voyager",
+    "year": 2026
+   },
+   "vegetarian": {
+    "basket_g_per_day": {
+     "cheese": 45,
+     "milk": 300,
+     "eggs": 50,
+     "pulses": 60,
+     "tofu": 40,
+     "rice": 90,
+     "wheat_rye": 180,
+     "potatoes": 120,
+     "vegetables": 350,
+     "tomatoes": 60,
+     "fruit": 200,
+     "bananas": 60,
+     "nuts": 30,
+     "cane_sugar": 40,
+     "coffee": 15
+    },
+    "kg_per_day": 4.367,
+    "unit": "kg CO2e per person.day",
+    "source": "voyager",
+    "year": 2026
+   },
+   "vegan": {
+    "basket_g_per_day": {
+     "tofu": 100,
+     "pulses": 100,
+     "soy_milk": 250,
+     "nuts": 40,
+     "groundnuts": 20,
+     "rice": 100,
+     "wheat_rye": 200,
+     "potatoes": 150,
+     "vegetables": 400,
+     "tomatoes": 70,
+     "fruit": 250,
+     "bananas": 80,
+     "cane_sugar": 30,
+     "coffee": 15
+    },
+    "kg_per_day": 2.863,
+    "unit": "kg CO2e per person.day",
+    "source": "voyager",
+    "year": 2026
+   }
+  },
+  "default_diet": "mixed"
+ },
+ "assumptions": {
+  "flight_bands_km": {
+   "domestic_max": 500,
+   "short_haul_max": 3700
+  },
+  "flight_cabin_fallback": {
+   "short_haul": {
+    "premium_economy": "economy",
+    "first": "business"
+   },
+   "domestic": {
+    "economy": "average",
+    "premium_economy": "average",
+    "business": "average",
+    "first": "average"
+   }
+  },
+  "ground_default_km_per_day": 10,
+  "ground_default_mix": {
+   "metro": 0.4,
+   "bus_local": 0.4,
+   "taxi_vehicle": 0.2
+  },
+  "taxi_seats": 4,
+  "car_seats": 5,
+  "rail_route_factor": 1.2,
+  "rail_hint_max_km": 700,
+  "rail_hint_no_rail_countries": [
+   "CY",
+   "FJ",
+   "ID",
+   "IS",
+   "MT",
+   "MV",
+   "NZ",
+   "PH"
+  ],
+  "rooms_per_traveller": 0.5,
+  "default_nights": 7,
+  "annual_budget_kg_per_person": 2000,
+  "activities": [
+   {
+    "key": "boat",
+    "match": [
+     "boat",
+     "cruise",
+     "ferry",
+     "sailing",
+     "catamaran",
+     "yacht"
+    ],
+    "mode": "ferry_foot",
+    "km": 20
+   },
+   {
+    "key": "coach_tour",
+    "match": [
+     "day trip",
+     "excursion",
+     "tour bus",
+     "coach tour",
+     "bus tour"
+    ],
+    "mode": "coach",
+    "km": 100
+   },
+   {
+    "key": "car_tour",
+    "match": [
+     "jeep",
+     "safari",
+     "atv",
+     "quad",
+     "4x4",
+     "road trip",
+     "drive"
+    ],
+    "mode": "car_average",
+    "km": 60
+   }
+  ],
+  "activities_unmodelled": [
+   "helicopter",
+   "scenic flight",
+   "hot air balloon",
+   "seaplane",
+   "skydiv"
+  ]
+ }
+}

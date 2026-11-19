@@ -438,5 +438,89 @@
       "business": "商务舱",
       "first": "头等舱"
     }
+  },
+  "carbon": {
+    "title": "行程碳足迹",
+    "loading": "正在计算碳足迹…",
+    "error": "暂时无法显示碳足迹。",
+    "total": "≈ {{kg}} 千克 CO₂e",
+    "perPerson": "每人 {{kg}} 千克",
+    "kg": "{{kg}} 千克",
+    "cat": {
+      "flights": "航班",
+      "stays": "住宿",
+      "ground": "当地出行",
+      "food": "饮食",
+      "activities": "活动"
+    },
+    "carKm": "相当于一辆普通汽车行驶 {{km}} 公里",
+    "budget": "相当于每人每年 {{tonnes}} 吨预算的 {{pct}}",
+    "railHint": "更低碳的选择：{{route}} 改乘火车（约 {{km}} 公里）可减少约 {{kg}} 千克 CO₂e。请确认是否有车次。",
+    "how": "计算方法",
+    "howIntro": "航班在 Google Travel Impact Model 有该航班数据时使用其数值，否则按距离和舱位使用英国政府（DESNZ 2026）的排放因子，并计入非 CO₂ 影响。住宿、交通和活动使用 DESNZ 因子；饮食使用 Our World in Data 的食物数据。估算值均已标注。",
+    "close": "关闭",
+    "linesTitle": "计入的项目",
+    "assumptionsTitle": "假设",
+    "sourcesTitle": "数据来源",
+    "method": {
+      "measured_tim": "Google TIM",
+      "factor": "排放因子",
+      "estimate": "估算"
+    },
+    "diet": {
+      "label": "饮食",
+      "mixed": "混合饮食",
+      "meat_heavy": "大量肉食",
+      "pescatarian": "鱼素",
+      "vegetarian": "素食",
+      "vegan": "纯素"
+    },
+    "cabin": {
+      "economy": "经济舱",
+      "premium_economy": "超级经济舱",
+      "business": "商务舱",
+      "first": "头等舱"
+    },
+    "mode": {
+      "rail_national": "火车",
+      "rail_international": "国际火车",
+      "light_rail_tram": "有轨电车",
+      "metro": "地铁",
+      "bus_local": "公交",
+      "coach": "长途大巴",
+      "taxi_vehicle": "出租车",
+      "car_average": "汽车",
+      "ferry_foot": "船"
+    },
+    "line": {
+      "flight_tim": "航班 {{route}}",
+      "flight_factor": "航班 {{route}}（{{km}} 公里）",
+      "hotel_nights": "{{city}} 住宿：{{nights}} 晚，{{rooms}} 间",
+      "local_measured": "行程各站之间的当地出行：{{km}} 公里",
+      "local_estimate": "当地出行（估算）：{{km}} 公里",
+      "intercity": "{{route}}，乘{{mode}}（{{km}} 公里）",
+      "meals": "饮食（{{diet}}）：{{days}} 天，{{travellers}} 人",
+      "activity_estimate": "{{name}}（乘{{mode}}约 {{km}} 公里）"
+    },
+    "assume": {
+      "travellers_default": "一位旅客（未填写人数）。",
+      "nights_default": "{{nights}} 晚（没有返程日期）。",
+      "flights_cheapest": "航班：列表中最便宜的选项。",
+      "flights_cabin": "舱位：{{cabin}}。",
+      "flights_none": "计划中没有航班，因此不计航班。",
+      "flight_desnz": "没有 Google TIM 数值的航班：大圆距离 × 对应距离段和舱位的 DESNZ 因子，计入辐射强迫。",
+      "flight_unknown_airport": "航班 {{route}} 未计入：找不到机场。",
+      "rooms_default": "房间：{{rooms}} 间（每两位旅客一间）。",
+      "hotel_default": "{{city}} 没有 DESNZ 酒店因子：使用 DESNZ 各国的中位数（每间每晚 {{kg}} 千克）。",
+      "stays_none": "计划中没有酒店，因此不计住宿。",
+      "ground_default_mix": "当地出行：40% 地铁、40% 公交、20% 出租车（未选择交通方式）。",
+      "ground_straight_line": "当地出行：行程各站之间的直线距离。",
+      "ground_per_day": "行程中没有站点的日子：每天 {{km_per_day}} 公里当地交通。",
+      "intercity_rail": "城市之间没有选航班的移动：按火车计算。",
+      "intercity_unknown": "{{route}} 未计入：找不到地点。",
+      "food_basket": "饮食：按{{diet}}的典型一天饮食（每人 {{kg_per_day}} 千克）全额计入。",
+      "activities_partial": "活动：只估算乘船、大巴游和自驾；其他活动未计入（没有数据）。",
+      "activities_unmodelled": "涉及飞行的活动未计入（没有因子）：{{count}} 项。"
+    }
   }
 }

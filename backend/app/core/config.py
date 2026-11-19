@@ -55,6 +55,9 @@ class Settings(BaseSettings):
 
     # Third-party API keys
     serpapi_key: str = ""  # SerpAPI key; empty = AI agent fallback for flights
+    # Trip carbon footprint, POST /api/carbon/trip (docs/Carbon-Footprint.md):
+    # pure computation from the committed factor table; on by default
+    carbon_footprint_enabled: bool = True
     # Tripadvisor Terra (Discover) ratings, fetched live on demand only
     # (services/tripadvisor.py, docs/Tripadvisor.md). On only when
     # TRIPADVISOR_ENABLED=true AND a key is set. The budget is a hard cap on
@@ -130,6 +133,7 @@ class Settings(BaseSettings):
     rate_limit_play: int = 60  # /play/* (per user)
     rate_limit_telemetry: int = 120  # POST /telemetry (batches, not events)
     rate_limit_tripadvisor: int = 10  # /tripadvisor/attractions (per user)
+    rate_limit_carbon: int = 120  # /carbon/trip (pure computation, no AI)
     # Phase 5 (Social + Play), per user: writes, reads, Play, admin moderation
     rate_limit_social_write: int = 30
     rate_limit_social_read: int = 120
