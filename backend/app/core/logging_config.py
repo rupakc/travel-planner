@@ -28,7 +28,11 @@ class RedactSecrets(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
         from .config import settings
 
-        secrets = [s for s in (settings.tripadvisor_api_key, settings.tim_api_key) if s and len(s) >= 8]
+        secrets = [
+            s
+            for s in (settings.tripadvisor_api_key, settings.tim_api_key)
+            if s and len(s) >= 8
+        ]
         if not secrets:
             return True
         msg = record.getMessage()

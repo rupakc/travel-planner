@@ -72,7 +72,9 @@ class FlightsAgent(ToolAgent, _URLSearchMixin):
         super().__init__(load_agent_definition(agents_dir, "flights"))
 
     async def enrich(self, data: dict, cabin: str | None = None) -> dict:
-        if not any(r.get("source") == "google_flights" for r in data.get("results", [])):
+        if not any(
+            r.get("source") == "google_flights" for r in data.get("results", [])
+        ):
             # SerpAPI results already have authoritative booking URLs
             data = await self._enrich_urls(data)
         # Per-flight CO2e from Google's Travel Impact Model (no-op when off)

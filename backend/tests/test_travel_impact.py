@@ -58,7 +58,12 @@ class Tim:
             200,
             json={
                 "flightEmissions": out,
-                "modelVersion": {"major": 3, "minor": 0, "patch": 2, "dated": "20261119"},
+                "modelVersion": {
+                    "major": 3,
+                    "minor": 0,
+                    "patch": 2,
+                    "dated": "20261119",
+                },
             },
         )
 
@@ -106,7 +111,9 @@ def _used() -> int:
 
 def test_off_by_default_makes_no_call(client):
     data = {"results": [_rt()]}
-    assert _annotate(data) == {"results": [_rt()]}  # conftest guard would fail on a call
+    assert _annotate(data) == {
+        "results": [_rt()]
+    }  # conftest guard would fail on a call
 
 
 def test_enabled_needs_a_key(client, monkeypatch):
@@ -117,7 +124,12 @@ def test_enabled_needs_a_key(client, monkeypatch):
 
 
 def test_round_trip_sums_both_legs_in_one_batched_call(tim):
-    data = {"results": [_rt(), _rt(_leg("LX632", "ZRH", "CDG"), _leg("LX633", "CDG", "ZRH", "2027-01-20"))]}
+    data = {
+        "results": [
+            _rt(),
+            _rt(_leg("LX632", "ZRH", "CDG"), _leg("LX633", "CDG", "ZRH", "2027-01-20")),
+        ]
+    }
     _annotate(data)
     assert len(tim.calls) == 1
     assert len(tim.calls[0]["flights"]) == 4
@@ -151,7 +163,9 @@ def test_cabin_class_picks_the_headline(tim):
     data = {"results": [{"outbound": _leg()}]}
     _annotate(data, "business")
     e = data["results"][0]["emissions"]
-    assert e["cabin"] == "business" and e["kg_co2e_per_pax"] == e["by_class"]["business"]
+    assert (
+        e["cabin"] == "business" and e["kg_co2e_per_pax"] == e["by_class"]["business"]
+    )
 
 
 def test_connections_and_bad_numbers_are_not_estimated(tim):

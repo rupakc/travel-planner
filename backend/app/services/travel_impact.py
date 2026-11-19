@@ -34,9 +34,7 @@ from ..db import api_budget_db
 logger = logging.getLogger(__name__)
 
 PROVIDER = "google_tim"
-ENDPOINT = (
-    "https://travelimpactmodel.googleapis.com/v1/flights:computeFlightEmissions"
-)
+ENDPOINT = "https://travelimpactmodel.googleapis.com/v1/flights:computeFlightEmissions"
 SOURCE = "Google Travel Impact Model"
 ATTRIBUTION_URL = "https://travelimpactmodel.org"
 TIMEOUT_S = 8.0
@@ -191,7 +189,11 @@ def _summarise(entries: list[dict], cabin: str, version: str | None) -> dict | N
             by_class[c] = round(sum(grams) / 1000)
     if cabin not in by_class:
         return None
-    buckets = [e.get("contrailsImpactBucket") for e in entries if e.get("contrailsImpactBucket")]
+    buckets = [
+        e.get("contrailsImpactBucket")
+        for e in entries
+        if e.get("contrailsImpactBucket")
+    ]
     return {
         "kg_co2e_per_pax": by_class[cabin],
         "cabin": cabin,
@@ -231,7 +233,9 @@ async def annotate(data: dict, cabin: str | None = None) -> dict:
             if granted < len(wanted):
                 logger.info(
                     "tim_cap: %d of %d flights sent (daily cap %d)",
-                    granted, len(wanted), cap(),
+                    granted,
+                    len(wanted),
+                    cap(),
                 )
             ask = wanted[:granted]
             if ask:
