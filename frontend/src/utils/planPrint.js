@@ -39,6 +39,23 @@ const link = (url, label) => {
   return href ? ` <a href="${esc(href)}">${esc(label)}</a>` : ''
 }
 
+// A fact kept in My Plan: a quote stays a quote; a crawler fact keeps its
+// source (linked), as-of date and licence attribution (linked to the licence)
+function factLine(f) {
+  const text = f.quote ? `<q><em>${esc(f.text)}</em></q>` : esc(f.text)
+  const head = `${f.place ? `<strong>${esc(f.place)}</strong> — ` : ''}${text}`
+  const c = f.origin === 'crawler' ? f.citation : null
+  if (!c?.name) return `${head} <span class="muted">· ${esc(tr('print.factAi'))}</span>`
+  const href = safeUrl(c.url)
+  const name = href ? `<a href="${esc(href)}">${esc(c.name)}</a>` : esc(c.name)
+  const asOf = typeof c.as_of === 'string' && /^\d{4}-\d{2}-\d{2}/.test(c.as_of) ? ` · ${esc(c.as_of.slice(0, 10))}` : ''
+  const lic = safeUrl(c.licence_url)
+  const attribution = c.attribution
+    ? ` · ${lic ? `<a href="${esc(lic)}">${esc(c.attribution)}</a>` : esc(c.attribution)}`
+    : ''
+  return `${head} <span class="muted">· ${name}${asOf}${attribution}</span>`
+}
+
 const section = (title, body) => (body ? `<section><h2>${esc(title)}</h2>${body}</section>` : '')
 
 const list = (items, render) => (items?.length ? `<ul>${items.map((it) => `<li>${render(it)}</li>`).join('')}</ul>` : '')
@@ -167,6 +184,7 @@ export function buildPlanPrintHtml({ planName, searchData, selections, itinerary
     section(tr('print.section.sim'), sel.sim ? `<p>${esc([sel.sim.provider, sel.sim.plan_name].filter(Boolean).join(' — '))}${Number(sel.sim.price_usd) > 0 ? ` <span class="amt">${usd(sel.sim.price_usd)}</span>` : ''}${link(sel.sim.url, tr('print.getPlan'))}</p>` : ''),
     section(tr('print.section.gettingAround'), list(sel.getting_around, (t) => `${esc(t.name)}${t.price_info ? ` <span class="muted">· ${esc(t.price_info)}</span>` : ''}`)),
     section(tr('print.section.tips'), list(sel.tips, (t) => `<strong>${esc(t.title)}</strong>${t.body ? ` — ${esc(t.body)}` : ''}`)),
+    section(tr('print.section.placeFacts'), list(sel.place_facts, factLine)),
   ].join('')
 
   return `<!doctype html>

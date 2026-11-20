@@ -30,7 +30,8 @@
       "walkingTours": "वॉकिंग टूर ({{count}})",
       "itinerarySlots": "यात्रा कार्यक्रम स्लॉट ({{count}})",
       "fullItinerary_one": "पूरा यात्रा कार्यक्रम ({{count}} दिन)",
-      "fullItinerary_other": "पूरा यात्रा कार्यक्रम ({{count}} दिन)"
+      "fullItinerary_other": "पूरा यात्रा कार्यक्रम ({{count}} दिन)",
+      "placeFacts": "जगह के तथ्य ({{count}})"
     },
     "flight": {
       "outbound": "जाना:",
@@ -62,7 +63,8 @@
       "morning": "सुबह",
       "afternoon": "दोपहर",
       "evening": "शाम"
-    }
+    },
+    "factAi": "AI का सुझाव, सत्यापित नहीं"
   },
   "export": {
     "calendar": "कैलेंडर में जोड़ें",
@@ -182,8 +184,10 @@
       "events": "इवेंट",
       "sim": "सिम / eSIM",
       "gettingAround": "आना-जाना",
-      "tips": "सुझाव"
-    }
+      "tips": "सुझाव",
+      "placeFacts": "जगह के तथ्य"
+    },
+    "factAi": "AI का सुझाव, सत्यापित नहीं"
   },
   "ics": {
     "dayTheme": "दिन {{n}}: {{theme}}",

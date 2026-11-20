@@ -63,6 +63,10 @@
     "packing_list": {
       "label": "行李清单",
       "badge": "行李"
+    },
+    "facts": {
+      "label": "地点趣闻",
+      "badge": "趣闻"
     }
   },
   "interests": {
@@ -524,6 +528,26 @@
       "activities_unmodelled": "涉及飞行的活动未计入（没有因子）：{{count}} 项。",
       "hotel_grid": "{{city}} 没有酒店住宿因子：按该国电网（{{g_per_kwh}} g CO₂e/kWh）× 每间夜 {{kwh}} kWh 当量计算。",
       "factors_newer": "有较新 DESNZ {{year}} 数值的因子采用该数值（来自 Voyager 爬虫）；其余来自内置表。"
+    }
+  },
+  "facts": {
+    "aiLabel": "AI 建议，未经核实",
+    "aiNote": "AI 建议的内容来自模型的一般知识，没有来源。请在依赖之前自行核实。",
+    "machineTranslated": "由原文机器翻译",
+    "placesLabel": "地点",
+    "groupsLabel": "分类",
+    "scope": {
+      "city": "城市",
+      "place": "目的地",
+      "region": "地区",
+      "country": "国家"
+    },
+    "group": {
+      "historical": "历史",
+      "fun": "趣味",
+      "popular": "知名",
+      "unbelievable": "难以置信",
+      "little_known": "鲜为人知"
     }
   }
 }

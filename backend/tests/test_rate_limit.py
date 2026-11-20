@@ -237,6 +237,7 @@ EXPECTED_BUCKETS = {
     ("POST", "/api/forex"): "light_ai",
     ("POST", "/api/itinerary"): "light_ai",
     ("POST", "/api/events"): "light_ai",
+    ("POST", "/api/place-facts"): "light_ai",
     ("POST", "/api/walking-tours"): "light_ai",
     ("POST", "/api/layover"): "light_ai",
     ("POST", "/api/nearby"): "light_ai",

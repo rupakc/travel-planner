@@ -24,7 +24,7 @@ Endpoints that call the AI agents are rate-limited per caller (the signed-in use
 | import | `POST /api/import/extract`, `POST /api/import/resolve-place` | 20 |
 | tripadvisor | `POST /api/tripadvisor/attractions` (signed-in only; not an AI route) | 10 |
 | carbon | `POST /api/carbon/trip` (pure computation, anonymous-friendly; not an AI route) | 120 |
-| light_ai | `POST /api/flights`, `/hotels`, `/activities` and their `/filtered` variants, `/flights/fare-calendar`, `/visa`, `/sim`, `/tips`, `/getting-around`, `/forex`, `/itinerary`, `/events`, `/walking-tours`, `/layover`, `/stress-test`, `/nearby`, `/live-check`, `/fare-watches` (create), `/fare-watches/{id}/check`, `/price-watches` (create), `/price-watches/{id}/check`, `PUT /auth/email` | 60 |
+| light_ai | `POST /api/flights`, `/hotels`, `/activities` and their `/filtered` variants, `/flights/fare-calendar`, `/visa`, `/sim`, `/tips`, `/getting-around`, `/forex`, `/itinerary`, `/events`, `/place-facts`, `/walking-tours`, `/layover`, `/stress-test`, `/nearby`, `/live-check`, `/fare-watches` (create), `/fare-watches/{id}/check`, `/price-watches` (create), `/price-watches/{id}/check`, `PUT /auth/email` | 60 |
 
 Each bucket is counted separately, with one exception: a chat turn that starts a full trip plan (including a refinement that rebuilds the itinerary) also takes one token from the caller's **search** bucket, so searches and chat-planned trips share one budget; over it, the already-open chat stream answers with a friendly `delta` saying roughly how many minutes to wait, then `done` (no `429`, no `error`). Over the limit the API answers `429 Too Many Requests` with a `Retry-After` header (seconds) and:
 
@@ -105,6 +105,7 @@ Limits are configurable (see [Configuration](Configuration.md#rate-limits)). The
 | POST | `/api/visa`, `/api/sim`, `/api/tips`, `/api/getting-around`, `/api/forex` | optional | Single specialist agents |
 | POST | `/api/itinerary` | optional | Itinerary agent |
 | POST | `/api/events` | optional | Events agent (no frontend caller) |
+| POST | `/api/place-facts` | optional | Place facts: crawler facts with sources, AI-suggested facts for empty groups ([Place Facts](Place-Facts.md)) |
 | POST | `/api/walking-tours` | optional | Crawled free walking tours |
 | POST | `/api/layover` | optional | Layover mini-plan |
 | POST | `/api/stress-test` | optional | Audit an itinerary |
@@ -240,7 +241,8 @@ Two optional fields carry a trip imported with `POST /api/import/extract`:
 | `visa`, `sim`, `tips`, `getting_around`, `forex` | 0, then 1 | `static`, then `ai` | Static-backed; an AI error is not sent, so the static data stays |
 | `confidence` | 0 | `static` | Travel Ease grade: total out of 100 and green/amber/red, from visa ease, safety, English friendliness, cost vs budget and tourist infrastructure |
 | `emergency_card` | 0, then 1 | `static`, then `ai` | Static-backed |
-| `agent_status` | — | — | `{agent, status: "searching" \| "done"}` for the 15 agents at start, and for `stress_test` |
+| `agent_status` | — | — | `{agent, status: "searching" \| "done"}` for the 15 agents at start (16 with `facts` when `PLACE_FACTS_ENABLED`), and for `stress_test` |
+| `facts` | 0, then 1 | `crawler`, then `ai` | Place facts ([Place Facts](Place-Facts.md)). The `crawler` yield is sent only when the crawler answered with facts. An AI error after it is not sent. Absent when `PLACE_FACTS_ENABLED=false` |
 | `flights`, `weather`, `hotels`, `activities`, `places_to_see`, `walking_tours`, `events` | 1 | `ai` | `hotels`, `activities` and `places_to_see` are sent twice: before and after link enrichment |
 | `packing_list` | deferred | `ai` (`static` for the template fallback) | Starts when activities and weather are in |
 | `pricing_advisor` | deferred | `ai` | Starts when flights have at least 3 results; skipped on error or after 120 s |
@@ -533,6 +535,7 @@ Each takes the `TravelSearchRequest` body of `/api/search` unless noted. **Auth:
 | `POST /api/visa`, `/api/sim`, `/api/tips`, `/api/getting-around`, `/api/forex` | The corresponding specialist result |
 | `POST /api/itinerary` | Day-by-day itinerary |
 | `POST /api/events` | What's On during the trip |
+| `POST /api/place-facts` | Place facts for each destination, its region and its country (same body as `/api/search`; `404 place_facts_disabled` when off). See [Place Facts](Place-Facts.md#section-shape) |
 | `POST /api/walking-tours` | Crawled free walking tours (see below) |
 | `POST /api/layover` | Layover plan. Own body: `city`, `duration_hours` (> 0, ≤ 48), `nationality`, optional `airport`, `arrival_time` (`HH:MM`) and `interests` |
 | `POST /api/stress-test` | Audit of an itinerary. Body: the search request plus `itinerary` (required) and optional `flights`, `visa` and `weather` |

@@ -30,7 +30,8 @@
       "walkingTours": "Walking Tours ({{count}})",
       "itinerarySlots": "Itinerary Slots ({{count}})",
       "fullItinerary_one": "Full Itinerary ({{count}} day)",
-      "fullItinerary_other": "Full Itinerary ({{count}} days)"
+      "fullItinerary_other": "Full Itinerary ({{count}} days)",
+      "placeFacts": "Place facts ({{count}})"
     },
     "flight": {
       "outbound": "Outbound:",
@@ -62,7 +63,8 @@
       "morning": "morning",
       "afternoon": "afternoon",
       "evening": "evening"
-    }
+    },
+    "factAi": "AI-suggested, not verified"
   },
   "export": {
     "calendar": "Add to calendar",
@@ -182,8 +184,10 @@
       "events": "Events",
       "sim": "SIM / eSIM",
       "gettingAround": "Getting around",
-      "tips": "Tips"
-    }
+      "tips": "Tips",
+      "placeFacts": "Place facts"
+    },
+    "factAi": "AI-suggested, not verified"
   },
   "ics": {
     "dayTheme": "Day {{n}}: {{theme}}",

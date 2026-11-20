@@ -2,6 +2,7 @@ import asyncio
 import logging
 from datetime import timedelta
 
+from ..core.config import settings
 from ..schemas.request import TravelSearchRequest
 from ..services.must_include import ensure_must_include
 from ..services.verification import attach_verification
@@ -15,6 +16,7 @@ from .getting_around_agent import GettingAroundAgent
 from .hotels_agent import HotelsAgent
 from .itinerary_agent import ItineraryAgent
 from .packing_list_agent import PackingListAgent
+from .place_facts_agent import PlaceFactsAgent, crawler_section
 from .places_agent import PlacesAgent
 from .pricing_advisor_agent import PricingAdvisorAgent
 from .sim_agent import SimAgent
@@ -28,6 +30,8 @@ logger = logging.getLogger(__name__)
 
 # Sections whose first AI yield is followed by a URL-enrichment re-yield
 _ENRICH_PENDING = {"hotels", "activities", "places_to_see"}
+# Queue marker of the place-facts crawler step (Phase 0 of the facts section)
+_FACTS_PHASE0 = "__facts_crawler__"
 
 
 def _enrich_does_work(agent) -> bool:
@@ -80,6 +84,14 @@ class TravelOrchestrator:
         self.packing_list = PackingListAgent(agents_dir)
         self.pricing_advisor = PricingAdvisorAgent(agents_dir)
         self.stress_test = StressTestAgent(agents_dir)
+        self.place_facts = PlaceFactsAgent(agents_dir)
+
+    def _facts_agent(self):
+        """The place facts agent when the feature is on (tests that build the
+        orchestrator by hand may leave it out)."""
+        if not settings.place_facts_enabled:
+            return None
+        return getattr(self, "place_facts", None)
 
     async def run(self, request: TravelSearchRequest) -> dict:
         """Run all agents: Phase 1 in parallel, Phase 2 sequential."""
@@ -100,6 +112,7 @@ class TravelOrchestrator:
             self.places.run(request),
             self.events.run(request),
             self.walking_tours.run(request),
+            self._run_facts(request),
             return_exceptions=True,
         )
 
@@ -120,6 +133,7 @@ class TravelOrchestrator:
         places_to_see = safe(phase1_results[8], {"results": []})
         events = safe(phase1_results[9], {"results": []})
         walking_tours = safe(phase1_results[10], {"results": []})
+        facts = phase1_results[11]
 
         # Phase 2: Itinerary uses activities + hotels
         itinerary = await self.itinerary.run(
@@ -134,7 +148,7 @@ class TravelOrchestrator:
             request, itinerary=itinerary, flights=flights, visa=visa
         )
 
-        return {
+        out = {
             "stress_test": stress_test,
             "flights": flights,
             "hotels": hotels,
@@ -149,6 +163,13 @@ class TravelOrchestrator:
             "forex": forex,
             "itinerary": itinerary,
         }
+        if facts is not None:
+            out["facts"] = safe(facts, {"places": []})
+        return out
+
+    async def _run_facts(self, request: TravelSearchRequest):
+        agent = self._facts_agent()
+        return None if agent is None else await agent.run(request)
 
     async def stream_run(self, request: TravelSearchRequest):
         """Stream results with a static-first, AI-enhanced pattern.
@@ -225,7 +246,7 @@ class TravelOrchestrator:
             "forex",
             "packing_list",
             "pricing_advisor",
-        ]:
+        ] + (["facts"] if self._facts_agent() is not None else []):
             yield f"data: {json.dumps({'type': 'agent_status', 'agent': name, 'status': 'searching'})}\n\n"
 
         # ── Phase 1: Parallel AI agents (fast — no web searches) ────────
@@ -271,6 +292,35 @@ class TravelOrchestrator:
             for name, agent in phase1_agents.items()
         ]
 
+        # Place facts: the crawler's facts stream as soon as they arrive
+        # (Phase 0, `source: crawler`); the agent awaits the same fetch and
+        # fills only the groups the crawler left empty (docs/Place-Facts.md)
+        facts_agent = self._facts_agent()
+        if facts_agent is not None:
+            crawler_task = asyncio.create_task(crawler_section(request))
+            phase0_queued = asyncio.Event()
+
+            async def facts_phase0():
+                try:
+                    section = await asyncio.shield(crawler_task)
+                except Exception as e:
+                    logger.warning(f"Place facts crawler step failed: {e}")
+                    section = None
+                await queue.put((_FACTS_PHASE0, section))
+                phase0_queued.set()
+
+            async def facts_ai():
+                result = await facts_agent.run(
+                    request, crawler=asyncio.shield(crawler_task)
+                )
+                # The crawler yield always goes first, even when the agent
+                # answers at once (no gaps, or an instant error)
+                await phase0_queued.wait()
+                return result
+
+            phase1_tasks.append(asyncio.create_task(facts_phase0()))
+            phase1_tasks.append(asyncio.create_task(run_agent("facts", facts_ai())))
+
         _STATIC_BACKED = {
             "visa",
             "sim",
@@ -279,6 +329,9 @@ class TravelOrchestrator:
             "forex",
             "emergency_card",
         }
+
+        # Sections whose earlier yield (crawler facts) survives an AI error
+        retained: set[str] = set()
 
         # Enrichment starts per-agent as soon as each Phase 1 result arrives
         enrich_queue: asyncio.Queue = asyncio.Queue()
@@ -302,10 +355,29 @@ class TravelOrchestrator:
 
         for _ in range(len(phase1_tasks)):
             name, result = await queue.get()
+            if name == _FACTS_PHASE0:
+                from ..services.place_facts import has_facts, public
+
+                if has_facts(result) and "facts" not in results:
+                    section = _attach_verification(
+                        "facts", public(result), request, source="crawler"
+                    )
+                    yield f"data: {json.dumps({'type': 'facts', 'data': section, 'source': 'crawler'})}\n\n"
+                    # From here an AI error must not replace the crawler facts
+                    retained.add("facts")
+                continue
             results[name] = result
 
-            if name in _STATIC_BACKED and result.get("error"):
+            if (name in _STATIC_BACKED or name in retained) and result.get("error"):
                 logger.info(f"Agent {name} errored, retaining Phase 0 static data")
+            elif name == "facts" and result.get("error"):
+                # Optional section: an error is never sent (the card stays
+                # hidden) so it can neither replace crawler facts nor make the
+                # whole run uncacheable
+                logger.info(
+                    "Place facts unavailable (%s); section not sent",
+                    result.get("error_code") or "error",
+                )
             else:
                 pending = (
                     name in _ENRICH_PENDING

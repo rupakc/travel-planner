@@ -30,7 +30,8 @@
       "walkingTours": "ওয়াকিং ট্যুর ({{count}})",
       "itinerarySlots": "ভ্রমণসূচির স্লট ({{count}})",
       "fullItinerary_one": "সম্পূর্ণ ভ্রমণসূচি ({{count}} দিন)",
-      "fullItinerary_other": "সম্পূর্ণ ভ্রমণসূচি ({{count}} দিন)"
+      "fullItinerary_other": "সম্পূর্ণ ভ্রমণসূচি ({{count}} দিন)",
+      "placeFacts": "জায়গার তথ্য ({{count}})"
     },
     "flight": {
       "outbound": "যাওয়া:",
@@ -62,7 +63,8 @@
       "morning": "সকাল",
       "afternoon": "বিকেল",
       "evening": "সন্ধ্যা"
-    }
+    },
+    "factAi": "AI-এর পরামর্শ, যাচাই করা নয়"
   },
   "export": {
     "calendar": "ক্যালেন্ডারে যোগ করুন",
@@ -182,8 +184,10 @@
       "events": "ইভেন্ট",
       "sim": "সিম / eSIM",
       "gettingAround": "যাতায়াত",
-      "tips": "টিপস"
-    }
+      "tips": "টিপস",
+      "placeFacts": "জায়গার তথ্য"
+    },
+    "factAi": "AI-এর পরামর্শ, যাচাই করা নয়"
   },
   "ics": {
     "dayTheme": "দিন {{n}}: {{theme}}",

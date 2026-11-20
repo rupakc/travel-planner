@@ -63,6 +63,10 @@
     "packing_list": {
       "label": "Packliste",
       "badge": "Packen"
+    },
+    "facts": {
+      "label": "Fakten zum Ort",
+      "badge": "Fakten"
     }
   },
   "interests": {
@@ -532,6 +536,26 @@
       "activities_unmodelled": "Aktivitäten mit Flug nicht gezählt (kein Faktor): {{count}}.",
       "hotel_grid": "Kein Hotelfaktor für {{city}}: das Stromnetz des Landes ({{g_per_kwh}} g CO₂e/kWh) × {{kwh}} kWh-Äquivalent pro Zimmernacht.",
       "factors_newer": "Faktoren mit einem neueren DESNZ-{{year}}-Wert nutzen diesen (aus dem Voyager-Crawler); die übrigen stammen aus der eingebauten Tabelle."
+    }
+  },
+  "facts": {
+    "aiLabel": "KI-Vorschlag, nicht geprüft",
+    "aiNote": "KI-Vorschläge stammen aus dem Allgemeinwissen des Modells und haben keine Quelle. Prüfe sie, bevor du dich darauf verlässt.",
+    "machineTranslated": "Maschinell aus der Originalsprache übersetzt",
+    "placesLabel": "Orte",
+    "groupsLabel": "Faktengruppen",
+    "scope": {
+      "city": "Stadt",
+      "place": "Reiseziel",
+      "region": "Region",
+      "country": "Land"
+    },
+    "group": {
+      "historical": "Geschichte",
+      "fun": "Kurios",
+      "popular": "Bekannt",
+      "unbelievable": "Unglaublich",
+      "little_known": "Wenig bekannt"
     }
   }
 }

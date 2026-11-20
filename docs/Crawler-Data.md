@@ -16,6 +16,7 @@ The feature is **off by default** (`CRAWLER_ENABLED=false`). Off, or with the cr
 | Visa cross-check | `visa_reference` | Wikipedia visa-requirement tables (share-alike) | Only a labelled **cross-check** ("Cross-check (Wikipedia, not an official source)", agrees / differs). Never the answer and never sent to the model. |
 | Events and itinerary | `public_holiday` | OpenHolidays (share-alike), official calendars | "Public holidays during your trip" in Events and above the itinerary (`public_holidays`). Open-licence holidays are also given to the events and itinerary agents as closure context. |
 | Trip carbon footprint | `emission_factor` (`/v1/carbon/factors`), `grid_ci:<ISO2>:annual:lifecycle` observations (`/v1/carbon/grid`) | UK DESNZ conversion factors (open); Ember / Our World in Data grid intensity (open) | A DESNZ factor set **newer** than the committed table's year replaces the matching rows (same label and unit); a stay in a country with no hotel-stay factor uses the country's grid intensity instead of the median. Lines worked out from them carry `crawler_source`; the answer lists them in `crawler_sources`. See [Carbon Footprint](Carbon-Footprint.md#crawler-data). |
+| Place facts | `place_fact` (`/v1/facts` by `geonames_id` and by `country`) | Wikidata (CC0), CIA World Factbook (CC0), Wikipedia DYK / OTD hooks (share-alike) | Their own section, `facts`: each fact with its `citation` (source, link, as-of, licence, attribution), streamed in Phase 0. Hooks are shown as written, as quotes. Facts from AI-bot-blocked sources (`ai_bot_blocked`) are not shown. Only `llm_ok`, open-licence, non-hook facts are given to the place facts agent, as reference data it must not repeat. The agent fills only empty groups, labelled AI-suggested with no source. See [Place Facts](Place-Facts.md). |
 | Pricing advisor | `fare:<O>:<D>:<YYYY-MM>` observations (`cheapest_fare`) | Travelpayouts fare cache (API terms) | One line in the banner: "Typical cached fare for <month>: … not a live price" (`typical_fares`). It is also given to the model as context. It is never shown as a live or bookable price. |
 
 Every crawler fact carries a **source** object: `{source_id, name, url, as_of, licence, attribution, licence_url, conflict}`. Sections also list the sources they used in `crawler_sources`. All of these are new, optional response fields. An older SPA ignores them and still renders the replaced values (rates, embassy) in the existing fields.
@@ -45,11 +46,11 @@ The emergency card prefers **showing nothing over a guessed number**. When the c
 | `400` / `404` | No data for this request; the breaker stays closed. |
 | Crawler answers with nothing for this trip | Same as before, except the emergency card's model phone numbers are removed (see above). |
 
-Answers, including empty ones, are cached in process for `CRAWLER_CACHE_TTL_S` (15 min). `/v1/sources` (display names) and the carbon reads (`/v1/carbon/factors`, `/v1/carbon/grid`) are cached for 6 hours, `/v1/stats` (health) for 60 s. Complete search results are also cached for 30 min as before.
+Answers, including empty ones, are cached in process for `CRAWLER_CACHE_TTL_S` (15 min). `/v1/sources` (display names) and the carbon reads (`/v1/carbon/factors`, `/v1/carbon/grid`) are cached for 6 hours, place facts (`/v1/facts`) for 1 hour, `/v1/stats` (health) for 60 s. Complete search results are also cached for 30 min as before.
 
 ## Client
 
-`backend/app/services/crawler_client.py` handles transport only: an async httpx client per request, bearer token, pinned TLS, timeouts, cache and breaker. It never raises. `backend/app/services/crawler_facts.py` fetches, maps, attributes and applies the facts for each section. The agents (`forex`, `emergency_card`, `visa`, `events`, `itinerary`, `pricing_advisor`) call it only when `crawler_client.configured()`. The carbon calculator's reads and mapping live in `backend/app/services/carbon_live.py` (no agent, no model). The single-agent routes and the chat specialist fallback get the same data because they run the same agents.
+`backend/app/services/crawler_client.py` handles transport only: an async httpx client per request, bearer token, pinned TLS, timeouts, cache and breaker. It never raises. `backend/app/services/crawler_facts.py` fetches, maps, attributes and applies the facts for each section. The agents (`forex`, `emergency_card`, `visa`, `events`, `itinerary`, `pricing_advisor`) call it only when `crawler_client.configured()`. The carbon calculator's reads and mapping live in `backend/app/services/carbon_live.py` (no agent, no model). Place facts are read and mapped in `backend/app/services/place_facts.py` (`crawler_client.place_facts`). The single-agent routes and the chat specialist fallback get the same data because they run the same agents.
 
 TLS: the crawler serves a self-signed certificate for its internal IP. The client trusts **only** that certificate: `CRAWLER_CA_PEM` (the secret `crawler-api-tls-cert`) or `CRAWLER_CA_FILE`. A PEM holding two certificates (current and next) is accepted during a rotation.
 
@@ -66,6 +67,7 @@ TLS: the crawler serves a self-signed certificate for its internal IP. The clien
 - each section;
 - no model phone number shown as verified;
 - share-alike data never merged and never in a prompt;
+- place facts (`backend/tests/test_place_facts.py`): sources per fact, hooks as quotes, AI only for empty groups and never with a source, crawler facts kept when the AI fails;
 - flag off and crawler down: prompts and responses identical to today.
 
 `backend/tests/test_carbon_crawler.py` covers the carbon reads, including byte-identical answers with the crawler off, down or answering nothing usable.

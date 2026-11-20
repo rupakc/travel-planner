@@ -19,7 +19,7 @@ You are a flight search specialist...
 
 `backend/app/agents/loader.py` reads the file into an `AgentDefinition(name, description, system_prompt)`. The directory comes from `AGENTS_DIR` (default `<repo>/.agents`). Changing an agent's behaviour usually means editing its prompt; the Python class builds the user prompt and post-processes the JSON.
 
-There are 22 definition files:
+There are 24 definition files:
 
 | `.agents` file | Python class (`backend/app/agents/`) | Used by |
 |---|---|---|
@@ -36,12 +36,14 @@ There are 22 definition files:
 | `emergency_card.md` | `emergency_card_agent.py` | search |
 | `getting-around.md` | `getting_around_agent.py` | search, `/getting-around`, chat |
 | `forex.md` | `forex_agent.py` | search, `/forex` |
+| `place_facts.md` | `place_facts_agent.py` | search (`facts`, after the crawler's Phase 0 facts), `/place-facts`; see [Place Facts](Place-Facts.md) |
 | `packing_list.md` | `packing_list_agent.py` | search (deferred) |
 | `pricing_advisor.md` | `pricing_advisor_agent.py` | search (deferred) |
 | `itinerary.md` | `itinerary_agent.py` | search Phase 2, `/itinerary` |
 | `stress_test.md` | `stress_test_agent.py` | search (after the itinerary), `/stress-test` |
 | `discovery.md` | `discovery_agent.py` | `/discover` |
 | `layover.md` | `layover_agent.py` | `/layover` |
+| `link_import.md` | `link_import_agent.py` (via `services/link_import.py`) | `/import/extract` |
 | `chat.md` | `chat_agent.py` | `/chat` |
 | `chat-itinerary.md` | `chat_itinerary_agent.py` | chat comprehensive planning |
 | `orchestrator.md` | none | Descriptive only; the orchestrator is the Python `TravelOrchestrator` |
@@ -136,6 +138,7 @@ The orchestrator attaches `data.verification` to every non-error section just be
 | visa | compared with the static visa table | match → verified; different visa type → conflict; no entry → unverified |
 | emergency_card | compared with the static emergency numbers | verified only when at least 2 of police/ambulance/fire were compared and all matched; any mismatch → conflict |
 | sim, tips, getting_around, forex (Phase 0 yields) | curated reference data | verified |
+| facts | `origin` of each fact: crawler facts carry their published source, AI facts none | all sourced → verified; some → partial; none → unverified |
 | everything else (AI yields of the above, itinerary, stress test, packing list, pricing advisor) | none | unverified |
 
 Name matching (`services/name_match.py`) drops destination words and generic words ("hotel", "tour", "museum", …) first, so "Berlin City Tour" is not evidence for a "Top Berlin Tours" page. The first, pre-enrichment yield of hotels, activities and places is `pending: true`; the frontend clears a still-pending label when the stream ends. Model-supplied `link_verified` and `link_checked` flags are stripped, and saved plans drop them.

@@ -63,6 +63,10 @@
     "packing_list": {
       "label": "Lista de equipaje",
       "badge": "Equipaje"
+    },
+    "facts": {
+      "label": "Datos del lugar",
+      "badge": "Datos"
     }
   },
   "interests": {
@@ -540,6 +544,26 @@
       "activities_unmodelled": "Actividades en avión o helicóptero no contadas (sin factor): {{count}}.",
       "hotel_grid": "Sin factor de estancia hotelera para {{city}}: la red eléctrica del país ({{g_per_kwh}} g CO₂e/kWh) × {{kwh}} kWh equivalentes por habitación y noche.",
       "factors_newer": "Los factores con un valor DESNZ {{year}} más reciente lo usan (del rastreador de Voyager); los demás vienen de la tabla integrada."
+    }
+  },
+  "facts": {
+    "aiLabel": "Sugerido por IA, sin verificar",
+    "aiNote": "Los datos sugeridos por IA proceden del conocimiento general del modelo y no tienen fuente. Compruébalos antes de fiarte de ellos.",
+    "machineTranslated": "Traducción automática del idioma original",
+    "placesLabel": "Lugares",
+    "groupsLabel": "Grupos de datos",
+    "scope": {
+      "city": "Ciudad",
+      "place": "Destino",
+      "region": "Región",
+      "country": "País"
+    },
+    "group": {
+      "historical": "Históricos",
+      "fun": "Curiosos",
+      "popular": "Populares",
+      "unbelievable": "Increíbles",
+      "little_known": "Poco conocidos"
     }
   }
 }

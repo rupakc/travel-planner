@@ -11,7 +11,7 @@ import {
   LogOut, User, Save, RefreshCw, Bookmark, Plus, Minus, Eye,
   Bus, Map as MapIcon, SlidersHorizontal, Wifi, Bath, Cloud,
   ShoppingBag, TrendingUp, LayoutList, CalendarDays, HeartPulse,
-  Wand2, ArrowDown, ArrowUp, PartyPopper, Share2, Footprints, Link2
+  Wand2, ArrowDown, ArrowUp, PartyPopper, Share2, Footprints, Link2, BookOpen
 } from 'lucide-react'
 import TimelineView from '../components/TimelineView'
 import { Link } from 'react-router-dom'
@@ -30,6 +30,7 @@ import { defaultAllocation, reallocate, withTotal, fitResults, capsFromFit, flig
 import { buildEmergencyCardHtml } from '../utils/emergencyCardPrint'
 import WalkingToursSection, { WalkingTourPlanRow } from '../components/WalkingToursSection'
 import TripadvisorBlock from '../components/TripadvisorBlock'
+import PlaceFactsSection, { hasPlaceFacts, SelectedFact } from '../components/PlaceFactsSection'
 import EmissionsChip from '../components/EmissionsChip'
 import { RateSource, EmergencyOfficial, PhoneUnverified, VisaOfficial, HolidayNotice, TypicalFares } from '../components/OfficialData'
 import { orderSectionByCity } from '../utils/orderSectionByCity'
@@ -97,6 +98,8 @@ const AGENT_CONFIG = {
   stress_test:    { icon: HeartPulse, color: 'rose'    },
   emergency_card: { icon: Shield,      color: 'red'     },
   packing_list:   { icon: ShoppingBag, color: 'teal'    },
+  // Place facts: rendered only when the backend sends the section (not in AGENT_ORDER)
+  facts:          { icon: BookOpen,    color: 'orange'  },
 }
 const AGENT_ORDER = ['flights', 'weather', 'hotels', 'activities', 'places_to_see', 'walking_tours', 'events', 'visa', 'sim', 'tips', 'emergency_card', 'getting_around', 'forex', 'itinerary', 'stress_test', 'packing_list']
 
@@ -2844,6 +2847,23 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
             </div>
           )}
 
+          {/* Selected place facts */}
+          {selections.place_facts?.length > 0 && (
+            <div className="border border-orange-200 bg-orange-50 rounded-xl p-3" data-testid="drawer-place-facts">
+              <div className="text-xs font-semibold text-orange-700 uppercase tracking-wide mb-2 flex items-center gap-1.5"><BookOpen size={11}/> {t('drawer.placeFacts', { count: selections.place_facts.length })}</div>
+              <div className="space-y-2">
+                {selections.place_facts.map((fact) => (
+                  <div key={fact.id} className="flex items-start justify-between border-b border-orange-100 last:border-0 pb-1.5 last:pb-0">
+                    <div className="flex-1 min-w-0 mr-2">
+                      <SelectedFact fact={fact} aiLabel={t('drawer.factAi')} />
+                    </div>
+                    <button data-tid="drawer.remove.place_facts" aria-label={t('drawer.removeFact')} onClick={() => onRemoveSelection('place_facts', fact)} className="text-gray-400 hover:text-red-500 shrink-0 mt-0.5"><X size={12}/></button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Selected tips */}
           {selections.tips?.length > 0 && (
             <div className="border border-amber-200 bg-amber-50 rounded-xl p-3">
@@ -3375,6 +3395,8 @@ export default function ResultsPage() {
   const [searchData, setSearchData] = useState(null)
   const [statuses,   setStatuses]   = useState(() => Object.fromEntries(AGENT_ORDER.map(a => [a, 'waiting'])))
   const [results,    setResults]    = useState({})
+  // Place facts status: null until the (optional) section arrives
+  const [factsStatus, setFactsStatus] = useState(null)
   const [isDone,     setIsDone]     = useState(false)
   const [error,      setError]      = useState(null)
   const [streamWarning, setStreamWarning] = useState(null)
@@ -3627,6 +3649,7 @@ export default function ResultsPage() {
   const runSearch = (sd, preloadSelections = null) => {
     setStatuses(Object.fromEntries(AGENT_ORDER.map(a => [a, 'waiting'])))
     setResults({})
+    setFactsStatus(null)
     setIsDone(false)
     setError(null)
     setLoadedPlanId(null)
@@ -3747,6 +3770,16 @@ export default function ResultsPage() {
         }
         // AI paused (monthly spend cap, billing off): one plain banner, not N failures
         if (data?.error_code === 'ai_limit' || data?.error_code === 'ai_billing') setError(data.error)
+        if (type === 'facts') {
+          // Optional section (older backends never send it): crawler facts
+          // first (`source: crawler`), then the AI-completed version. An AI
+          // error never replaces facts already shown.
+          startTransition(() => {
+            setResults(r => (data?.error && hasPlaceFacts(r.facts)) ? r : { ...r, facts: data })
+          })
+          setFactsStatus(prev => (source === 'crawler' && prev !== 'done') ? 'enhancing' : 'done')
+          return
+        }
         if (!AGENT_ORDER.includes(type)) return
         // Flights legs and weather days are already journey-ordered by the
         // backend; every other city-tagged list gets sorted client-side too.
@@ -3779,6 +3812,7 @@ export default function ResultsPage() {
       }
     const finalize = () => {
         setIsDone(true)
+        setFactsStatus(prev => (prev ? 'done' : prev))
         // If itinerary never arrived, generate client-side fallback so section always renders
         setResults(prev => {
           // A section still awaiting link enrichment must not show "Checking…" forever
@@ -3796,6 +3830,8 @@ export default function ResultsPage() {
           }
           return next
         })
+        // Place facts kept from the crawler when the AI pass sent nothing
+        setFactsStatus(prev => (prev === 'enhancing' ? 'done' : prev))
       }
     const startStream = () => {
       cleanupWorker.current = streamSearch(
@@ -3824,7 +3860,7 @@ export default function ResultsPage() {
   if (!searchData) return null
 
   const completedCount = Object.values(statuses).filter(s => s === 'done' || s === 'enhancing').length
-  const selectedCount  = (selections.flight ? 1 : 0) + (selections.flights?.length || 0) + (selections.hotel ? 1 : 0) + selections.activities.length + (selections.places_to_see?.length || 0) + (selections.walking_tours?.length || 0) + (selections.sim ? 1 : 0) + (selections.getting_around?.length || 0) + (selections.events?.length || 0) + (selections.itinerary_slots?.length || 0)
+  const selectedCount  = (selections.flight ? 1 : 0) + (selections.flights?.length || 0) + (selections.hotel ? 1 : 0) + selections.activities.length + (selections.places_to_see?.length || 0) + (selections.walking_tours?.length || 0) + (selections.sim ? 1 : 0) + (selections.getting_around?.length || 0) + (selections.events?.length || 0) + (selections.itinerary_slots?.length || 0) + (selections.place_facts?.length || 0)
 
   const handleSelect = (type, value) => {
     if (type === 'activities') {
@@ -3836,6 +3872,12 @@ export default function ResultsPage() {
       setSelections(s => {
         const already = s.tips.some(t => t.title === value.title)
         return { ...s, tips: already ? s.tips.filter(t => t.title !== value.title) : [...s.tips, value] }
+      })
+    } else if (type === 'place_facts') {
+      setSelections(s => {
+        const list = s.place_facts || []
+        const already = list.some(f => f.id === value.id)
+        return { ...s, place_facts: already ? list.filter(f => f.id !== value.id) : [...list, value] }
       })
     } else if (type === 'getting_around') {
       setSelections(s => {
@@ -3888,6 +3930,8 @@ export default function ResultsPage() {
       setSelections(s => ({ ...s, getting_around: s.getting_around.filter(a => a.name !== value.name) }))
     } else if (type === 'tips') {
       setSelections(s => ({ ...s, tips: s.tips.filter(t => t.title !== value.title) }))
+    } else if (type === 'place_facts') {
+      setSelections(s => ({ ...s, place_facts: (s.place_facts || []).filter(f => f.id !== value.id) }))
     } else if (type === 'places_to_see') {
       setSelections(s => ({ ...s, places_to_see: (s.places_to_see || []).filter(p => p.name !== value.name) }))
     } else if (type === 'walking_tours') {
@@ -4119,6 +4163,22 @@ export default function ResultsPage() {
     )
   }
 
+  // Place facts: its own card after Tips, only when the backend sent facts
+  const renderFactsCard = () => {
+    if (!factsStatus || !hasPlaceFacts(results.facts)) return null
+    const isOpen = !collapsedSections.facts
+    return (
+      <div key="facts" id="section-facts" className="bg-white rounded-xl shadow-md border border-gray-100 ring-1 ring-black/5 overflow-hidden transition-all duration-500" style={{ animation: 'fadeSlideIn 0.5s ease-out forwards', scrollMarginTop: '12rem' }}>
+        <SectionHeader agent="facts" status={factsStatus} isOpen={isOpen} onToggle={() => toggleSection('facts')} verification={results.facts?.verification} />
+        {isOpen && (
+          <div id={sectionBodyId('facts')}>
+            <PlaceFactsSection data={results.facts} {...sectionProps} />
+          </div>
+        )}
+      </div>
+    )
+  }
+
   const completionBanner = isDone && (
     <div className="flex items-center justify-center gap-2 py-3 px-4 bg-green-50 border border-green-200 rounded-xl text-green-800 text-sm font-medium">
       <CheckCircle2 size={16} className="text-green-600 shrink-0" />
@@ -4320,6 +4380,7 @@ export default function ResultsPage() {
             {AGENT_ORDER.map(agent => {
               const card = renderSectionCard(agent, { animationDelay: `${AGENT_ORDER.indexOf(agent) * 80}ms` })
               // Tripadvisor ratings: their own labelled card after Places to see, never merged into it
+              if (agent === 'tips') return [card, renderFactsCard()]
               if (agent !== 'places_to_see') return card
               return [card, <TripadvisorBlock key="tripadvisor" token={token}
                 destinations={searchData?.destinations?.length > 1 ? searchData.destinations : [searchData?.destination]} />]

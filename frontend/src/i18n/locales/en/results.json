@@ -63,6 +63,10 @@
     "packing_list": {
       "label": "Packing List",
       "badge": "Packing"
+    },
+    "facts": {
+      "label": "Place Facts",
+      "badge": "Facts"
     }
   },
   "interests": {
@@ -532,6 +536,26 @@
       "activities_unmodelled": "Flight-based activities left out (no factor): {{count}}.",
       "hotel_grid": "No hotel-stay factor for {{city}}: the country's electricity grid ({{g_per_kwh}} g CO₂e/kWh) × {{kwh}} kWh-equivalent per room-night.",
       "factors_newer": "Factors with a newer DESNZ {{year}} value use it (from the Voyager crawler); the others come from the built-in table."
+    }
+  },
+  "facts": {
+    "aiLabel": "AI-suggested, not verified",
+    "aiNote": "AI-suggested facts come from the model's general knowledge and have no source. Check them before you rely on them.",
+    "machineTranslated": "Machine-translated from the source language",
+    "placesLabel": "Places",
+    "groupsLabel": "Fact groups",
+    "scope": {
+      "city": "City",
+      "place": "Destination",
+      "region": "Region",
+      "country": "Country"
+    },
+    "group": {
+      "historical": "Historical",
+      "fun": "Fun",
+      "popular": "Popular",
+      "unbelievable": "Unbelievable",
+      "little_known": "Little-known"
     }
   }
 }
