@@ -3,8 +3,9 @@
 The crawler is always an httpx.MockTransport (conftest refuses real network)
 and the model is a patched ``execute``. Covers: the client helper, place
 resolution (city, region, country; multi-city), crawler facts with their
-sources, licence rules for the model prompt, AI facts only for empty groups
-(never with a source or link), the static-first fallback, the stream
+sources (our own sentences only, value_lang, country near-duplicates),
+licence rules for the model prompt, AI facts only for empty groups (never
+with a source or link; the fun group is always AI), the static-first fallback, the stream
 (Phase 0 crawler yield, AI yield, flag off), the route, /config and the
 verification chip."""
 
@@ -86,6 +87,9 @@ def fact(
     text_en=None,
     source=WIKIDATA,
     blocked=False,
+    quantity=None,
+    confidence="structured",
+    **extra,
 ):
     return {
         "id": str(fid),
@@ -97,13 +101,14 @@ def fact(
         "text_origin": origin,
         "llm_ok": llm_ok,
         "date_ref": None,
-        "quantity": None,
+        "quantity": quantity,
         "source": source,
         "licence": licence,
         "as_of": "2026-11-20",
-        "confidence": "structured",
+        "confidence": confidence,
         "ai_bot_blocked": blocked,
         "updated_at": "2026-11-20T03:00:00Z",
+        **extra,
     }
 
 
@@ -113,19 +118,9 @@ BERLIN_FACTS = [
     fact(
         3,
         BERLIN,
-        "fun",
-        "... that a Berlin museum keeps a whole Babylonian gate?",
-        licence=CC_BY_SA,
-        llm_ok=False,
-        origin="source_hook",
-        source={
-            "source_id": "enwiki-dyk",
-            "url": "https://en.wikipedia.org/wiki/Ishtar_Gate",
-            "name": "Wikipedia: Did you know",
-            "publisher": "Wikipedia",
-            "source_class": "reference",
-            "sourced": "partial",
-        },
+        "popular",
+        "Berlin's motto is \u201cBerlin bleibt doch Berlin\u201d.",
+        value_lang="de",
     ),
 ]
 COUNTRY_FACTS = [
@@ -416,7 +411,7 @@ class TestCrawlerFacts:
                     "country": "DE",
                     "name": name,
                 },
-                "fun",
+                "little_known",
                 f"Fact {fid} about {name}.",
             )
 
@@ -435,7 +430,7 @@ class TestCrawlerFacts:
         )
         section = run(crawler_section(req(destination="Munich, Germany")))
         region = next(p for p in section["places"] if p["scope"] == "region")
-        texts = sorted(f["text"] for f in region["groups"]["fun"])
+        texts = sorted(f["text"] for f in region["groups"]["little_known"])
         assert texts == ["Fact 1 about Bavaria.", "Fact 4 about Bavaria Region."]
 
     def test_ai_bot_blocked_sources_are_not_shown(self, crawler_on):
@@ -446,11 +441,11 @@ class TestCrawlerFacts:
                         fact(
                             1,
                             BERLIN,
-                            "fun",
+                            "popular",
                             "Text from a blocked source.",
                             blocked=True,
                         ),
-                        fact(2, BERLIN, "fun", "Open text about Berlin."),
+                        fact(2, BERLIN, "popular", "Open text about Berlin."),
                     ]
                 },
                 {"DE": []},
@@ -461,32 +456,221 @@ class TestCrawlerFacts:
         assert texts == ["Open text about Berlin."]
         assert "blocked source" not in json.dumps(section)
 
-    def test_hooks_are_quotes_and_never_for_the_model(self, berlin_crawler):
+    def test_only_our_own_sentences_are_shown(self):
+        for origin in ("templated", "rewritten"):
+            f = pf.crawler_fact(fact(1, BERLIN, "popular", "Own words.", origin=origin))
+            assert f and f["text"] == "Own words."
+        # a source's text as written, or any origin this client does not know
+        for origin in ("source_hook", "quoted", "", None):
+            item = fact(1, BERLIN, "popular", "Not ours.", origin=origin)
+            assert pf.crawler_fact(item) is None
+        item = fact(1, BERLIN, "popular", "No origin.")
+        del item["text_origin"]
+        assert pf.crawler_fact(item) is None
+        f = pf.crawler_fact(fact(1, BERLIN, "popular", "Own words."))
+        assert "quote" not in f
+
+    def test_value_lang_is_carried_and_optional(self, berlin_crawler):
         section = run(crawler_section(req()))
-        hook = facts_of(section, "city:2950159")["fun"][0]
-        assert hook["quote"] is True and hook["citation"]["licence"] == "share_alike"
+        motto = next(
+            f
+            for f in facts_of(section, "city:2950159")["popular"]
+            if "motto" in f["text"]
+        )
+        assert motto["value_lang"] == "de" and motto["lang"] == "en"
+        founded = facts_of(section, "city:2950159")["historical"][0]
+        assert founded["value_lang"] is None  # absent in the item
+        assert (
+            pf.crawler_fact(fact(1, BERLIN, "popular", "Text x.", value_lang="und"))[
+                "value_lang"
+            ]
+            == "und"
+        )
+        for bad in ("<script>", "d e", 7, "x" * 40):
+            item = fact(1, BERLIN, "popular", "Text x.", value_lang=bad)
+            assert pf.crawler_fact(item)["value_lang"] is None
+        translated = pf.crawler_fact(
+            fact(
+                2,
+                BERLIN,
+                "popular",
+                "Berlin hat 1.700 Brücken.",
+                lang="de",
+                text_en="Berlin has 1,700 bridges.",
+            )
+        )
+        assert translated["lang"] == "en"
+
+    def test_share_alike_is_never_for_the_model(self, crawler_on):
+        crawler_on(
+            FakeCrawler(
+                {
+                    2950159: [
+                        fact(1, BERLIN, "historical", "Berlin was founded in 1237."),
+                        fact(
+                            2,
+                            BERLIN,
+                            "little_known",
+                            "Berlin holds a Babylonian gate.",
+                            licence=CC_BY_SA,
+                            llm_ok=False,
+                            origin="rewritten",
+                        ),
+                    ]
+                },
+                {"DE": []},
+            )
+        )
+        section = run(crawler_section(req()))
+        city = facts_of(section, "city:2950159")
+        assert city["little_known"][0]["citation"]["licence"] == "share_alike"
         prompt = pf.reference_prompt(section)
         assert "Berlin was founded in 1237." in prompt
         assert "UNTRUSTED" in prompt.upper()
         assert "Babylonian" not in prompt
 
+    def test_country_near_duplicates_prefer_wikidata(self, crawler_on):
+        bare_de = {"admin_level": "country", "country": "DE", "name": "Germany"}
+        factbook = {
+            "source_id": "factbook_json",
+            "url": "https://github.com/factbook/factbook.json",
+            "name": "The World Factbook",
+        }
+
+        def fb(fid, ftype, text, value, unit, scope=None):
+            return fact(
+                fid,
+                bare_de,
+                ftype,
+                text,
+                source=factbook,
+                quantity={"value": value, "unit": unit, "rank_scope": scope},
+            )
+
+        def wd(fid, ftype, text, value, unit, scope=None):
+            return fact(
+                fid,
+                GERMANY,
+                ftype,
+                text,
+                quantity={"value": value, "unit": unit, "rank_scope": scope},
+            )
+
+        items = [
+            # Factbook first in the page; Wikidata still wins
+            fb(
+                1,
+                "popular",
+                "Germany covers a total area of 357,022 km².",
+                357022,
+                "km2",
+            ),
+            wd(2, "popular", "Germany covers an area of 357,588 km².", 357588, "km2"),
+            fb(
+                3,
+                "unbelievable",
+                "The highest point of Germany is Zugspitze (2,963 m).",
+                2963,
+                "m",
+                "highest point of Germany",
+            ),
+            wd(
+                4,
+                "unbelievable",
+                "The highest point of Federal Republic of Germany is Zugspitze (2,962 m).",
+                2962,
+                "m",
+                "highest point of Federal Republic of Germany",
+            ),
+            # a figure that differs is kept
+            fb(
+                5,
+                "unbelievable",
+                "The lowest point of Germany is Neuendorf (-3.5 m).",
+                -3.5,
+                "m",
+                "lowest point of Germany",
+            ),
+            wd(
+                6,
+                "unbelievable",
+                "The lowest point of Germany is Freepsum Lake (-2 m).",
+                -2,
+                "m",
+                "lowest point of Germany",
+            ),
+            # different quantities never collapse
+            fb(
+                7, "popular", "Germany has 55 UNESCO World Heritage Sites.", 55, "sites"
+            ),
+        ]
+        crawler_on(FakeCrawler({}, {"DE": items}))
+        section = run(crawler_section(req()))
+        country = facts_of(section, "country:DE")
+        assert [f["text"] for f in country["popular"]] == [
+            "Germany covers an area of 357,588 km².",
+            "Germany has 55 UNESCO World Heritage Sites.",
+        ]
+        texts = sorted(f["text"] for f in country["unbelievable"])
+        assert texts == [
+            "The highest point of Federal Republic of Germany is Zugspitze (2,962 m).",
+            "The lowest point of Germany is Freepsum Lake (-2 m).",
+            "The lowest point of Germany is Neuendorf (-3.5 m).",
+        ]
+
+    def test_near_duplicates_without_wikidata_keep_one(self):
+        bare = {"admin_level": "country", "country": "DE"}
+        q = {"value": 100.0, "unit": "km2", "rank_scope": None}
+        src = {"source_id": "factbook_json", "name": "The World Factbook"}
+        a = fact(
+            1,
+            bare,
+            "popular",
+            "Area one.",
+            quantity=q,
+            confidence="extracted",
+            source=src,
+        )
+        b = fact(
+            2, bare, "popular", "Area two.", quantity={**q, "value": 100.4}, source=src
+        )
+        pairs = [(i, pf.crawler_fact(i)) for i in (a, b)]
+        kept = pf.dedupe_quantities(pairs)
+        # the better-confidence one stays
+        assert [f["text"] for _, f in kept] == ["Area two."]
+        # facts without a quantity, or below country level, are left alone
+        city = fact(3, BERLIN, "popular", "City area.", quantity=q)
+        plain = fact(4, bare, "popular", "No figure.")
+        pairs = [(i, pf.crawler_fact(i)) for i in (a, city, plain)]
+        assert len(pf.dedupe_quantities(pairs)) == 3
+
     def test_share_alike_ai_blocked_and_not_llm_ok_stay_out_of_prompts(self):
         items = [
-            fact(1, BERLIN, "fun", "Share alike text.", licence=CC_BY_SA, llm_ok=False),
-            fact(3, BERLIN, "fun", "Reserved source text.", llm_ok=False),
-            fact(4, BERLIN, "fun", "Open text."),
+            fact(
+                1,
+                BERLIN,
+                "little_known",
+                "Share alike text.",
+                licence=CC_BY_SA,
+                llm_ok=False,
+            ),
+            fact(3, BERLIN, "little_known", "Reserved source text.", llm_ok=False),
+            fact(4, BERLIN, "little_known", "Open text."),
         ]
         facts = [pf.crawler_fact(i) for i in items]
         assert [f["llm_ok"] for f in facts] == [False, False, True]
         # an AI-blocked source is not shown at all, so never in a prompt
-        assert pf.crawler_fact(fact(2, BERLIN, "fun", "Blocked.", blocked=True)) is None
+        assert (
+            pf.crawler_fact(fact(2, BERLIN, "little_known", "Blocked.", blocked=True))
+            is None
+        )
 
     def test_languages(self):
-        de = fact(1, BERLIN, "fun", "Berlin hat viele Brücken.", lang="de")
+        de = fact(1, BERLIN, "little_known", "Berlin hat viele Brücken.", lang="de")
         de_en = fact(
             2,
             BERLIN,
-            "fun",
+            "little_known",
             "Berlin hat 1.700 Brücken.",
             lang="de",
             text_en="Berlin has 1,700 bridges.",
@@ -498,7 +682,9 @@ class TestCrawlerFacts:
 
     def test_unusable_items_are_dropped(self):
         assert pf.crawler_fact(fact(1, BERLIN, "gossip", "x" * 20)) is None
-        assert pf.crawler_fact(fact(1, BERLIN, "fun", "Text.", source={})) is None
+        assert (
+            pf.crawler_fact(fact(1, BERLIN, "little_known", "Text.", source={})) is None
+        )
         assert pf.crawler_fact("junk") is None
 
     def test_off_is_none(self):
@@ -579,20 +765,61 @@ class TestAgent:
         assert city["unbelievable"][0]["origin"] == "ai"
         assert out["counts"]["crawler"] == 6 and out["counts"]["ai"] >= 1
 
-    def test_no_model_call_when_every_group_has_facts(self, crawler_on, monkeypatch):
+    def test_the_fun_group_is_always_ai(self, crawler_on, monkeypatch):
+        # The crawler writes no fun facts: with every other group sourced,
+        # the model is asked for fun only, and those facts are labelled AI
+        sourced = [t for t in pf.FACT_TYPES if t != "fun"]
         full = [
             fact(i, BERLIN, t, f"Berlin fact number {i} about {t}.")
-            for i, t in enumerate(pf.FACT_TYPES)
+            for i, t in enumerate(sourced)
         ]
         country = [
             fact(100 + i, GERMANY, t, f"Germany fact number {i} about {t}.")
-            for i, t in enumerate(pf.FACT_TYPES)
+            for i, t in enumerate(sourced)
         ]
         crawler_on(FakeCrawler({2950159: full}, {"DE": country}))
-        mock = stub_model(monkeypatch, AI)
+        ai = {
+            "places": [
+                {
+                    "key": k,
+                    "facts": [
+                        {"fact_type": "fun", "text": f"A fun fact about {k} here."},
+                        {"fact_type": "popular", "text": f"Not asked for at {k}."},
+                    ],
+                }
+                for k in ("city:2950159", "country:DE")
+            ]
+        }
+        mock = stub_model(monkeypatch, ai)
         out = run(PlaceFactsAgent(settings.agents_dir).run(req()))
+        prompt = mock.call_args.args[0]
+        for k in ("city:2950159", "country:DE"):
+            line = next(ln for ln in prompt.splitlines() if f'key "{k}"' in ln)
+            assert line.endswith("groups: fun")
+            fun = facts_of(out, k)["fun"]
+            assert [f["text"] for f in fun] == [f"A fun fact about {k} here."]
+            assert fun[0]["origin"] == "ai" and fun[0]["verified"] is False
+            assert fun[0]["citation"] is None
+        assert out["counts"] == {"crawler": 8, "ai": 2}
+
+    def test_no_model_call_when_every_group_has_facts(self, monkeypatch):
+        scopes = pf.scopes_for(req())
+        full = {
+            s.key: {
+                t: [
+                    pf.crawler_fact(
+                        fact(f"{s.key}{t}", BERLIN, t, f"{s.key} {t} fact.")
+                    )
+                ]
+                for t in pf.FACT_TYPES
+            }
+            for s in scopes
+        }
+        mock = stub_model(monkeypatch, AI)
+        section = pf.build_section(scopes, full)
+        out = run(PlaceFactsAgent(settings.agents_dir).run(req(), crawler=section))
         mock.assert_not_called()
-        assert out["counts"] == {"crawler": 10, "ai": 0}
+        assert out["counts"] == {"crawler": 5 * len(scopes), "ai": 0}
 
     def test_ai_failure_keeps_the_crawler_facts(self, berlin_crawler, monkeypatch):
         stub_model(monkeypatch, {"error": "model down"})
@@ -801,7 +1028,7 @@ class TestVerification:
                 {
                     "key": "city:1",
                     "groups": {
-                        "fun": [
+                        "popular": [
                             {
                                 "origin": o,
                                 "text": "x",
@@ -821,7 +1048,7 @@ class TestVerification:
         conflict = self._section(["crawler"], {**self.LINKED, "conflict": True})
         assert verify_section("facts", conflict, r)["level"] == "unverified"
         mixed = self._section(["crawler", "crawler"])
-        mixed["places"][0]["groups"]["fun"][1]["citation"] = {"name": "x"}
+        mixed["places"][0]["groups"]["popular"][1]["citation"] = {"name": "x"}
         assert verify_section("facts", mixed, r)["level"] == "partial"
 
     def test_levels(self):

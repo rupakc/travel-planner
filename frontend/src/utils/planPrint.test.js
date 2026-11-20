@@ -274,10 +274,13 @@ describe('imported trips', () => {
 
 describe('buildPlanPrintHtml place facts', () => {
   const placeFacts = [
-    { id: 'c:1', place: 'Berlin', text: 'Berlin was founded in 1237.', origin: 'crawler', quote: false,
+    { id: 'c:1', place: 'Berlin', text: 'Berlin was founded in 1237.', origin: 'crawler',
       citation: { name: 'Wikidata', url: 'https://www.wikidata.org/wiki/Q64', as_of: '2026-11-20', attribution: 'Wikidata (CC0 1.0)', licence_url: 'https://creativecommons.org/publicdomain/zero/1.0/' } },
-    { id: 'c:3', place: 'Berlin', text: '... that a museum keeps a whole gate?', origin: 'crawler', quote: true,
-      citation: { name: 'Wikipedia: Did you know', url: 'javascript:alert(1)', attribution: 'Wikipedia contributors (CC BY-SA 4.0)', licence_url: 'https://creativecommons.org/licenses/by-sa/4.0/' } },
+    { id: 'c:3', place: 'Berlin', text: 'Berlin’s motto is “Berlin bleibt doch Berlin”.', origin: 'crawler', lang: 'en', value_lang: 'de',
+      citation: { name: 'Wikidata', url: 'javascript:alert(1)', attribution: 'Wikidata (CC0 1.0)', licence_url: 'https://creativecommons.org/publicdomain/zero/1.0/' } },
+    // a plan saved before hooks were dropped: plain text now, still attributed
+    { id: 'c:4', place: 'Berlin', text: 'An old saved fact.', origin: 'crawler', quote: true,
+      citation: { name: 'Old source', attribution: 'Old (CC BY-SA 4.0)' } },
     { id: 'a:1', place: 'Berlin', text: 'Berlin has more bridges than Venice.', origin: 'ai', citation: null },
   ]
   const html = build({ selections: { ...selections, place_facts: placeFacts } })
@@ -288,10 +291,11 @@ describe('buildPlanPrintHtml place facts', () => {
     expect(html).toContain('<a href="https://creativecommons.org/publicdomain/zero/1.0/">Wikidata (CC0 1.0)</a>')
   })
 
-  it('marks a share-alike hook as a quote with its attribution, never a script link', () => {
-    expect(html).toContain('<q><em>... that a museum keeps a whole gate?</em></q>')
-    expect(html).toContain('<a href="https://creativecommons.org/licenses/by-sa/4.0/">Wikipedia contributors (CC BY-SA 4.0)</a>')
+  it('marks the text and its quoted value with their languages, never a script link', () => {
+    expect(html).toContain('<span lang="en">Berlin’s motto is “<span lang="de">Berlin bleibt doch Berlin</span>”.</span>')
     expect(html).not.toContain('javascript:')
+    expect(html).not.toContain('<q>')
+    expect(html).toContain('An old saved fact. <span class="muted">· Old source · Old (CC BY-SA 4.0)</span>')
   })
 
   it('labels AI facts and gives them no link', () => {

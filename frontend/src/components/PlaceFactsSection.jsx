@@ -1,14 +1,16 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Check, Plus, Sparkles, Quote } from 'lucide-react'
+import { Check, Plus, Sparkles } from 'lucide-react'
 import { SourceLine } from './OfficialData'
+import { langAttr, quotedValue } from '../utils/placeFactText'
 
 /**
  * Place facts (docs/Place-Facts.md): five groups of facts about each
  * destination, its region and its country. Crawler facts show their source
  * (name, link, as-of, licence attribution); AI facts are labelled
- * "AI-suggested, not verified" and never carry a source or link. Share-alike
- * hooks (`quote: true`) are shown as written, as a quote with attribution.
+ * "AI-suggested, not verified" and never carry a source or link. The crawler
+ * writes no `fun` facts, so that group is AI-suggested. A crawler fact's
+ * `lang` / `value_lang` (both optional) become `lang` attributes.
  *
  * The section is only rendered when the backend sent it (an older backend
  * never does), and it hides itself when there is nothing to show.
@@ -41,7 +43,8 @@ export function factSelection(fact, place) {
     fact_type: fact.fact_type,
     place: place?.name || null,
     origin: fact.origin === 'crawler' ? 'crawler' : 'ai',
-    quote: !!fact.quote,
+    lang: langAttr(fact.lang),
+    value_lang: typeof fact.value_lang === 'string' ? fact.value_lang : null,
     citation: fact.origin === 'crawler' && fact.citation
       ? { name: fact.citation.name || null, url: fact.citation.url || null, as_of: fact.citation.as_of || null, attribution: fact.citation.attribution || null, licence_url: fact.citation.licence_url || null }
       : null,
@@ -49,8 +52,23 @@ export function factSelection(fact, place) {
 }
 
 /**
- * One fact kept in My Plan (drawer, plan view): a quote stays a quote, and a
- * crawler fact keeps its source link, as-of date and licence attribution.
+ * A fact's text: in its own language (`lang`) when known, with a quoted
+ * value (an official name, a motto) marked in the value's language.
+ */
+export function FactText({ fact }) {
+  const parts = quotedValue(fact.text, fact.value_lang)
+  return (
+    <span lang={langAttr(fact.lang) || undefined}>
+      {parts
+        ? <>{parts.before}<span lang={parts.lang}>{parts.value}</span>{parts.after}</>
+        : fact.text}
+    </span>
+  )
+}
+
+/**
+ * One fact kept in My Plan (drawer, plan view): a crawler fact keeps its
+ * source link, as-of date and licence attribution.
  */
 export function SelectedFact({ fact, aiLabel, className = 'text-xs' }) {
   if (!fact) return null
@@ -59,9 +77,7 @@ export function SelectedFact({ fact, aiLabel, className = 'text-xs' }) {
     <>
       <p className={`${className} text-gray-800`} data-testid="selected-fact">
         {fact.place && <span className="font-medium not-italic">{fact.place}: </span>}
-        {fact.quote
-          ? <q className="italic" data-testid="selected-fact-quote">{fact.text}</q>
-          : fact.text}
+        <FactText fact={fact} />
       </p>
       {crawler && fact.citation
         ? <SourceLine source={fact.citation} className="mt-0.5" />
@@ -75,9 +91,7 @@ function FactCard({ fact, place, selected, onSelect }) {
   const ai = fact.origin !== 'crawler'
   return (
     <li className={`p-3 rounded-lg border bg-white ${selected ? 'border-orange-400 ring-1 ring-orange-300' : 'border-gray-200'}`} data-testid="place-fact">
-      {fact.quote
-        ? <p className="text-sm text-gray-800 italic flex gap-1.5"><Quote size={12} className="shrink-0 mt-1 text-gray-400" aria-hidden="true" /><span>{fact.text}</span></p>
-        : <p className="text-sm text-gray-800">{fact.text}</p>}
+      <p className="text-sm text-gray-800"><FactText fact={fact} /></p>
       <div className="flex flex-wrap items-center justify-between gap-2 mt-1.5">
         <div className="min-w-0 flex-1">
           {ai ? (

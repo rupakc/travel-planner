@@ -11,6 +11,7 @@ import { slotKey } from './itineraryLayout'
 import { toRecentSearch, describeRecentSearch } from './recentSearches'
 import i18n from '../i18n'
 import { fmtNumber, intlLocale } from '../i18n/format'
+import { langAttr, quotedValue } from './placeFactText'
 
 // Resolved at call time, so the page follows the language in use when it is built
 const tr = (key, opts) => i18n.t(`plan:${key}`, opts)
@@ -39,10 +40,20 @@ const link = (url, label) => {
   return href ? ` <a href="${esc(href)}">${esc(label)}</a>` : ''
 }
 
-// A fact kept in My Plan: a quote stays a quote; a crawler fact keeps its
-// source (linked), as-of date and licence attribution (linked to the licence)
+// A fact kept in My Plan: a crawler fact keeps its source (linked), as-of
+// date and licence attribution (linked to the licence); its language tags
+// (optional) become lang attributes
+function factText(f) {
+  const parts = quotedValue(f.text, f.value_lang)
+  const body = parts
+    ? `${esc(parts.before)}<span lang="${esc(parts.lang)}">${esc(parts.value)}</span>${esc(parts.after)}`
+    : esc(f.text)
+  const lang = langAttr(f.lang)
+  return lang ? `<span lang="${esc(lang)}">${body}</span>` : body
+}
+
 function factLine(f) {
-  const text = f.quote ? `<q><em>${esc(f.text)}</em></q>` : esc(f.text)
+  const text = factText(f)
   const head = `${f.place ? `<strong>${esc(f.place)}</strong> — ` : ''}${text}`
   const c = f.origin === 'crawler' ? f.citation : null
   if (!c?.name) return `${head} <span class="muted">· ${esc(tr('print.factAi'))}</span>`

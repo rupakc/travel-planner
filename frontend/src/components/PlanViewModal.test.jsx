@@ -69,13 +69,13 @@ describe('PlanViewModal', () => {
 })
 
 describe('PlanViewModal place facts', () => {
-  it('shows a quote as a quote with its source link and licence attribution', async () => {
+  it('shows a crawler fact with its source link and licence attribution', async () => {
     const plan = {
       ...PLAN,
       selections: {
         place_facts: [
-          { id: 'c:3', place: 'Berlin', text: 'A museum keeps a whole gate.', origin: 'crawler', quote: true,
-            citation: { name: 'Wikipedia: Did you know', url: 'https://en.wikipedia.org/wiki/Ishtar_Gate', attribution: 'Wikipedia contributors (CC BY-SA 4.0)', licence_url: 'https://creativecommons.org/licenses/by-sa/4.0/' } },
+          { id: 'c:3', place: 'Berlin', text: 'Berlin’s motto is “Berlin bleibt doch Berlin”.', origin: 'crawler', value_lang: 'de',
+            citation: { name: 'Wikidata', url: 'https://www.wikidata.org/wiki/Q64#P1451', attribution: 'Wikidata (CC0 1.0)', licence_url: 'https://creativecommons.org/publicdomain/zero/1.0/' } },
           { id: 'a:1', text: 'Berlin has more bridges than Venice.', origin: 'ai', citation: null },
         ],
       },
@@ -83,11 +83,12 @@ describe('PlanViewModal place facts', () => {
     await render(<PlanViewModal plan={plan} token="tok" inline />)
     const section = tid('plan.section-place_facts')
     if (section && !container.querySelector('[data-testid="selected-fact"]')) await act(async () => section.click())
-    expect(container.querySelector('[data-testid="selected-fact-quote"]').textContent).toBe('A museum keeps a whole gate.')
+    expect(container.querySelector('[data-testid="selected-fact"] [lang="de"]').textContent).toBe('Berlin bleibt doch Berlin')
+    expect(container.querySelector('q')).toBeNull()
     const links = [...container.querySelectorAll('a')].map((a) => a.getAttribute('href'))
-    expect(links).toContain('https://en.wikipedia.org/wiki/Ishtar_Gate')
-    expect(links).toContain('https://creativecommons.org/licenses/by-sa/4.0/')
-    expect(container.textContent).toContain('Wikipedia contributors (CC BY-SA 4.0)')
+    expect(links).toContain('https://www.wikidata.org/wiki/Q64#P1451')
+    expect(links).toContain('https://creativecommons.org/publicdomain/zero/1.0/')
+    expect(container.textContent).toContain('Wikidata (CC0 1.0)')
     expect(container.textContent).toContain('AI-suggested, not verified')
   })
 })

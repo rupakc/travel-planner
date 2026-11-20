@@ -11,14 +11,16 @@ const crawlerFact = {
   id: 'c:1', fact_type: 'historical', text: 'Berlin was founded in 1237.', origin: 'crawler', source: 'crawler',
   citation: { name: 'Wikidata', url: 'https://www.wikidata.org/wiki/Q64#P571', as_of: '2026-11-20', licence: 'open', attribution: 'Wikidata (CC0 1.0)' },
 }
-const hook = {
-  id: 'c:3', fact_type: 'fun', text: '... that a Berlin museum keeps a whole Babylonian gate?', origin: 'crawler', quote: true,
-  citation: { name: 'Wikipedia: Did you know', url: 'https://en.wikipedia.org/wiki/Ishtar_Gate', licence: 'share_alike', attribution: 'Wikipedia contributors (CC BY-SA 4.0)' },
+// The crawler sends no fun facts: the fun group here is AI-suggested
+const motto = {
+  id: 'c:3', fact_type: 'popular', text: 'Berlin’s motto is “Berlin bleibt doch Berlin”.', origin: 'crawler', lang: 'en', value_lang: 'de',
+  citation: { name: 'Wikidata', url: 'https://www.wikidata.org/wiki/Q64#P1451', licence: 'open', attribution: 'Wikidata (CC0 1.0)' },
 }
+const aiFun = { id: 'a:2', fact_type: 'fun', text: 'Berlin has a museum just for currywurst.', origin: 'ai', source: 'ai', verified: false, citation: null }
 const aiFact = { id: 'a:1', fact_type: 'unbelievable', text: 'Berlin has more bridges than Venice.', origin: 'ai', source: 'ai', verified: false, citation: null }
 const section = () => ({
   places: [
-    { key: 'city:2950159', scope: 'city', name: 'Berlin', groups: { ...empty(), historical: [crawlerFact], fun: [hook], unbelievable: [aiFact] } },
+    { key: 'city:2950159', scope: 'city', name: 'Berlin', groups: { ...empty(), historical: [crawlerFact], fun: [aiFun], popular: [motto], unbelievable: [aiFact] } },
     { key: 'country:DE', scope: 'country', name: 'Germany', groups: { ...empty(), popular: [{ ...crawlerFact, id: 'c:10', fact_type: 'popular', text: 'Germany has about 83 million people.' }] } },
     { key: 'region:DE.02', scope: 'region', name: 'Bavaria', groups: empty() },
   ],
@@ -56,14 +58,14 @@ describe('PlaceFactsSection', () => {
   it('shows the crawler source line and switches groups', () => {
     render(<PlaceFactsSection data={section()} />)
     const groups = [...container.querySelectorAll('[data-tid="results.facts.group"]')]
-    expect(groups.map(g => g.textContent)).toEqual(['Historical (1)', 'Fun (1)', 'Unbelievable (1)'])
+    expect(groups.map(g => g.textContent)).toEqual(['Historical (1)', 'Fun (1)', 'Popular (1)', 'Unbelievable (1)'])
     expect(container.textContent).toContain('Berlin was founded in 1237.')
     const link = container.querySelector('[data-testid="official-source"] a')
     expect(link.getAttribute('href')).toBe('https://www.wikidata.org/wiki/Q64#P571')
     expect(container.textContent).toContain('Wikidata (CC0 1.0)')
     expect(container.querySelector('[data-testid="fact-ai-label"]')).toBeNull()
 
-    click(groups[2])
+    click(groups[3])
     expect(container.textContent).toContain('Berlin has more bridges than Venice.')
     expect(container.querySelector('[data-testid="fact-ai-label"]').textContent).toContain('AI-suggested, not verified')
     // an AI fact never shows a link
@@ -78,11 +80,28 @@ describe('PlaceFactsSection', () => {
     expect(container.textContent).toContain('Germany has about 83 million people.')
   })
 
-  it('shows hooks as quotes with their attribution', () => {
+  it('the fun group is AI-suggested', () => {
     render(<PlaceFactsSection data={section()} />)
     click(container.querySelectorAll('[data-tid="results.facts.group"]')[1])
-    expect(container.querySelector('[data-testid="place-fact"] .italic').textContent).toContain('Babylonian gate')
-    expect(container.textContent).toContain('Wikipedia contributors (CC BY-SA 4.0)')
+    expect(container.textContent).toContain('Berlin has a museum just for currywurst.')
+    expect(container.querySelector('[data-testid="fact-ai-label"]').textContent).toContain('AI-suggested, not verified')
+    expect(container.querySelector('[data-testid="place-fact"] a')).toBeNull()
+  })
+
+  it('marks the text and a quoted value with their languages', () => {
+    render(<PlaceFactsSection data={section()} />)
+    click(container.querySelectorAll('[data-tid="results.facts.group"]')[2])
+    const card = container.querySelector('[data-testid="place-fact"]')
+    expect(card.querySelector('[lang="en"]').textContent).toBe('Berlin’s motto is “Berlin bleibt doch Berlin”.')
+    expect(card.querySelector('[lang="de"]').textContent).toBe('Berlin bleibt doch Berlin')
+    expect(card.querySelector('q')).toBeNull()
+  })
+
+  it('tolerates facts without language tags', () => {
+    render(<PlaceFactsSection data={section()} />)
+    const card = container.querySelector('[data-testid="place-fact"]')
+    expect(card.textContent).toContain('Berlin was founded in 1237.')
+    expect(card.querySelector('[lang]')).toBeNull()
   })
 
   it('adds a fact to My Plan with its citation', () => {
@@ -101,14 +120,20 @@ describe('PlaceFactsSection', () => {
     expect(factSelection({ ...aiFact, citation: { name: 'Made up', url: 'https://x.example' } }, { name: 'Berlin' }).citation).toBeNull()
   })
 
-  it('a fact in My Plan keeps its quote, source link and licence attribution (drawer)', () => {
-    const kept = factSelection(hook, { name: 'Berlin' })
+  it('a fact in My Plan keeps its languages, source link and licence attribution (drawer)', () => {
+    const kept = factSelection(motto, { name: 'Berlin' })
+    expect(kept).toEqual(expect.objectContaining({ lang: 'en', value_lang: 'de' }))
+    expect(kept).not.toHaveProperty('quote')
     render(<SelectedFact fact={kept} aiLabel="AI-suggested" />)
-    expect(container.querySelector('[data-testid="selected-fact-quote"]').textContent).toContain('Babylonian gate')
+    expect(container.querySelector('[data-testid="selected-fact"] [lang="de"]').textContent).toBe('Berlin bleibt doch Berlin')
     const hrefs = [...container.querySelectorAll('a')].map((a) => a.getAttribute('href'))
-    expect(hrefs).toContain('https://en.wikipedia.org/wiki/Ishtar_Gate')
-    expect(container.textContent).toContain('Wikipedia contributors (CC BY-SA 4.0)')
+    expect(hrefs).toContain('https://www.wikidata.org/wiki/Q64#P1451')
+    expect(container.textContent).toContain('Wikidata (CC0 1.0)')
     expect(container.textContent).not.toContain('AI-suggested')
+  })
+
+  it('a fact without language tags keeps null ones in My Plan', () => {
+    expect(factSelection(crawlerFact, { name: 'Berlin' })).toEqual(expect.objectContaining({ lang: null, value_lang: null }))
   })
 
   it('a stored fact with a script link gets no link (drawer)', () => {

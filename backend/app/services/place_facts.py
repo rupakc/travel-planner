@@ -15,10 +15,16 @@ multi-city trip), its state/region and its country, in five groups:
   ``origin: "ai"``, ``verified: false`` and carries **no** source or link (a
   model never gets to invent one). If the agent fails, the crawler facts stay.
 * **Licence rules** (``docs/Crawler-Data.md``): only open / api_terms facts
-  whose record says ``llm_ok`` (not share-alike, not a Wikipedia hook, not an
-  AI-blocked source, not in conflict) are given to the model, wrapped as
-  untrusted reference data. Share-alike hooks are shown as written, as a
-  quote with their attribution, never merged into our wording.
+  whose record says ``llm_ok`` (not share-alike, not an AI-blocked source,
+  not in conflict) are given to the model, wrapped as untrusted reference
+  data. Only our own sentences are shown: ``text_origin`` ``templated`` or
+  ``rewritten``; any other origin is dropped.
+* **No crawler ``fun`` facts.** The crawler writes none, so the ``fun``
+  group is the model's (labelled AI-suggested, not verified) unless a
+  crawler fact ever arrives for it.
+* **Near-duplicates.** A Factbook and a Wikidata fact for the same country
+  and quantity (area, highest point) are one fact: the Wikidata
+  ``structured`` one is kept, the other only when its figure differs.
 
 Pure helpers except :func:`crawler_facts_for`, which calls the crawler client
 (never raises, ``None`` when the crawler is off or did not answer).
@@ -51,6 +57,12 @@ _CONFIDENCE_RANK = {"corroborated": 0, "structured": 1, "extracted": 2}
 _URL_RE = re.compile(r"^https?://\S+$")
 _DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}")
 _LINKISH = re.compile(r"https?://|www\.", re.IGNORECASE)
+# Only our own sentences are shown (the crawler serves no other origin)
+_OWN_WORDS = frozenset({"templated", "rewritten"})
+# BCP 47 tag (loose: language subtag plus optional subtags), or "und"
+_LANG_RE = re.compile(r"^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{1,8})*$")
+# Two figures for one quantity are the same fact within this relative gap
+QUANTITY_TOLERANCE = 0.01
 
 
 @dataclass(frozen=True)
@@ -404,6 +416,13 @@ def _citation(item: dict) -> dict:
     }
 
 
+def _lang_tag(value) -> str | None:
+    """A BCP 47 tag as sent (``"de"``, ``"zh-Hant"``), ``"und"`` kept, or
+    None for anything else."""
+    tag = _str(value)
+    return tag if tag and len(tag) <= 35 and _LANG_RE.match(tag) else None
+
+
 def _text_for(item: dict, locale: str) -> tuple[str | None, bool]:
     """The fact's text for ``locale`` and whether it is a machine
     translation: the text in the reader's language, else the ingest-time
@@ -439,10 +458,11 @@ def crawler_fact(item: dict, locale: str = "en") -> dict | None:
     citation = _citation(item)
     if not citation["name"]:
         return None
-    hook = item.get("text_origin") == "source_hook"
+    if item.get("text_origin") not in _OWN_WORDS:
+        # Not our own sentence (or an origin this client does not know)
+        return None
     llm_ok = (
         item.get("llm_ok") is True
-        and not hook
         and citation["licence"] in _MERGEABLE
         and not citation["conflict"]
     )
@@ -459,7 +479,10 @@ def crawler_fact(item: dict, locale: str = "en") -> dict | None:
         "source": "crawler",
         "citation": citation,
         "date_ref": _str(item.get("date_ref")),
-        "quote": hook,
+        # Language of ``text`` as shown, and of a quoted value in it (a
+        # name, nickname or motto), when the crawler says so
+        "lang": "en" if translated else _lang_tag(item.get("lang")),
+        "value_lang": _lang_tag(item.get("value_lang")),
         "machine_translated": translated,
         "confidence": _str(item.get("confidence")),
         "llm_ok": llm_ok,
@@ -505,9 +528,61 @@ def _sort_key(f: dict) -> tuple:
     return (
         _CONFIDENCE_RANK.get(f.get("confidence") or "", 3),
         f.get("machine_translated", False),
-        f.get("quote", False),
         f["id"],
     )
+
+
+def _quantity_key(item: dict) -> tuple | None:
+    """``(fact_type, unit, what)`` of a country fact's figure, None when
+    it has none. ``what`` is the record scope without its place ("highest
+    point of Germany" → "highest point"), so two sources naming the
+    country differently still match."""
+    q = item.get("quantity")
+    if not isinstance(q, dict) or not _is_country_level(item):
+        return None
+    value, unit = q.get("value"), _str(q.get("unit"))
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or not unit:
+        return None
+    scope = (_str(q.get("rank_scope")) or "").lower().split(" of ")[0].strip()
+    return (item.get("fact_type"), unit.lower(), scope)
+
+
+def _is_wikidata_structured(item: dict) -> bool:
+    src = item.get("source") if isinstance(item.get("source"), dict) else {}
+    sid = (_str(src.get("source_id")) or "").lower()
+    return "wikidata" in sid and item.get("confidence") == "structured"
+
+
+def _same_figure(a: float, b: float) -> bool:
+    return abs(a - b) <= QUANTITY_TOLERANCE * max(abs(a), abs(b), 1.0)
+
+
+def dedupe_quantities(items: list[tuple[dict, dict]]) -> list[tuple[dict, dict]]:
+    """Drop near-duplicate country facts: ``(raw item, fact)`` pairs with
+    the same quantity (Factbook and Wikidata both give a country's area or
+    highest point). The Wikidata ``structured`` one is kept; another is kept
+    only when its figure differs. Order is preserved."""
+    kept: dict[tuple, list[float]] = {}
+    drop: set[int] = set()
+    order = sorted(
+        range(len(items)),
+        key=lambda i: (
+            not _is_wikidata_structured(items[i][0]),
+            _CONFIDENCE_RANK.get(items[i][1].get("confidence") or "", 3),
+            items[i][1]["id"],
+        ),
+    )
+    for i in order:
+        key = _quantity_key(items[i][0])
+        if key is None:
+            continue
+        value = float(items[i][0]["quantity"]["value"])
+        seen = kept.setdefault(key, [])
+        if any(_same_figure(value, v) for v in seen):
+            drop.add(i)
+        else:
+            seen.append(value)
+    return [pair for i, pair in enumerate(items) if i not in drop]
 
 
 def empty_groups() -> dict[str, list]:
@@ -574,8 +649,9 @@ async def crawler_facts_for(
                 and not _is_country_level(i)
                 and _names_scope(i, s.name, levels)
             ]
-        facts = [f for f in (crawler_fact(i, locale) for i in raw) if f]
-        out[s.key] = _group(facts)
+        pairs = [(i, crawler_fact(i, locale)) for i in raw]
+        kept = dedupe_quantities([(i, f) for i, f in pairs if f])
+        out[s.key] = _group([f for _, f in kept])
     return out
 
 
@@ -630,8 +706,8 @@ def gaps(section: dict) -> dict[str, list[str]]:
 
 
 def reference_prompt(section: dict) -> str:
-    """The crawler facts the model may see (open licence, ``llm_ok``, no hook,
-    no conflict), as untrusted reference data, so it does not repeat them."""
+    """The crawler facts the model may see (open licence, ``llm_ok``, no
+    conflict), as untrusted reference data, so it does not repeat them."""
     lines = []
     for p in section.get("places") or []:
         for facts in (p.get("groups") or {}).values():
