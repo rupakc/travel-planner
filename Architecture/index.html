@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
     
     
       
@@ -692,6 +692,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../Place-Facts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Place Facts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../Multi-City-Trips/" class="md-nav__link">
         
   
@@ -1018,10 +1046,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#phase-1-thirteen-agents-in-parallel" class="md-nav__link">
+  <a href="#phase-1-fourteen-agents-in-parallel" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Phase 1: thirteen agents in parallel
+        Phase 1: fourteen agents in parallel
       
     </span>
   </a>
@@ -1836,7 +1864,7 @@ FastAPI backend (uvicorn, one process)
   ├── middleware: CORS, request logging, X-Request-ID
   ├── routers: one per domain, rate-limit dependency on AI routes
   ├── TravelOrchestrator ── Phase 0 static tables
-  │                       ├── Phase 1: 13 specialist agents in parallel (+2 deferred)
+  │                       ├── Phase 1: 14 specialist agents in parallel (+2 deferred)
   │                       └── Phase 2: itinerary → stress test
   ├── ChatAgent ── routing, knowledge answers, comprehensive planning
   ├── services: SerpAPI flights, Serper places, link resolvers,
@@ -1858,10 +1886,11 @@ External: Gemini on Vertex AI (3.5 Flash-Lite, 3.8 Flash; or Anthropic as a fall
 <p><code>POST /api/search</code> (<code>backend/app/api/routes/search.py</code>) checks the cache, then streams <code>TravelOrchestrator.stream_run()</code> (<code>backend/app/agents/orchestrator.py</code>).</p>
 <h3 id="phase-0-static-data-instant">Phase 0: static data (instant)</h3>
 <p>Lookup tables in <code>backend/app/agents/static_results.py</code> produce, in this order: visa, sim, tips, getting_around and forex; then a <code>confidence</code> event (the Travel Ease grade); then emergency_card. All carry <code>source: "static"</code>, and the UI marks those sections "Enhancing…" until the AI version arrives.</p>
-<h3 id="phase-1-thirteen-agents-in-parallel">Phase 1: thirteen agents in parallel</h3>
-<p>flights, weather, hotels, activities, places_to_see, walking_tours, events, visa, sim, tips, emergency_card, getting_around and forex start together. Each has a 240 s ceiling. A section is yielded as soon as its agent finishes, with <code>source: "ai"</code>.</p>
+<h3 id="phase-1-fourteen-agents-in-parallel">Phase 1: fourteen agents in parallel</h3>
+<p>flights, weather, hotels, activities, places_to_see, walking_tours, events, visa, sim, tips, emergency_card, getting_around, forex and place facts (<code>facts</code>) start together. Each has a 240 s ceiling. A section is yielded as soon as its agent finishes, with <code>source: "ai"</code>.</p>
 <ul>
 <li><strong>Static-backed agents</strong> (visa, sim, tips, getting_around, forex, emergency_card): if the AI result is an error, it is not yielded, so the Phase 0 data stays. The frontend also refuses to replace valid data with an error.</li>
+<li><strong>Place facts</strong> (<code>facts</code>, <code>PLACE_FACTS_ENABLED</code>): the crawler's facts are yielded as soon as they arrive (<code>source: "crawler"</code>), then the agent's version, which adds AI-suggested facts for the empty groups (<code>source: "ai"</code>). An AI error after a crawler yield is not sent. See <a href="../Place-Facts/">Place Facts</a>.</li>
 <li><strong>URL enrichment</strong>: hotels, activities and places_to_see are yielded first with <code>verification.pending = true</code>, then again after their links have been searched and checked.</li>
 <li><strong>Deferred agents</strong>: <code>packing_list</code> starts once activities and weather are both in (template fallback after 120 s or on error). <code>pricing_advisor</code> starts once flights have at least 3 results (skipped after 120 s or on error).</li>
 </ul>

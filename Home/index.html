@@ -19,7 +19,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
     
     
       
@@ -761,6 +761,34 @@
     
   
     Crawler Data
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Place-Facts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Place Facts
   
 
     
@@ -1641,7 +1669,7 @@
 <h2 id="how-a-search-works-in-brief">How a search works, in brief</h2>
 <ol>
 <li><strong>Phase 0 (instant).</strong> Static lookup tables yield visa, SIM, tips, getting-around and forex results, the Travel Ease confidence grade and the emergency card, all marked <code>source: "static"</code>.</li>
-<li><strong>Phase 1 (parallel AI).</strong> Thirteen specialist agents run concurrently and stream their results as they finish. For the six static-backed agents (visa, sim, tips, getting_around, forex, emergency_card) an AI failure is suppressed, so the static data stays on screen. Two deferred agents, packing list and pricing advisor, start as soon as their inputs are ready.</li>
+<li><strong>Phase 1 (parallel AI).</strong> Fourteen specialist agents run concurrently and stream their results as they finish (place facts streams the crawler's sourced facts first, then fills empty groups with AI-suggested ones). For the six static-backed agents (visa, sim, tips, getting_around, forex, emergency_card) an AI failure is suppressed, so the static data stays on screen. Two deferred agents, packing list and pricing advisor, start as soon as their inputs are ready.</li>
 <li><strong>Phase 2.</strong> The itinerary agent starts once activities and hotels are in (60 s timeout, template fallback). When the itinerary is final, the stress-test agent audits it.</li>
 </ol>
 <p>Every specialist agent uses Gemini 3.5 Flash-Lite on Vertex AI through <code>BaseAgent</code>. Chat uses Gemini 3.8 Flash for conversational answers. Without <code>GCP_PROJECT</code> and with an Anthropic key (or <code>LLM_PROVIDER=anthropic</code>) both use Claude (Haiku 4.5 / Sonnet 4.6). See <a href="../Architecture/">Architecture</a> and <a href="../Agent-System/">Agent System</a>.</p>
@@ -1669,7 +1697,7 @@
 </tr>
 <tr>
 <td><a href="../Agent-System/">Agent System</a></td>
-<td>The 22 agent definitions, <code>BaseAgent</code>, static fallbacks, verification</td>
+<td>The 24 agent definitions, <code>BaseAgent</code>, static fallbacks, verification</td>
 </tr>
 <tr>
 <td><a href="../Trip-Planning-Features/">Trip Planning Features</a></td>

@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
     
     
       
@@ -672,6 +672,34 @@
     
   
     Crawler Data
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Place-Facts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Place Facts
   
 
     
@@ -2544,7 +2572,7 @@
 </tr>
 <tr>
 <td>light_ai</td>
-<td><code>POST /api/flights</code>, <code>/hotels</code>, <code>/activities</code> and their <code>/filtered</code> variants, <code>/flights/fare-calendar</code>, <code>/visa</code>, <code>/sim</code>, <code>/tips</code>, <code>/getting-around</code>, <code>/forex</code>, <code>/itinerary</code>, <code>/events</code>, <code>/walking-tours</code>, <code>/layover</code>, <code>/stress-test</code>, <code>/nearby</code>, <code>/live-check</code>, <code>/fare-watches</code> (create), <code>/fare-watches/{id}/check</code>, <code>/price-watches</code> (create), <code>/price-watches/{id}/check</code>, <code>PUT /auth/email</code></td>
+<td><code>POST /api/flights</code>, <code>/hotels</code>, <code>/activities</code> and their <code>/filtered</code> variants, <code>/flights/fare-calendar</code>, <code>/visa</code>, <code>/sim</code>, <code>/tips</code>, <code>/getting-around</code>, <code>/forex</code>, <code>/itinerary</code>, <code>/events</code>, <code>/place-facts</code>, <code>/walking-tours</code>, <code>/layover</code>, <code>/stress-test</code>, <code>/nearby</code>, <code>/live-check</code>, <code>/fare-watches</code> (create), <code>/fare-watches/{id}/check</code>, <code>/price-watches</code> (create), <code>/price-watches/{id}/check</code>, <code>PUT /auth/email</code></td>
 <td>60</td>
 </tr>
 </tbody>
@@ -2957,6 +2985,12 @@
 </tr>
 <tr>
 <td>POST</td>
+<td><code>/api/place-facts</code></td>
+<td>optional</td>
+<td>Place facts: crawler facts with sources, AI-suggested facts for empty groups (<a href="../Place-Facts/">Place Facts</a>)</td>
+</tr>
+<tr>
+<td>POST</td>
 <td><code>/api/walking-tours</code></td>
 <td>optional</td>
 <td>Crawled free walking tours</td>
@@ -3254,7 +3288,13 @@
 <td><code>agent_status</code></td>
 <td>—</td>
 <td>—</td>
-<td><code>{agent, status: "searching" \| "done"}</code> for the 15 agents at start, and for <code>stress_test</code></td>
+<td><code>{agent, status: "searching" \| "done"}</code> for the 15 agents at start (16 with <code>facts</code> when <code>PLACE_FACTS_ENABLED</code>), and for <code>stress_test</code></td>
+</tr>
+<tr>
+<td><code>facts</code></td>
+<td>0, then 1</td>
+<td><code>crawler</code>, then <code>ai</code></td>
+<td>Place facts (<a href="../Place-Facts/">Place Facts</a>). The <code>crawler</code> yield is sent only when the crawler answered with facts. An AI error after it is not sent. Absent when <code>PLACE_FACTS_ENABLED=false</code></td>
 </tr>
 <tr>
 <td><code>flights</code>, <code>weather</code>, <code>hotels</code>, <code>activities</code>, <code>places_to_see</code>, <code>walking_tours</code>, <code>events</code></td>
@@ -3548,6 +3588,10 @@
 <tr>
 <td><code>POST /api/events</code></td>
 <td>What's On during the trip</td>
+</tr>
+<tr>
+<td><code>POST /api/place-facts</code></td>
+<td>Place facts for each destination, its region and its country (same body as <code>/api/search</code>; <code>404 place_facts_disabled</code> when off). See <a href="../Place-Facts/#section-shape">Place Facts</a></td>
 </tr>
 <tr>
 <td><code>POST /api/walking-tours</code></td>

@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
     
     
       
@@ -608,6 +608,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#place-facts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Place facts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#crawler-data-optional" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -973,6 +984,34 @@
     
   
     Crawler Data
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Place-Facts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Place Facts
   
 
     
@@ -2106,6 +2145,24 @@
 <td><code>CARBON_FOOTPRINT_ENABLED</code></td>
 <td><code>true</code></td>
 <td>Feature flag (<code>features.carbon</code> in <code>/api/config</code>). Off: the endpoint answers <code>404</code> and the web app hides the card.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="place-facts">Place facts</h3>
+<p>The Place facts section on Results and <code>POST /api/place-facts</code>: sourced facts from the crawler first (when it is configured), AI-suggested facts for the groups it left empty. See <a href="../Place-Facts/">Place Facts</a>.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>PLACE_FACTS_ENABLED</code></td>
+<td><code>true</code></td>
+<td>Feature flag (<code>features.place_facts</code> in <code>/api/config</code>). Off: <code>/api/search</code> sends no <code>facts</code> events, no model call is made, and <code>POST /api/place-facts</code> answers <code>404 place_facts_disabled</code>.</td>
 </tr>
 </tbody>
 </table>
