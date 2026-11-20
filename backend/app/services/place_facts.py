@@ -448,7 +448,9 @@ def crawler_fact(item: dict, locale: str = "en") -> dict | None:
     )
     fid = _str(str(item.get("id"))) if item.get("id") is not None else None
     if not fid:
-        fid = hashlib.sha1(f"{ftype}|{text}".encode()).hexdigest()[:12]
+        fid = hashlib.sha1(
+            f"{ftype}|{text}".encode(), usedforsecurity=False
+        ).hexdigest()[:12]
     return {
         "id": f"c:{fid}",
         "fact_type": ftype,
@@ -676,7 +678,9 @@ def merge_ai(section: dict, ai: dict, *, per_group: int = AI_PER_GROUP) -> dict:
             if len([f for f in groups[ftype] if f["origin"] == "ai"]) >= per_group:
                 continue
             seen.add(fold_place(text))
-            digest = hashlib.sha1(f"{p['key']}|{ftype}|{text}".encode()).hexdigest()
+            digest = hashlib.sha1(
+                f"{p['key']}|{ftype}|{text}".encode(), usedforsecurity=False
+            ).hexdigest()
             groups[ftype].append(
                 {
                     "id": f"a:{digest[:12]}",
