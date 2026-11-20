@@ -1752,8 +1752,8 @@
 <tr>
 <td>Place facts</td>
 <td><code>place_fact</code> (<code>/v1/facts</code> by <code>geonames_id</code> and by <code>country</code>)</td>
-<td>Wikidata (CC0), CIA World Factbook (CC0), Wikipedia DYK / OTD hooks (share-alike)</td>
-<td>Their own section, <code>facts</code>: each fact with its <code>citation</code> (source, link, as-of, licence, attribution), streamed in Phase 0. Hooks are shown as written, as quotes. Facts from AI-bot-blocked sources (<code>ai_bot_blocked</code>) are not shown. Only <code>llm_ok</code>, open-licence, non-hook facts are given to the place facts agent, as reference data it must not repeat. The agent fills only empty groups, labelled AI-suggested with no source. See <a href="../Place-Facts/">Place Facts</a>.</td>
+<td>Wikidata (CC0), CIA World Factbook (CC0)</td>
+<td>Their own section, <code>facts</code>: each fact with its <code>citation</code> (source, link, as-of, licence, attribution), streamed in Phase 0. Only our own sentences are shown (<code>text_origin</code> <code>templated</code> or <code>rewritten</code>; any other origin is dropped). Factbook / Wikidata near-duplicates (same country quantity, such as area or highest point) collapse to the Wikidata fact unless the figures differ. <code>value_lang</code> (optional) marks the language of a quoted name or motto. Facts from AI-bot-blocked sources (<code>ai_bot_blocked</code>) are not shown. Only <code>llm_ok</code>, open-licence, non-conflict facts are given to the place facts agent, as reference data it must not repeat. The agent fills only empty groups, labelled AI-suggested with no source; the crawler writes no <code>fun</code> facts, so that group is always the agent's. See <a href="../Place-Facts/">Place Facts</a>.</td>
 </tr>
 <tr>
 <td>Pricing advisor</td>
@@ -1823,7 +1823,7 @@
 <li>each section;</li>
 <li>no model phone number shown as verified;</li>
 <li>share-alike data never merged and never in a prompt;</li>
-<li>place facts (<code>backend/tests/test_place_facts.py</code>): sources per fact, hooks as quotes, AI only for empty groups and never with a source, crawler facts kept when the AI fails;</li>
+<li>place facts (<code>backend/tests/test_place_facts.py</code>): sources per fact, own-words-only origins, <code>value_lang</code>, country near-duplicates, the AI-only <code>fun</code> group, AI only for empty groups and never with a source, crawler facts kept when the AI fails;</li>
 <li>flag off and crawler down: prompts and responses identical to today.</li>
 </ul>
 <p><code>backend/tests/test_carbon_crawler.py</code> covers the carbon reads, including byte-identical answers with the crawler off, down or answering nothing usable.</p>

@@ -776,6 +776,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Licence rules">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#crawler-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Crawler contract
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1692,7 +1709,7 @@
 </tr>
 <tr>
 <td><code>fun</code></td>
-<td>Light curiosities, "Did you know" hooks</td>
+<td>Light curiosities. The crawler writes none, so this group is always AI-suggested</td>
 </tr>
 <tr>
 <td><code>popular</code></td>
@@ -1711,7 +1728,7 @@
 <p>Facts come from two places, and the card always says which:</p>
 <ul>
 <li><strong>Sourced facts from the crawler</strong> (<code>origin: "crawler"</code>). Each one shows its source line: source name and link, "as of" date and the licence attribution. See <a href="../Crawler-Data/">Crawler Data</a>.</li>
-<li><strong>AI-suggested facts</strong> (<code>origin: "ai"</code>). The <code>place_facts</code> agent writes them from model knowledge, and only for groups that have no sourced fact. They are labelled "AI-suggested, not verified" and never carry a source or a link. The model is told never to write one, and the server drops any URL or source name it sends anyway.</li>
+<li><strong>AI-suggested facts</strong> (<code>origin: "ai"</code>). The <code>place_facts</code> agent writes them from model knowledge, and only for groups that have no sourced fact. The crawler produces no <code>fun</code> facts, so the <code>fun</code> group of every place is filled by the agent (nothing assumes a crawler <code>fun</code> fact exists; one would simply be shown like any other sourced fact). They are labelled "AI-suggested, not verified" and never carry a source or a link. The model is told never to write one, and the server drops any URL or source name it sends anyway.</li>
 </ul>
 <p>The feature is on by default (<code>PLACE_FACTS_ENABLED=true</code>). <code>GET /api/config</code> reports it as <code>features.place_facts</code> (<code>1</code> or <code>0</code>). When it is off, <code>/api/search</code> sends no <code>facts</code> events and <code>POST /api/place-facts</code> answers <code>404 place_facts_disabled</code>.</p>
 <h2 id="how-it-runs">How it runs</h2>
@@ -1723,7 +1740,7 @@
 <li><strong>A curated destination hint</strong> with no GeoNames id gets one from our own data when it can: the town with that own name in that country (at least 15,000 people: Kyoto → city 1857910 and its prefecture), else a notable feature so named (Santorini → a <code>place</code> with the island's id). Otherwise ("Bali") it is a <code>place</code> with no id, matched by name.</li>
 </ul>
 </li>
-<li><strong>Phase 0 (crawler).</strong> When the crawler is configured, the backend calls <code>GET /v1/facts?geonames_id=&lt;city&gt;</code> for each city and <code>GET /v1/facts?country=&lt;ISO2&gt;</code> (up to 2 pages of 100) for each country, all at the same time. Places with a GeoNames id (cities and resolved hints) also get their own <code>geonames_id</code> query. The country page is split into the country's own facts (<code>admin_level: country</code>, or a Factbook fact that names only the country), the region's facts and the city's facts (same GeoNames id). A region or <code>place</code> matches an item by the same name; a name that only starts with it ("Victoria Park" for Victoria) counts only when the crawler marks the item <code>admin_level: admin1</code>. As soon as the crawler answers with at least one fact, the <code>facts</code> section is streamed with <code>source: "crawler"</code>. The UI shows it with the "Enhancing…" status.</li>
+<li><strong>Phase 0 (crawler).</strong> When the crawler is configured, the backend calls <code>GET /v1/facts?geonames_id=&lt;city&gt;</code> for each city and <code>GET /v1/facts?country=&lt;ISO2&gt;</code> (up to 2 pages of 100) for each country, all at the same time. Places with a GeoNames id (cities and resolved hints) also get their own <code>geonames_id</code> query. The country page is split into the country's own facts (<code>admin_level: country</code>, or a Factbook fact that names only the country), the region's facts and the city's facts (same GeoNames id). <strong>Near-duplicates</strong> among a place's country facts are dropped: the Factbook and Wikidata often both give the same quantity (area, highest or lowest point). Two facts are the same when they have the same group, <code>quantity.unit</code> and record scope (<code>rank_scope</code> without its place name, so "highest point of Germany" matches "highest point of Federal Republic of Germany") and their values are within 1 %. The Wikidata <code>structured</code> fact is kept; another is kept only when its figure differs. A region or <code>place</code> matches an item by the same name; a name that only starts with it ("Victoria Park" for Victoria) counts only when the crawler marks the item <code>admin_level: admin1</code>. As soon as the crawler answers with at least one fact, the <code>facts</code> section is streamed with <code>source: "crawler"</code>. The UI shows it with the "Enhancing…" status.</li>
 <li><strong>Phase 1 (AI).</strong> The <code>place_facts</code> agent runs with the other specialists and waits for the same crawler fetch. It lists the empty groups per place and asks the model for up to 3 facts per empty group (2 on a multi-city trip). If every group already has sourced facts, no model call is made. The merged section is streamed with <code>source: "ai"</code>.</li>
 <li><strong>Fallback.</strong> If the agent fails, the crawler facts stay: the agent returns them. In <code>/api/search</code> a <code>facts</code> error is <strong>never sent</strong> (model failure, <code>no_facts</code>, <code>no_place</code>, timeout): the card stays hidden, or keeps the crawler facts, and the run stays cacheable, since the section is optional. The web app marks a crawler-only card done when the stream ends.</li>
 </ol>
@@ -1732,12 +1749,70 @@
 <p>These follow the rules in <a href="../Crawler-Data/#licences">Crawler Data</a>:</p>
 <ul>
 <li>Every crawler fact keeps its <code>citation</code>: <code>{source_id, name, publisher, url, as_of, licence, attribution, licence_url, conflict}</code>. The UI shows it with the fact, in the card, in My Plan and in the printed plan.</li>
-<li><strong>Wikipedia hooks</strong> (<code>text_origin: source_hook</code>, share-alike) are shown as written, as a quote with their attribution. They are never rewritten, never merged into our wording and never sent to a model.</li>
+<li><strong>Only our own sentences are shown.</strong> A fact's <code>text_origin</code> must be <code>templated</code> (our template over typed fields) or <code>rewritten</code> (our rewrite of a source sentence). Any other value, or none, is dropped: the crawler no longer serves source text as written (it dropped its Wikipedia hook reader), and an origin this client does not know is never shown.</li>
+<li><strong>Share-alike facts</strong> keep their attribution and are never merged into our wording or sent to a model.</li>
 <li><strong>AI-blocked sources</strong> (<code>ai_bot_blocked: true</code>, the source's robots.txt blocks AI bots) are not shown at all: the design note keeps such sources to title + link only, and a fact item has no title, so it is dropped.</li>
-<li>Only facts whose record says <code>llm_ok: true</code>, whose licence is <code>open</code> or <code>api_terms</code>, that are not in conflict and not a hook are given to the model. They are wrapped as <strong>untrusted reference data</strong> ("facts we already show — do not repeat them"), so the model does not repeat them.</li>
+<li>Only facts whose record says <code>llm_ok: true</code>, whose licence is <code>open</code> or <code>api_terms</code>, and that are not in conflict are given to the model. They are wrapped as <strong>untrusted reference data</strong> ("facts we already show — do not repeat them"), so the model does not repeat them.</li>
 <li>A fact in another language is shown when it is in the reader's language. Otherwise its ingest-time English translation (<code>text_en</code>) is shown, labelled "Machine-translated from the source language". Facts in any other language are skipped.</li>
+<li><strong>Languages.</strong> A fact's <code>lang</code> is the language of the text as shown (<code>en</code> for a machine translation). <code>value_lang</code> (optional, BCP 47 or <code>und</code>) is the language of a quoted value in the text: an official name, nickname or motto (<code>The official name of Germany is “Bundesrepublik Deutschland”.</code>). Both are passed through and may be missing (an older crawler); anything that is not a language tag becomes <code>null</code>.</li>
 <li>At most 4 crawler facts per group and place. Structured and corroborated facts come first.</li>
 </ul>
+<h3 id="crawler-contract">Crawler contract</h3>
+<p><code>GET /v1/facts</code> (<code>geonames_id</code>, <code>wikidata_qid</code>, <code>country</code>, <code>fact_type</code>, <code>limit</code>, <code>cursor</code>) answers <code>{items, next_cursor}</code>. Each item:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>Record id (our fact id is <code>c:</code> + it)</td>
+</tr>
+<tr>
+<td><code>place</code></td>
+<td><code>{geonames_id, wikidata_qid, admin_level, country, name, name_lang}</code>; a bare Factbook country gets the Wikidata country's id and QID</td>
+</tr>
+<tr>
+<td><code>fact_type</code></td>
+<td><code>historical</code>, <code>fun</code>, <code>popular</code>, <code>unbelievable</code>, <code>little_known</code> (the crawler writes no <code>fun</code> facts)</td>
+</tr>
+<tr>
+<td><code>text</code>, <code>lang</code>, <code>text_en</code></td>
+<td>One sentence in our own words (≤ 280 characters), its language, the ingest-time English translation</td>
+</tr>
+<tr>
+<td><code>value_lang</code></td>
+<td>Language of a quoted value in <code>text</code>, optional</td>
+</tr>
+<tr>
+<td><code>text_origin</code></td>
+<td><code>templated</code> or <code>rewritten</code></td>
+</tr>
+<tr>
+<td><code>llm_ok</code></td>
+<td>Whether the text may be given to a model (false for share-alike and AI-reserved sources)</td>
+</tr>
+<tr>
+<td><code>date_ref</code>, <code>quantity</code></td>
+<td>Year or date; <code>{value, unit, rank_scope}</code> or <code>null</code></td>
+</tr>
+<tr>
+<td><code>source</code></td>
+<td><code>{source_id, url, name, publisher, source_class, sourced}</code></td>
+</tr>
+<tr>
+<td><code>licence</code></td>
+<td><code>{class, spdx, attribution, url}</code></td>
+</tr>
+<tr>
+<td><code>as_of</code>, <code>confidence</code>, <code>ai_bot_blocked</code>, <code>updated_at</code></td>
+<td>Edition or crawl date; <code>structured</code>, <code>extracted</code> or <code>corroborated</code>; robots.txt blocks AI bots; last update</td>
+</tr>
+</tbody>
+</table>
 <h2 id="section-shape">Section shape</h2>
 <pre><code class="language-json">{
   &quot;places&quot;: [
@@ -1748,7 +1823,8 @@
       &quot;groups&quot;: {
         &quot;historical&quot;: [
           {&quot;id&quot;: &quot;c:1234&quot;, &quot;fact_type&quot;: &quot;historical&quot;, &quot;text&quot;: &quot;Berlin was founded in 1237.&quot;,
-           &quot;origin&quot;: &quot;crawler&quot;, &quot;source&quot;: &quot;crawler&quot;, &quot;date_ref&quot;: &quot;1237&quot;, &quot;quote&quot;: false,
+           &quot;origin&quot;: &quot;crawler&quot;, &quot;source&quot;: &quot;crawler&quot;, &quot;date_ref&quot;: &quot;1237&quot;,
+           &quot;lang&quot;: &quot;en&quot;, &quot;value_lang&quot;: null,
            &quot;machine_translated&quot;: false, &quot;confidence&quot;: &quot;structured&quot;,
            &quot;citation&quot;: {&quot;source_id&quot;: &quot;od-wikidata-entitydata&quot;, &quot;name&quot;: &quot;Wikidata&quot;,
                         &quot;publisher&quot;: &quot;Wikidata contributors (Wikimedia Foundation)&quot;,
@@ -1777,7 +1853,7 @@
 <p><code>POST /api/place-facts</code> takes the same body as <code>/api/search</code> (including <code>locale</code> and multi-city <code>destinations</code>) and returns the section above with <code>verification</code>. It is in the <code>light_ai</code> rate-limit bucket. Errors: <code>404 place_facts_disabled</code>, <code>422</code> for a bad body, and the usual <code>{"error", "error_code"}</code> object when the model fails and the crawler had nothing (for example <code>ai_limit</code>).</p>
 <p>In <code>/api/search</code>, the stream sends <code>agent_status</code> for <code>facts</code> at start, then <code>facts</code> with <code>source: "crawler"</code> (Phase 0, only when the crawler answered with facts), then <code>facts</code> with <code>source: "ai"</code> (left out when the AI pass failed). A <code>facts</code> error is never streamed, so it never stops a run from being cached. The search cache key is unchanged. <code>/api/search/sync</code> includes <code>facts</code> too.</p>
 <h2 id="web-app">Web app</h2>
-<p><code>frontend/src/components/PlaceFactsSection.jsx</code> is shown as its own card after Tips. It renders only when the stream sent a <code>facts</code> section with at least one fact, so with an older backend it stays hidden. There are place chips (multi-place trips) and group tabs with counts. Each crawler fact has its source line (<code>SourceLine</code> from <code>OfficialData.jsx</code>). Each AI fact has the "AI-suggested, not verified" label, and a note under the list explains it. Every fact can be added to <strong>My Plan</strong> (<code>selections.place_facts</code>: <code>{id, text, fact_type, place, origin, quote, citation}</code>, where <code>citation</code> is null for AI facts). The drawer and the plan view (<code>SelectedFact</code>) and the printed plan show each fact as it was shown in the card: a hook as a quote, and a crawler fact with its source link, as-of date and licence attribution (linked to the licence); AI facts with the AI label. Every link goes through <code>safeUrl</code>. Shared plans leave them out, because the share whitelist does not include them. Strings are in the <code>results</code>, <code>sections</code> and <code>plan</code> namespaces in all 7 languages. The interactive elements carry <code>data-tid</code> (<code>results.facts.place</code>, <code>results.facts.group</code>, <code>results.fact.add</code>, <code>drawer.remove.place_facts</code>, <code>plan.remove-place-facts</code>; source links use <code>results.official.source</code>). No new telemetry events are added.</p>
+<p><code>frontend/src/components/PlaceFactsSection.jsx</code> is shown as its own card after Tips. It renders only when the stream sent a <code>facts</code> section with at least one fact, so with an older backend it stays hidden. There are place chips (multi-place trips) and group tabs with counts. Each crawler fact has its source line (<code>SourceLine</code> from <code>OfficialData.jsx</code>). Each AI fact has the "AI-suggested, not verified" label, and a note under the list explains it. Every fact can be added to <strong>My Plan</strong> (<code>selections.place_facts</code>: <code>{id, text, fact_type, place, origin, lang, value_lang, citation}</code>, where <code>citation</code> is null for AI facts). The drawer and the plan view (<code>SelectedFact</code>) and the printed plan show each fact as it was shown in the card: a crawler fact with its source link, as-of date and licence attribution (linked to the licence); AI facts with the AI label. The text carries <code>lang</code> when known, and a single quoted value (“…”) is wrapped in a <code>&lt;span lang&gt;</code> of its <code>value_lang</code> (<code>utils/placeFactText.js</code>; <code>und</code> and invalid tags are left out). A plan saved with the old <code>quote</code> flag shows that fact as plain text with its attribution. Every link goes through <code>safeUrl</code>. Shared plans leave them out, because the share whitelist does not include them. Strings are in the <code>results</code>, <code>sections</code> and <code>plan</code> namespaces in all 7 languages. The interactive elements carry <code>data-tid</code> (<code>results.facts.place</code>, <code>results.facts.group</code>, <code>results.fact.add</code>, <code>drawer.remove.place_facts</code>, <code>plan.remove-place-facts</code>; source links use <code>results.official.source</code>). No new telemetry events are added.</p>
 <p>Android and iOS do not show the section yet (see <a href="../Feature-Parity/">Feature Parity</a>). They ignore the unknown <code>facts</code> event.</p>
 <h2 id="code-and-tests">Code and tests</h2>
 <ul>
