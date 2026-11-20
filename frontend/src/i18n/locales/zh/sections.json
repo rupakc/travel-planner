@@ -101,7 +101,10 @@
     "view": "查看",
     "viewBook": "查看并预订",
     "walkingTours": "步行游览（{{count}}）",
-    "watch": "关注"
+    "watch": "关注",
+    "placeFacts": "地点趣闻（{{count}}）",
+    "factAi": "AI 建议，未经核实",
+    "removeFact": "移除"
   },
   "emergency": {
     "disclaimer": "出行前请核实所有信息——内容可能已过时。抵达后请向酒店礼宾部确认。",

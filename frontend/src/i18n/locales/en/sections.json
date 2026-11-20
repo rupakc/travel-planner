@@ -104,7 +104,10 @@
     "view": "View",
     "viewBook": "View & Book",
     "walkingTours": "Walking tours ({{count}})",
-    "watch": "Watch"
+    "watch": "Watch",
+    "placeFacts": "Place facts ({{count}})",
+    "factAi": "AI-suggested, not verified",
+    "removeFact": "Remove fact"
   },
   "emergency": {
     "disclaimer": "Verify all details before travel — information may be outdated. Confirm with hotel concierge on arrival.",

@@ -104,7 +104,10 @@
     "view": "Ansehen",
     "viewBook": "Ansehen & buchen",
     "walkingTours": "Walking Tours ({{count}})",
-    "watch": "Preisalarm"
+    "watch": "Preisalarm",
+    "placeFacts": "Fakten zum Ort ({{count}})",
+    "factAi": "KI-Vorschlag, nicht geprüft",
+    "removeFact": "Fakt entfernen"
   },
   "emergency": {
     "disclaimer": "Prüfe alle Angaben vor der Reise – sie können veraltet sein. Lass sie dir bei der Ankunft an der Hotelrezeption bestätigen.",

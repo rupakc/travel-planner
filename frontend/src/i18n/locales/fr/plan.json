@@ -33,7 +33,8 @@
       "itinerarySlots": "Créneaux de l’itinéraire ({{count}})",
       "fullItinerary_one": "Itinéraire complet ({{count}} jour)",
       "fullItinerary_many": "Itinéraire complet ({{count}} jours)",
-      "fullItinerary_other": "Itinéraire complet ({{count}} jours)"
+      "fullItinerary_other": "Itinéraire complet ({{count}} jours)",
+      "placeFacts": "Faits sur le lieu ({{count}})"
     },
     "flight": {
       "outbound": "Aller :",
@@ -66,7 +67,8 @@
       "morning": "matin",
       "afternoon": "après-midi",
       "evening": "soir"
-    }
+    },
+    "factAi": "Suggéré par l'IA, non vérifié"
   },
   "export": {
     "calendar": "Ajouter au calendrier",
@@ -190,8 +192,10 @@
       "events": "Événements",
       "sim": "SIM / eSIM",
       "gettingAround": "Se déplacer",
-      "tips": "Conseils"
-    }
+      "tips": "Conseils",
+      "placeFacts": "Faits sur le lieu"
+    },
+    "factAi": "Suggéré par l'IA, non vérifié"
   },
   "ics": {
     "dayTheme": "Jour {{n}} : {{theme}}",

@@ -107,7 +107,10 @@
     "view": "Ver",
     "viewBook": "Ver y reservar",
     "walkingTours": "Tours a pie ({{count}})",
-    "watch": "Vigilar"
+    "watch": "Vigilar",
+    "placeFacts": "Datos del lugar ({{count}})",
+    "factAi": "Sugerido por IA, sin verificar",
+    "removeFact": "Quitar dato"
   },
   "emergency": {
     "disclaimer": "Verifica todos los datos antes de viajar: la información puede estar desactualizada. Confírmala con el conserje del hotel al llegar.",

@@ -63,6 +63,10 @@
     "packing_list": {
       "label": "Liste de bagages",
       "badge": "Bagages"
+    },
+    "facts": {
+      "label": "Faits sur le lieu",
+      "badge": "Faits"
     }
   },
   "interests": {
@@ -540,6 +544,26 @@
       "activities_unmodelled": "Activités en avion ou hélicoptère non comptées (pas de facteur) : {{count}}.",
       "hotel_grid": "Pas de facteur hôtelier pour {{city}} : le réseau électrique du pays ({{g_per_kwh}} g CO₂e/kWh) × {{kwh}} kWh-équivalent par chambre et par nuit.",
       "factors_newer": "Les facteurs ayant une valeur DESNZ {{year}} plus récente l'utilisent (via le robot d'exploration Voyager) ; les autres viennent de la table intégrée."
+    }
+  },
+  "facts": {
+    "aiLabel": "Suggéré par l'IA, non vérifié",
+    "aiNote": "Les faits suggérés par l'IA viennent des connaissances générales du modèle et n'ont pas de source. Vérifiez-les avant de vous y fier.",
+    "machineTranslated": "Traduction automatique de la langue d'origine",
+    "placesLabel": "Lieux",
+    "groupsLabel": "Groupes de faits",
+    "scope": {
+      "city": "Ville",
+      "place": "Destination",
+      "region": "Région",
+      "country": "Pays"
+    },
+    "group": {
+      "historical": "Histoire",
+      "fun": "Insolites",
+      "popular": "Célèbres",
+      "unbelievable": "Incroyables",
+      "little_known": "Méconnus"
     }
   }
 }

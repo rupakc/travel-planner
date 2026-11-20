@@ -167,6 +167,7 @@ export function buildPlanPrintHtml({ planName, searchData, selections, itinerary
     section(tr('print.section.sim'), sel.sim ? `<p>${esc([sel.sim.provider, sel.sim.plan_name].filter(Boolean).join(' — '))}${Number(sel.sim.price_usd) > 0 ? ` <span class="amt">${usd(sel.sim.price_usd)}</span>` : ''}${link(sel.sim.url, tr('print.getPlan'))}</p>` : ''),
     section(tr('print.section.gettingAround'), list(sel.getting_around, (t) => `${esc(t.name)}${t.price_info ? ` <span class="muted">· ${esc(t.price_info)}</span>` : ''}`)),
     section(tr('print.section.tips'), list(sel.tips, (t) => `<strong>${esc(t.title)}</strong>${t.body ? ` — ${esc(t.body)}` : ''}`)),
+    section(tr('print.section.placeFacts'), list(sel.place_facts, (f) => `${f.place ? `<strong>${esc(f.place)}</strong> — ` : ''}${esc(f.text)} <span class="muted">· ${f.origin === 'crawler' && f.citation?.name ? esc(f.citation.name) : esc(tr('print.factAi'))}</span>`)),
   ].join('')
 
   return `<!doctype html>

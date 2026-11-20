@@ -125,6 +125,7 @@ export function countSelections(selections) {
     (selections?.sim ? 1 : 0) +
     (selections?.getting_around?.length || 0) +
     (selections?.tips?.length || 0) +
+    (selections?.place_facts?.length || 0) +
     (selections?.events?.length || 0) +
     (selections?.itinerary_slots?.length || 0) +
     (selections?.packing_list ? 1 : 0)

@@ -33,6 +33,7 @@ def test_config_shape(client, monkeypatch):
         "tripadvisor": False,
         "crawler_data": False,
         "carbon": 1,
+        "place_facts": 1,
     }
     assert r.headers["cache-control"] == "max-age=300"
 

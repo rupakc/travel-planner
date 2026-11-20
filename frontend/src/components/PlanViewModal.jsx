@@ -5,7 +5,7 @@ import {
   X, Plane, Hotel, MapPin, Smartphone, Calendar,
   Save, Trash2, Loader2, Check, PenLine, ExternalLink,
   ChevronDown, ChevronUp, DollarSign, Star, Lightbulb, Bus, Wifi,
-  PartyPopper, Share2, Footprints
+  PartyPopper, Share2, Footprints, BookOpen
 } from 'lucide-react'
 import WatchFareButton from './alerts/WatchFareButton'
 import WatchTripButton from './alerts/WatchTripButton'
@@ -28,6 +28,7 @@ const SECTION_COLORS = {
   amber:  'bg-amber-50 border-b border-amber-100 text-amber-800',
   teal:   'bg-teal-50 border-b border-teal-100 text-teal-800',
   fuchsia:'bg-fuchsia-50 border-b border-fuchsia-100 text-fuchsia-800',
+  orange: 'bg-orange-50 border-b border-orange-100 text-orange-800',
 }
 
 // Money: whole dollars for the total, up to cents for item prices
@@ -77,6 +78,8 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
       setSel(s => ({ ...s, activities: s.activities.filter(a => a.name !== value.name) }))
     } else if (type === 'tips') {
       setSel(s => ({ ...s, tips: (s.tips || []).filter(t => t.title !== value.title) }))
+    } else if (type === 'place_facts') {
+      setSel(s => ({ ...s, place_facts: (s.place_facts || []).filter(f => f.id !== value.id) }))
     } else if (type === 'getting_around') {
       setSel(s => ({ ...s, getting_around: (s.getting_around || []).filter(a => a.name !== value.name) }))
     } else if (type === 'walking_tours') {
@@ -142,7 +145,7 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
     } finally { setDeleting(false) }
   }
 
-  const hasSelections = sel.flight || sel.flights?.length || sel.hotel || sel.activities?.length || sel.sim || sel.getting_around?.length || sel.tips?.length || sel.events?.length || sel.walking_tours?.length || sel.itinerary_slots?.length
+  const hasSelections = sel.flight || sel.flights?.length || sel.hotel || sel.activities?.length || sel.sim || sel.getting_around?.length || sel.tips?.length || sel.place_facts?.length || sel.events?.length || sel.walking_tours?.length || sel.itinerary_slots?.length
 
   const card = (
       <>
@@ -378,6 +381,27 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
                       )}
                     </div>
                     <button data-tid="plan.remove-tips" aria-label={t('modal.delete')} onClick={() => removeItem('tips', t)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0">
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </Section>
+          )}
+
+          {/* Place facts */}
+          {sel.place_facts?.length > 0 && (
+            <Section title={t('modal.section.placeFacts', { count: sel.place_facts.length })} tid="place_facts" color="orange" icon={BookOpen}>
+              <div className="space-y-2">
+                {sel.place_facts.map((f) => (
+                  <div key={f.id} className="flex items-start justify-between py-1.5 border-b border-gray-100 last:border-0">
+                    <div className="flex-1 min-w-0 mr-2">
+                      <p className="text-sm text-gray-900">{f.place && <span className="font-medium">{f.place}: </span>}{f.text}</p>
+                      {f.origin === 'crawler' && safeUrl(f.citation?.url)
+                        ? <a data-tid="plan.fact-source-link" href={safeUrl(f.citation.url)} target="_blank" rel="noopener noreferrer nofollow" className="flex items-center gap-1 text-xs text-orange-700 hover:text-orange-900 font-medium mt-0.5"><ExternalLink size={10} /> {f.citation.name || t('modal.source')}</a>
+                        : f.origin !== 'crawler' && <p className="text-xs text-amber-700 mt-0.5">{t('modal.factAi')}</p>}
+                    </div>
+                    <button data-tid="plan.remove-place-facts" aria-label={t('modal.delete')} onClick={() => removeItem('place_facts', f)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0">
                       <Trash2 size={13} />
                     </button>
                   </div>

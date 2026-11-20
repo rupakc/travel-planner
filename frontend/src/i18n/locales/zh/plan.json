@@ -27,7 +27,8 @@
       "events": "活动日程（{{count}}）",
       "walkingTours": "步行游览（{{count}}）",
       "itinerarySlots": "行程时段（{{count}}）",
-      "fullItinerary_other": "完整行程（{{count}} 天）"
+      "fullItinerary_other": "完整行程（{{count}} 天）",
+      "placeFacts": "地点趣闻（{{count}}）"
     },
     "flight": {
       "outbound": "去程：",
@@ -58,7 +59,8 @@
       "morning": "上午",
       "afternoon": "下午",
       "evening": "晚上"
-    }
+    },
+    "factAi": "AI 建议，未经核实"
   },
   "export": {
     "calendar": "添加到日历",
@@ -174,8 +176,10 @@
       "events": "活动日程",
       "sim": "SIM / eSIM",
       "gettingAround": "当地交通",
-      "tips": "贴士"
-    }
+      "tips": "贴士",
+      "placeFacts": "地点趣闻"
+    },
+    "factAi": "AI 建议，未经核实"
   },
   "ics": {
     "dayTheme": "第 {{n}} 天：{{theme}}",

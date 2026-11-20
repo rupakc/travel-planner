@@ -316,3 +316,66 @@ async def carbon_grid(
         return None
     got = page.get("items")
     return [i for i in got if isinstance(i, dict)] if isinstance(got, list) else []
+
+
+# Place facts change slowly (Wikidata edits, frozen Factbook edition): an hour
+# keeps a busy destination to one round of requests per hour per filter set.
+FACTS_TTL_S = 3600
+FACT_TYPES = ("historical", "fun", "popular", "unbelievable", "little_known")
+
+
+async def place_facts(
+    *,
+    geonames_id: int | None = None,
+    wikidata_qid: str | None = None,
+    country: str | None = None,
+    fact_type: str | None = None,
+    limit: int = 50,
+    pages: int = 1,
+) -> list[dict] | None:
+    """Facts about one place (``/v1/facts``: kind ``place_fact``), following
+    up to ``pages`` pages. Every filter is an exact match on the crawler's
+    resolved place; at least one of ``geonames_id`` / ``wikidata_qid`` /
+    ``country`` is required (no filter = no request). ``None`` when the
+    crawler is off or did not answer; ``[]`` when it answered with nothing.
+    Never raises."""
+    if geonames_id is not None and (
+        isinstance(geonames_id, bool) or not isinstance(geonames_id, int)
+    ):
+        return None
+    if geonames_id is not None and geonames_id <= 0:
+        return None
+    qid = (wikidata_qid or "").strip().upper() or None
+    if qid and not (qid[0] == "Q" and qid[1:].isdigit()):
+        return None
+    cc = (country or "").strip().upper() or None
+    if cc and not (len(cc) == 2 and cc.isalpha()):
+        return None
+    if fact_type is not None and fact_type not in FACT_TYPES:
+        return None
+    if geonames_id is None and qid is None and cc is None:
+        return None
+    items: list[dict] = []
+    cursor = None
+    for _ in range(max(1, pages)):
+        page = await get_json(
+            "/v1/facts",
+            {
+                "geonames_id": geonames_id,
+                "wikidata_qid": qid,
+                "country": cc,
+                "fact_type": fact_type,
+                "limit": limit,
+                "cursor": cursor,
+            },
+            ttl=FACTS_TTL_S,
+        )
+        if page is None:
+            return None if not items else items
+        got = page.get("items")
+        if isinstance(got, list):
+            items.extend(i for i in got if isinstance(i, dict))
+        cursor = page.get("next_cursor")
+        if not cursor:
+            break
+    return items

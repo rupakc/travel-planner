@@ -30,7 +30,8 @@
       "walkingTours": "Walking Tours ({{count}})",
       "itinerarySlots": "Programmpunkte ({{count}})",
       "fullItinerary_one": "Kompletter Reiseverlauf ({{count}} Tag)",
-      "fullItinerary_other": "Kompletter Reiseverlauf ({{count}} Tage)"
+      "fullItinerary_other": "Kompletter Reiseverlauf ({{count}} Tage)",
+      "placeFacts": "Fakten zum Ort ({{count}})"
     },
     "flight": {
       "outbound": "Hinflug:",
@@ -62,7 +63,8 @@
       "morning": "Vormittag",
       "afternoon": "Nachmittag",
       "evening": "Abend"
-    }
+    },
+    "factAi": "KI-Vorschlag, nicht geprüft"
   },
   "export": {
     "calendar": "Zum Kalender",
@@ -182,8 +184,10 @@
       "events": "Events",
       "sim": "SIM / eSIM",
       "gettingAround": "Fortbewegung",
-      "tips": "Tipps"
-    }
+      "tips": "Tipps",
+      "placeFacts": "Fakten zum Ort"
+    },
+    "factAi": "KI-Vorschlag, nicht geprüft"
   },
   "ics": {
     "dayTheme": "Tag {{n}}: {{theme}}",

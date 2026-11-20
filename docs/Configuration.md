@@ -88,6 +88,14 @@ Per-flight CO₂e estimates from Google's Travel Impact Model, added to flight r
 |---|---|---|
 | `CARBON_FOOTPRINT_ENABLED` | `true` | Feature flag (`features.carbon` in `/api/config`). Off: the endpoint answers `404` and the web app hides the card. |
 
+### Place facts
+
+The Place facts section on Results and `POST /api/place-facts`: sourced facts from the crawler first (when it is configured), AI-suggested facts for the groups it left empty. See [Place Facts](Place-Facts.md).
+
+| Variable | Default | Description |
+|---|---|---|
+| `PLACE_FACTS_ENABLED` | `true` | Feature flag (`features.place_facts` in `/api/config`). Off: `/api/search` sends no `facts` events, no model call is made, and `POST /api/place-facts` answers `404 place_facts_disabled`. |
+
 ### Crawler data (optional)
 
 Official facts from the Voyager crawler's private read API: published FX rates, emergency numbers, embassies, official medical lists, travel advice, entry rules, public holidays and cached fares, always shown with their source and "as of" date. On only when `CRAWLER_ENABLED=true` and both `CRAWLER_API_URL` and `CRAWLER_API_TOKEN` are set (`features.crawler_data` in `/api/config`, `crawler` in `/health`). Off, or with the crawler down, every section behaves exactly as before. See [Crawler Data](Crawler-Data.md).

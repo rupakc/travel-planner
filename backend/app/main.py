@@ -48,6 +48,7 @@ from .api.routes.nearby import router as nearby_router
 from .api.routes.notification_settings import router as notification_settings_router
 from .api.routes.notifications import router as notifications_router
 from .api.routes.oauth import router as oauth_router
+from .api.routes.place_facts import router as place_facts_router
 from .api.routes.plans import router as plans_router
 from .api.routes.play import router as play_router
 from .api.routes.preferences import router as preferences_router
@@ -424,6 +425,12 @@ app.include_router(
 )
 app.include_router(
     events_router, prefix="/api", tags=["events"], dependencies=_limited("light_ai")
+)
+app.include_router(
+    place_facts_router,
+    prefix="/api",
+    tags=["place_facts"],
+    dependencies=_limited("light_ai"),
 )
 app.include_router(
     walking_tours_router,

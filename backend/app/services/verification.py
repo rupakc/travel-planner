@@ -304,6 +304,53 @@ def _events(data: dict) -> dict:
     return _result("unverified", _DEFAULT_SUMMARY, checks)
 
 
+def _facts(data: dict) -> dict:
+    """Place facts: sourced crawler facts vs AI-suggested ones."""
+    facts = [
+        f
+        for p in data.get("places") or []
+        if isinstance(p, dict)
+        for group in (p.get("groups") or {}).values()
+        if isinstance(group, list)
+        for f in group
+        if isinstance(f, dict)
+    ]
+    sourced = sum(1 for f in facts if f.get("origin") == "crawler")
+    total = len(facts)
+    if not total:
+        return _result("unverified", _DEFAULT_SUMMARY)
+    checks = [
+        _check(
+            "Sourced facts",
+            "pass" if sourced else "info",
+            f"{sourced} of {total} facts come with their source",
+        )
+    ]
+    if sourced == total:
+        return _result(
+            "verified",
+            "Every fact links to its published source",
+            checks,
+            items_verified=sourced,
+            items_total=total,
+        )
+    if sourced:
+        return _result(
+            "partial",
+            "Some facts link to their source; the rest are AI-suggested, not verified",
+            checks,
+            items_verified=sourced,
+            items_total=total,
+        )
+    return _result(
+        "unverified",
+        "AI-suggested facts, not verified",
+        checks,
+        items_verified=0,
+        items_total=total,
+    )
+
+
 def _official_visa(data: dict, ai_type) -> dict | None:
     """Compare with an official entry rule from the crawler (single-country
     trips only), or None when there is nothing to compare."""
@@ -584,6 +631,8 @@ def verify_section(
         return _weather(data)
     if name == "events":
         return _events(data)
+    if name == "facts":
+        return _facts(data)
     if name == "visa":
         return _visa(data, request)
     if name == "emergency_card":

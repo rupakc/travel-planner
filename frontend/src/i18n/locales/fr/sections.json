@@ -107,7 +107,10 @@
     "view": "Voir",
     "viewBook": "Voir et réserver",
     "walkingTours": "Visites à pied ({{count}})",
-    "watch": "Surveiller"
+    "watch": "Surveiller",
+    "placeFacts": "Faits sur le lieu ({{count}})",
+    "factAi": "Suggéré par l'IA, non vérifié",
+    "removeFact": "Retirer le fait"
   },
   "emergency": {
     "disclaimer": "Vérifiez toutes les informations avant de partir : elles peuvent être périmées. Confirmez-les auprès de la conciergerie de l’hôtel à votre arrivée.",

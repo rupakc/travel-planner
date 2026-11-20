@@ -58,6 +58,9 @@ class Settings(BaseSettings):
     # Trip carbon footprint, POST /api/carbon/trip (docs/Carbon-Footprint.md):
     # pure computation from the committed factor table; on by default
     carbon_footprint_enabled: bool = True
+    # Place facts section on Results + POST /api/place-facts
+    # (docs/Place-Facts.md): crawler facts first, AI fills empty groups
+    place_facts_enabled: bool = True
     # Tripadvisor Terra (Discover) ratings, fetched live on demand only
     # (services/tripadvisor.py, docs/Tripadvisor.md). On only when
     # TRIPADVISOR_ENABLED=true AND a key is set. The budget is a hard cap on

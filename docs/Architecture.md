@@ -19,7 +19,7 @@ FastAPI backend (uvicorn, one process)
   ├── middleware: CORS, request logging, X-Request-ID
   ├── routers: one per domain, rate-limit dependency on AI routes
   ├── TravelOrchestrator ── Phase 0 static tables
-  │                       ├── Phase 1: 13 specialist agents in parallel (+2 deferred)
+  │                       ├── Phase 1: 14 specialist agents in parallel (+2 deferred)
   │                       └── Phase 2: itinerary → stress test
   ├── ChatAgent ── routing, knowledge answers, comprehensive planning
   ├── services: SerpAPI flights, Serper places, link resolvers,
@@ -48,11 +48,12 @@ In the container setup, nginx serves the built frontend and proxies `/api/` and 
 
 Lookup tables in `backend/app/agents/static_results.py` produce, in this order: visa, sim, tips, getting_around and forex; then a `confidence` event (the Travel Ease grade); then emergency_card. All carry `source: "static"`, and the UI marks those sections "Enhancing…" until the AI version arrives.
 
-### Phase 1: thirteen agents in parallel
+### Phase 1: fourteen agents in parallel
 
-flights, weather, hotels, activities, places_to_see, walking_tours, events, visa, sim, tips, emergency_card, getting_around and forex start together. Each has a 240 s ceiling. A section is yielded as soon as its agent finishes, with `source: "ai"`.
+flights, weather, hotels, activities, places_to_see, walking_tours, events, visa, sim, tips, emergency_card, getting_around, forex and place facts (`facts`) start together. Each has a 240 s ceiling. A section is yielded as soon as its agent finishes, with `source: "ai"`.
 
 - **Static-backed agents** (visa, sim, tips, getting_around, forex, emergency_card): if the AI result is an error, it is not yielded, so the Phase 0 data stays. The frontend also refuses to replace valid data with an error.
+- **Place facts** (`facts`, `PLACE_FACTS_ENABLED`): the crawler's facts are yielded as soon as they arrive (`source: "crawler"`), then the agent's version, which adds AI-suggested facts for the empty groups (`source: "ai"`). An AI error after a crawler yield is not sent. See [Place Facts](Place-Facts.md).
 - **URL enrichment**: hotels, activities and places_to_see are yielded first with `verification.pending = true`, then again after their links have been searched and checked.
 - **Deferred agents**: `packing_list` starts once activities and weather are both in (template fallback after 120 s or on error). `pricing_advisor` starts once flights have at least 3 results (skipped after 120 s or on error).
 
