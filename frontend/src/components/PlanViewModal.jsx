@@ -16,6 +16,7 @@ import { computePlanCost, getBudgetStatus } from '../utils/planHelpers'
 import { enumLabel } from '../utils/enumLabel'
 import PlanExport from './PlanExport'
 import { safeUrl } from '../utils/planPrint'
+import { SelectedFact } from './PlaceFactsSection'
 import { arrangeItinerary, slotKey } from '../utils/itineraryLayout'
 import { scheduleDays, timeRange } from '../utils/schedule'
 
@@ -396,10 +397,7 @@ export default function PlanViewModal({ plan, token, onClose, onSaved, onDeleted
                 {sel.place_facts.map((f) => (
                   <div key={f.id} className="flex items-start justify-between py-1.5 border-b border-gray-100 last:border-0">
                     <div className="flex-1 min-w-0 mr-2">
-                      <p className="text-sm text-gray-900">{f.place && <span className="font-medium">{f.place}: </span>}{f.text}</p>
-                      {f.origin === 'crawler' && safeUrl(f.citation?.url)
-                        ? <a data-tid="plan.fact-source-link" href={safeUrl(f.citation.url)} target="_blank" rel="noopener noreferrer nofollow" className="flex items-center gap-1 text-xs text-orange-700 hover:text-orange-900 font-medium mt-0.5"><ExternalLink size={10} /> {f.citation.name || t('modal.source')}</a>
-                        : f.origin !== 'crawler' && <p className="text-xs text-amber-700 mt-0.5">{t('modal.factAi')}</p>}
+                      <SelectedFact fact={f} aiLabel={t('modal.factAi')} className="text-sm" />
                     </div>
                     <button data-tid="plan.remove-place-facts" aria-label={t('modal.delete')} onClick={() => removeItem('place_facts', f)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0">
                       <Trash2 size={13} />

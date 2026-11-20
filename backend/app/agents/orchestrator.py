@@ -370,6 +370,14 @@ class TravelOrchestrator:
 
             if (name in _STATIC_BACKED or name in retained) and result.get("error"):
                 logger.info(f"Agent {name} errored, retaining Phase 0 static data")
+            elif name == "facts" and result.get("error"):
+                # Optional section: an error is never sent (the card stays
+                # hidden) so it can neither replace crawler facts nor make the
+                # whole run uncacheable
+                logger.info(
+                    "Place facts unavailable (%s); section not sent",
+                    result.get("error_code") or "error",
+                )
             else:
                 pending = (
                     name in _ENRICH_PENDING

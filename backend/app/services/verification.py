@@ -315,7 +315,15 @@ def _facts(data: dict) -> dict:
         for f in group
         if isinstance(f, dict)
     ]
-    sourced = sum(1 for f in facts if f.get("origin") == "crawler")
+    # Sourced = from the crawler, with a link to the source and no conflict
+    sourced = sum(
+        1
+        for f in facts
+        if f.get("origin") == "crawler"
+        and isinstance(f.get("citation"), dict)
+        and f["citation"].get("url")
+        and not f["citation"].get("conflict")
+    )
     total = len(facts)
     if not total:
         return _result("unverified", _DEFAULT_SUMMARY)
@@ -323,7 +331,7 @@ def _facts(data: dict) -> dict:
         _check(
             "Sourced facts",
             "pass" if sourced else "info",
-            f"{sourced} of {total} facts come with their source",
+            f"{sourced} of {total} facts link to their source",
         )
     ]
     if sourced == total:
@@ -337,14 +345,14 @@ def _facts(data: dict) -> dict:
     if sourced:
         return _result(
             "partial",
-            "Some facts link to their source; the rest are AI-suggested, not verified",
+            "Some facts link to their source; the rest are AI-suggested or unlinked",
             checks,
             items_verified=sourced,
             items_total=total,
         )
     return _result(
         "unverified",
-        "AI-suggested facts, not verified",
+        "No fact links to a published source",
         checks,
         items_verified=0,
         items_total=total,

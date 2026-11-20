@@ -48,6 +48,28 @@ export function factSelection(fact, place) {
   }
 }
 
+/**
+ * One fact kept in My Plan (drawer, plan view): a quote stays a quote, and a
+ * crawler fact keeps its source link, as-of date and licence attribution.
+ */
+export function SelectedFact({ fact, aiLabel, className = 'text-xs' }) {
+  if (!fact) return null
+  const crawler = fact.origin === 'crawler'
+  return (
+    <>
+      <p className={`${className} text-gray-800`} data-testid="selected-fact">
+        {fact.place && <span className="font-medium not-italic">{fact.place}: </span>}
+        {fact.quote
+          ? <q className="italic" data-testid="selected-fact-quote">{fact.text}</q>
+          : fact.text}
+      </p>
+      {crawler && fact.citation
+        ? <SourceLine source={fact.citation} className="mt-0.5" />
+        : !crawler && <p className="text-[10px] text-amber-700 mt-0.5">{aiLabel}</p>}
+    </>
+  )
+}
+
 function FactCard({ fact, place, selected, onSelect }) {
   const { t } = useTranslation('results')
   const ai = fact.origin !== 'crawler'

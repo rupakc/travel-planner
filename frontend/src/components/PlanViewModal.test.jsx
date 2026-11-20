@@ -67,3 +67,27 @@ describe('PlanViewModal', () => {
     expect(tid('plan.delete')).toBeNull()
   })
 })
+
+describe('PlanViewModal place facts', () => {
+  it('shows a quote as a quote with its source link and licence attribution', async () => {
+    const plan = {
+      ...PLAN,
+      selections: {
+        place_facts: [
+          { id: 'c:3', place: 'Berlin', text: 'A museum keeps a whole gate.', origin: 'crawler', quote: true,
+            citation: { name: 'Wikipedia: Did you know', url: 'https://en.wikipedia.org/wiki/Ishtar_Gate', attribution: 'Wikipedia contributors (CC BY-SA 4.0)', licence_url: 'https://creativecommons.org/licenses/by-sa/4.0/' } },
+          { id: 'a:1', text: 'Berlin has more bridges than Venice.', origin: 'ai', citation: null },
+        ],
+      },
+    }
+    await render(<PlanViewModal plan={plan} token="tok" inline />)
+    const section = tid('plan.section-place_facts')
+    if (section && !container.querySelector('[data-testid="selected-fact"]')) await act(async () => section.click())
+    expect(container.querySelector('[data-testid="selected-fact-quote"]').textContent).toBe('A museum keeps a whole gate.')
+    const links = [...container.querySelectorAll('a')].map((a) => a.getAttribute('href'))
+    expect(links).toContain('https://en.wikipedia.org/wiki/Ishtar_Gate')
+    expect(links).toContain('https://creativecommons.org/licenses/by-sa/4.0/')
+    expect(container.textContent).toContain('Wikipedia contributors (CC BY-SA 4.0)')
+    expect(container.textContent).toContain('AI-suggested, not verified')
+  })
+})

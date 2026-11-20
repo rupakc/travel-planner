@@ -103,10 +103,145 @@ def _typed_name(text: str) -> str:
     return head or (text or "").strip()
 
 
-def _same_place(region: str, city: str) -> bool:
-    """ "State of Berlin" for Berlin, "Tokyo" for Tokyo: one place, one entry."""
+# First-level divisions that are the city itself (city-states, capital
+# districts) though the city is not their only place in our data: one entry.
+CITY_ADMIN1 = frozenset(
+    {
+        "JP.40",  # Tokyo
+        "CN.22",  # Beijing
+        "CN.23",  # Shanghai
+        "CN.28",  # Tianjin
+        "TH.40",  # Bangkok
+        "MX.09",  # Mexico City
+        "RU.48",  # Moscow
+        "RU.66",  # Saint Petersburg
+        "KR.11",  # Seoul
+        "DE.16",  # Berlin
+        "DE.04",  # Hamburg
+        "DE.03",  # Bremen
+        "CZ.52",  # Prague
+        "HR.21",  # Zagreb
+        "VE.25",  # Caracas (Distrito Federal)
+        "MY.14",  # Kuala Lumpur
+        "AU.01",  # Canberra (Australian Capital Territory)
+        "AT.09",  # Vienna
+        "US.DC",  # Washington, DC
+        "IN.07",  # Delhi
+        "AR.07",  # Buenos Aires (federal district)
+        "BR.07",  # Brasília (federal district)
+    }
+)
+# A same-named division counts as the city when the city holds this share of
+# the division's population in our place data (Prague, Seoul, Vienna).
+CITY_SHARE = 0.9
+
+
+def _city_share(country: str, admin1: str, geonameid: int | None) -> float | None:
+    if not geonameid:
+        return None
+    try:
+        from ..db.database import get_connection
+
+        with get_connection() as conn:
+            total = conn.execute(
+                "SELECT SUM(population) FROM places"
+                " WHERE country_code = ? AND admin1 = ?",
+                (country, admin1),
+            ).fetchone()
+            own = conn.execute(
+                "SELECT population FROM places WHERE geonameid = ?", (geonameid,)
+            ).fetchone()
+        if not total or not total[0] or not own or own[0] is None:
+            return None
+        return float(own[0]) / float(total[0])
+    except Exception as e:  # never break the section over a lookup
+        logger.debug("city share %s.%s failed: %s", country, admin1, e)
+        return None
+
+
+def _same_place(
+    region: str,
+    city: str,
+    *,
+    country: str | None = None,
+    admin1: str | None = None,
+    geonameid: int | None = None,
+) -> bool:
+    """Whether the city's region is the city itself, so it gets one entry:
+    "State of Berlin" for Berlin, Tokyo-to for Tokyo, Prague for Prague. A
+    same-named state that is its own place (São Paulo, Rio de Janeiro,
+    Kyoto Prefecture) keeps its entry."""
     r, c = fold_place(region), fold_place(city)
-    return bool(c) and (r == c or f" {c} " in f" {r} ")
+    if not c:
+        return False
+    if country and admin1 and f"{country}.{admin1}" in CITY_ADMIN1:
+        return True
+    if r != c:
+        # "State of Berlin", "Buenos Aires F.D.": the city named inside it
+        return f" {c} " in f" {r} "
+    if not (country and admin1):
+        return True
+    share = _city_share(country, admin1, geonameid)
+    return share is None or share >= CITY_SHARE
+
+
+def _country_typed(dest: str) -> str | None:
+    """ISO code when the typed destination is a country ("Japan",
+    "Singapore", "Georgia"), else None."""
+    text = (dest or "").split("—")[-1]
+    parts = [fold_place(p) for p in text.split(",") if p.strip()]
+    if not parts:
+        return None
+    try:
+        from ..db.places_db import country_names
+
+        names = country_names()
+        codes = {names.get(p) for p in parts}
+        # "Georgia, USA" is the state: every part must name the same country
+        return codes.pop() if len(codes) == 1 else None
+    except Exception as e:
+        logger.debug("country name lookup failed: %s", e)
+        return None
+
+
+# A curated destination hint (no GeoNames id) is matched to a town of ours
+# only when the town is at least this big, so "Bali" never becomes a hamlet.
+HINT_TOWN_POPULATION = 15000
+
+
+def _hint_ids(name: str, country: str | None) -> tuple[str, int, str | None] | None:
+    """``(scope, geonames_id, admin1)`` for a curated destination hint
+    (Kyoto, Santorini) from our own place data: the town with that own name
+    in that country, else a notable feature so named; None when neither."""
+    folded = fold_place(name)
+    if not folded or not country:
+        return None
+    try:
+        from ..db.database import get_connection
+
+        with get_connection() as conn:
+            row = conn.execute(
+                "SELECT p.geonameid, p.admin1 FROM place_names n"
+                " JOIN places p ON p.geonameid = n.geonameid"
+                " WHERE n.name_folded = ? AND n.tier = 0 AND p.country_code = ?"
+                " AND p.population >= ?"
+                " ORDER BY p.score DESC, p.population DESC LIMIT 1",
+                (folded, country, HINT_TOWN_POPULATION),
+            ).fetchone()
+            if row:
+                return "city", int(row[0]), (row[1] or None)
+            row = conn.execute(
+                "SELECT f.geonameid FROM feature_names n"
+                " JOIN features f ON f.geonameid = n.geonameid"
+                " WHERE n.name_folded = ? AND f.country_code = ?"
+                " ORDER BY n.tier, f.notability DESC LIMIT 1",
+                (folded, country),
+            ).fetchone()
+            if row:
+                return "place", int(row[0]), None
+    except Exception as e:  # never break the section over a lookup
+        logger.debug("hint lookup %r failed: %s", name, e)
+    return None
 
 
 def destinations_of(request) -> list[str]:
@@ -134,11 +269,28 @@ def scopes_for(request) -> list[Scope]:
             out.append(s)
 
     for dest in destinations_of(request):
-        try:
-            place = resolve_place(dest)
-        except Exception as e:
-            logger.debug("resolve_place(%r) failed: %s", dest, e)
-            place = None
+        typed_cc = _country_typed(dest)
+        if typed_cc:
+            # "Japan" is the country, not the city its main airport serves
+            add(
+                Scope(
+                    key=f"country:{typed_cc}",
+                    scope="country",
+                    name=country_name(typed_cc),
+                    country=typed_cc,
+                    destination=dest,
+                )
+            )
+            continue
+        place = None
+        # "TYO — Tokyo, Japan" (an airport pick) resolves as "Tokyo, Japan"
+        for text in dict.fromkeys([dest, dest.split("—")[-1].strip()]):
+            try:
+                place = resolve_place(text)
+            except Exception as e:
+                logger.debug("resolve_place(%r) failed: %s", text, e)
+            if place:
+                break
         cc = (
             place.country_code.upper()
             if place and place.country_code
@@ -146,24 +298,39 @@ def scopes_for(request) -> list[Scope]:
         )
         region = None
         city_name = ""
+        city_id: int | None = None
+        admin1 = place.admin1 if place and place.admin1 else None
+        geo_id = place.geonameid if place else None
+        kind = "city"
+        if place and not place.division and not geo_id and cc:
+            hint = _hint_ids(place.name, cc)
+            if hint:
+                kind, geo_id, hint_admin1 = hint
+                admin1 = hint_admin1 or admin1
+        same_as_country = bool(cc) and (
+            fold_place(place.name if place else _typed_name(dest))
+            == fold_place(country_name(cc))
+        )
         if place and place.division:
             region = _admin1_name(cc, place.admin1) or place.name
-        elif place and place.geonameid:
-            add(
-                Scope(
-                    key=f"city:{place.geonameid}",
-                    scope="city",
-                    name=place.name,
-                    country=cc,
-                    destination=dest,
-                    geonames_id=place.geonameid,
+        elif place and geo_id and kind == "city":
+            if not same_as_country:
+                add(
+                    Scope(
+                        key=f"city:{geo_id}",
+                        scope="city",
+                        name=place.name,
+                        country=cc,
+                        destination=dest,
+                        geonames_id=geo_id,
+                    )
                 )
-            )
-            region = _admin1_name(cc, place.admin1)
+            region = _admin1_name(cc, admin1)
             city_name = place.name
+            city_id = geo_id
         else:
             name = place.name if place else _typed_name(dest)
-            if name and (not cc or fold_place(name) != fold_place(country_name(cc))):
+            if name and not same_as_country:
                 add(
                     Scope(
                         key=f"place:{fold_place(name)}",
@@ -171,11 +338,19 @@ def scopes_for(request) -> list[Scope]:
                         name=name,
                         country=cc,
                         destination=dest,
+                        geonames_id=geo_id,
                     )
                 )
             city_name = name
-        if region and cc and not _same_place(region, city_name):
-            code = place.admin1 if place and place.admin1 else fold_place(region)
+        if (
+            region
+            and cc
+            and fold_place(region) != fold_place(country_name(cc))
+            and not _same_place(
+                region, city_name, country=cc, admin1=admin1, geonameid=city_id
+            )
+        ):
+            code = admin1 or fold_place(region)
             add(
                 Scope(
                     key=f"region:{cc}.{code}",
@@ -247,7 +422,8 @@ def _text_for(item: dict, locale: str) -> tuple[str | None, bool]:
 
 def crawler_fact(item: dict, locale: str = "en") -> dict | None:
     """One ``/v1/facts`` item as a section fact, or None when it is unusable
-    (unknown group, no text in a language we show, no source name)."""
+    (unknown group, no text in a language we show, no source name) or comes
+    from a source whose robots.txt blocks AI bots."""
     if not isinstance(item, dict):
         return None
     ftype = item.get("fact_type")
@@ -256,6 +432,10 @@ def crawler_fact(item: dict, locale: str = "en") -> dict | None:
     text, translated = _text_for(item, locale or "en")
     if not text:
         return None
+    if item.get("ai_bot_blocked"):
+        # The source blocks AI bots: no extracted text of it is shown
+        # (facts_candidates §3); a title + link pointer has no title here.
+        return None
     citation = _citation(item)
     if not citation["name"]:
         return None
@@ -263,7 +443,6 @@ def crawler_fact(item: dict, locale: str = "en") -> dict | None:
     llm_ok = (
         item.get("llm_ok") is True
         and not hook
-        and not item.get("ai_bot_blocked")
         and citation["licence"] in _MERGEABLE
         and not citation["conflict"]
     )
@@ -297,15 +476,27 @@ def _is_country_level(item: dict) -> bool:
     return not p.get("geonames_id") and not p.get("wikidata_qid") and not p.get("name")
 
 
-def _names_region(item: dict, region: str) -> bool:
+_PLACE_LEVELS = ("admin1", "admin2", "locality", "village", "feature", None)
+
+
+def _names_scope(item: dict, name: str, levels: tuple) -> bool:
+    """The item is about the place ``name``: the same name at one of
+    ``levels``. A name that only starts with it ("Victoria Park" for
+    Victoria, "Washington Heights" for Washington) counts only when the
+    crawler marks the item as a first-level division."""
     p = _place(item)
-    if p.get("admin_level") not in ("admin1", None):
+    level = p.get("admin_level")
+    if level not in levels:
         return False
-    name = fold_place(p.get("name") or "")
-    want = fold_place(region)
-    if not name or not want:
+    got = fold_place(p.get("name") or "")
+    want = fold_place(name)
+    if not got or not want:
         return False
-    return name == want or name.startswith(want + " ") or want.startswith(name + " ")
+    if got == want:
+        return True
+    return level == "admin1" and (
+        got.startswith(want + " ") or want.startswith(got + " ")
+    )
 
 
 def _sort_key(f: dict) -> tuple:
@@ -341,7 +532,7 @@ async def crawler_facts_for(
     it is off or answered for none of the places. Never raises."""
     if not crawler_client.configured() or not scopes:
         return None
-    cities = [s for s in scopes if s.geonames_id]
+    cities = [s for s in scopes if s.geonames_id]  # cities and known places
     countries = sorted({s.country for s in scopes if s.country})
     try:
         got = await asyncio.gather(
@@ -362,22 +553,24 @@ async def crawler_facts_for(
     out: dict[str, dict[str, list]] = {}
     for s in scopes:
         raw: list[dict] = []
-        if s.scope == "city":
+        country_items = by_country.get(s.country) or []
+        if s.scope == "country":
+            raw = [i for i in country_items if _is_country_level(i)]
+        elif s.geonames_id:
             raw = list(by_city.get(s.key) or [])
             raw += [
                 i
-                for i in by_country.get(s.country) or []
+                for i in country_items
                 if _place(i).get("geonames_id") == s.geonames_id
             ]
-        elif s.scope == "country":
-            raw = [i for i in by_country.get(s.country) or [] if _is_country_level(i)]
-        elif s.scope in ("region", "place"):
+        else:
+            levels = ("admin1", None) if s.scope == "region" else _PLACE_LEVELS
             raw = [
                 i
-                for i in by_country.get(s.country) or []
+                for i in country_items
                 if _place(i).get("geonames_id") not in city_ids
                 and not _is_country_level(i)
-                and _names_region(i, s.name)
+                and _names_scope(i, s.name, levels)
             ]
         facts = [f for f in (crawler_fact(i, locale) for i in raw) if f]
         out[s.key] = _group(facts)

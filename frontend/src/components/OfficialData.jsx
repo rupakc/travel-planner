@@ -40,7 +40,7 @@ export function SourceLine({ source, className = '' }) {
       {source.attribution && (
         <span className="block text-gray-400">
           {safeUrl(source.licence_url)
-            ? <a href={source.licence_url} {...LINK} className="hover:underline">{source.attribution}</a>
+            ? <a href={safeUrl(source.licence_url)} {...LINK} className="hover:underline">{source.attribution}</a>
             : source.attribution}
         </span>
       )}

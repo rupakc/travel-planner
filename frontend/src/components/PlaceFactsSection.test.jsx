@@ -2,7 +2,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
-import PlaceFactsSection, { hasPlaceFacts, placesWithFacts, factSelection } from './PlaceFactsSection'
+import PlaceFactsSection, { hasPlaceFacts, placesWithFacts, factSelection, SelectedFact } from './PlaceFactsSection'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
@@ -99,5 +99,27 @@ describe('PlaceFactsSection', () => {
 
   it('never gives an AI fact a citation in the plan', () => {
     expect(factSelection({ ...aiFact, citation: { name: 'Made up', url: 'https://x.example' } }, { name: 'Berlin' }).citation).toBeNull()
+  })
+
+  it('a fact in My Plan keeps its quote, source link and licence attribution (drawer)', () => {
+    const kept = factSelection(hook, { name: 'Berlin' })
+    render(<SelectedFact fact={kept} aiLabel="AI-suggested" />)
+    expect(container.querySelector('[data-testid="selected-fact-quote"]').textContent).toContain('Babylonian gate')
+    const hrefs = [...container.querySelectorAll('a')].map((a) => a.getAttribute('href'))
+    expect(hrefs).toContain('https://en.wikipedia.org/wiki/Ishtar_Gate')
+    expect(container.textContent).toContain('Wikipedia contributors (CC BY-SA 4.0)')
+    expect(container.textContent).not.toContain('AI-suggested')
+  })
+
+  it('a stored fact with a script link gets no link (drawer)', () => {
+    render(<SelectedFact fact={{ id: 'c:9', text: 'Some fact text here.', origin: 'crawler', citation: { name: 'X', url: 'javascript:alert(1)', licence_url: 'javascript:alert(2)', attribution: 'X (CC0)' } }} aiLabel="AI" />)
+    expect(container.querySelector('a')).toBeNull()
+    expect(container.textContent).toContain('X (CC0)')
+  })
+
+  it('an AI fact in My Plan shows the AI label and no link (drawer)', () => {
+    render(<SelectedFact fact={factSelection(aiFact, { name: 'Berlin' })} aiLabel="AI-suggested, not verified" />)
+    expect(container.querySelector('a')).toBeNull()
+    expect(container.textContent).toContain('AI-suggested, not verified')
   })
 })

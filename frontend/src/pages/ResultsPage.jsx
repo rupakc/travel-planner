@@ -30,7 +30,7 @@ import { defaultAllocation, reallocate, withTotal, fitResults, capsFromFit, flig
 import { buildEmergencyCardHtml } from '../utils/emergencyCardPrint'
 import WalkingToursSection, { WalkingTourPlanRow } from '../components/WalkingToursSection'
 import TripadvisorBlock from '../components/TripadvisorBlock'
-import PlaceFactsSection, { hasPlaceFacts } from '../components/PlaceFactsSection'
+import PlaceFactsSection, { hasPlaceFacts, SelectedFact } from '../components/PlaceFactsSection'
 import EmissionsChip from '../components/EmissionsChip'
 import { RateSource, EmergencyOfficial, PhoneUnverified, VisaOfficial, HolidayNotice, TypicalFares } from '../components/OfficialData'
 import { orderSectionByCity } from '../utils/orderSectionByCity'
@@ -2855,10 +2855,7 @@ export function MyPlanDrawer({ isOpen, onClose, selections, planName, onPlanName
                 {selections.place_facts.map((fact) => (
                   <div key={fact.id} className="flex items-start justify-between border-b border-orange-100 last:border-0 pb-1.5 last:pb-0">
                     <div className="flex-1 min-w-0 mr-2">
-                      <p className="text-xs text-gray-800">{fact.place && <span className="font-medium">{fact.place}: </span>}{fact.text}</p>
-                      {fact.origin === 'crawler' && fact.citation?.url
-                        ? <a data-tid="drawer.fact-source" href={fact.citation.url} target="_blank" rel="noopener noreferrer nofollow" className="flex items-center gap-1 text-xs text-orange-700 hover:text-orange-900 font-medium mt-0.5"><ExternalLink size={9} /> {fact.citation.name || t('drawer.source')}</a>
-                        : fact.origin !== 'crawler' && <p className="text-[10px] text-amber-700 mt-0.5">{t('drawer.factAi')}</p>}
+                      <SelectedFact fact={fact} aiLabel={t('drawer.factAi')} />
                     </div>
                     <button data-tid="drawer.remove.place_facts" aria-label={t('drawer.removeFact')} onClick={() => onRemoveSelection('place_facts', fact)} className="text-gray-400 hover:text-red-500 shrink-0 mt-0.5"><X size={12}/></button>
                   </div>
@@ -3833,6 +3830,8 @@ export default function ResultsPage() {
           }
           return next
         })
+        // Place facts kept from the crawler when the AI pass sent nothing
+        setFactsStatus(prev => (prev === 'enhancing' ? 'done' : prev))
       }
     const startStream = () => {
       cleanupWorker.current = streamSearch(

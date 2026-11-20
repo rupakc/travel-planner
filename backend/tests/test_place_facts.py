@@ -289,6 +289,56 @@ class TestScopes:
         keys = [s.key for s in pf.scopes_for(req())]
         assert keys == ["city:2950159", "country:DE"]
 
+    def test_a_hint_destination_gets_its_geonames_id_and_region(self):
+        # resolve_place answers Kyoto from hints.json without a GeoNames id
+        scopes = pf.scopes_for(req(destination="Kyoto, Japan"))
+        assert [(s.key, s.name) for s in scopes] == [
+            ("city:1857910", "Kyoto"),
+            ("region:JP.22", "Kyoto"),  # the prefecture is its own place
+            ("country:JP", "Japan"),
+        ]
+        assert scopes[0].geonames_id == 1857910
+
+    def test_a_hint_without_a_town_is_a_place(self):
+        scopes = pf.scopes_for(req(destination="Bali"))
+        assert [(s.scope, s.name, s.geonames_id) for s in scopes] == [
+            ("place", "Bali", None),
+            ("country", "Indonesia", None),
+        ]
+
+    def test_a_country_destination_is_only_the_country(self):
+        for typed, cc in (
+            ("Japan", "JP"),
+            ("Singapore", "SG"),
+            ("Hong Kong", "HK"),
+            ("SIN — Singapore, Singapore", "SG"),
+            ("Georgia", "GE"),
+        ):
+            scopes = pf.scopes_for(req(destination=typed))
+            assert [s.key for s in scopes] == [f"country:{cc}"], typed
+
+    def test_a_state_named_like_a_country_is_the_state(self):
+        keys = [s.key for s in pf.scopes_for(req(destination="Georgia, USA"))]
+        assert keys == ["region:US.GA", "country:US"]
+
+    def test_an_airport_label_resolves(self):
+        keys = [s.key for s in pf.scopes_for(req(destination="TYO — Tokyo, Japan"))]
+        assert keys == ["city:1850147", "country:JP"]
+
+    def test_city_states_are_one_place_same_named_states_are_two(self):
+        def keys(d):
+            return [s.key for s in pf.scopes_for(req(destination=d))]
+
+        assert keys("Tokyo, Japan") == ["city:1850147", "country:JP"]
+        assert keys("Prague") == ["city:3067696", "country:CZ"]
+        assert keys("São Paulo, Brazil") == [
+            "city:3448439",
+            "region:BR.27",
+            "country:BR",
+        ]
+        # a region named like the country ("Taiwan" for Taipei) is not repeated
+        assert keys("Taipei") == ["city:1668341", "country:TW"]
+
     def test_a_division_is_a_region(self):
         scopes = pf.scopes_for(
             SimpleNamespace(destinations=None, destination="Florida")
@@ -340,6 +390,77 @@ class TestCrawlerFacts:
             "Bavaria's Zugspitze is Germany's highest peak."
         ]
 
+    def test_a_hint_destination_gets_city_facts(self, crawler_on):
+        kyoto = {**BERLIN, "geonames_id": 1857910, "country": "JP", "name": "Kyoto"}
+        fake = crawler_on(
+            FakeCrawler(
+                {1857910: [fact(1, kyoto, "historical", "Kyoto was the capital.")]},
+                {"JP": []},
+            )
+        )
+        section = run(crawler_section(req(destination="Kyoto, Japan")))
+        assert [f["text"] for f in facts_of(section, "city:1857910")["historical"]] == [
+            "Kyoto was the capital."
+        ]
+        assert {"geonames_id": "1857910"} in [
+            {k: v for k, v in p.items() if k == "geonames_id"} for p in fake.params()
+        ]
+
+    def test_region_match_needs_the_same_name_or_a_division(self, crawler_on):
+        def item(fid, name, level):
+            return fact(
+                fid,
+                {
+                    "geonames_id": 9000 + fid,
+                    "admin_level": level,
+                    "country": "DE",
+                    "name": name,
+                },
+                "fun",
+                f"Fact {fid} about {name}.",
+            )
+
+        crawler_on(
+            FakeCrawler(
+                {},
+                {
+                    "DE": [
+                        item(1, "Bavaria", None),
+                        item(2, "Bavaria Park", None),
+                        item(3, "Bavaria Film Studios", "feature"),
+                        item(4, "Bavaria Region", "admin1"),
+                    ]
+                },
+            )
+        )
+        section = run(crawler_section(req(destination="Munich, Germany")))
+        region = next(p for p in section["places"] if p["scope"] == "region")
+        texts = sorted(f["text"] for f in region["groups"]["fun"])
+        assert texts == ["Fact 1 about Bavaria.", "Fact 4 about Bavaria Region."]
+
+    def test_ai_bot_blocked_sources_are_not_shown(self, crawler_on):
+        crawler_on(
+            FakeCrawler(
+                {
+                    2950159: [
+                        fact(
+                            1,
+                            BERLIN,
+                            "fun",
+                            "Text from a blocked source.",
+                            blocked=True,
+                        ),
+                        fact(2, BERLIN, "fun", "Open text about Berlin."),
+                    ]
+                },
+                {"DE": []},
+            )
+        )
+        section = run(crawler_section(req()))
+        texts = [f["text"] for f in all_facts(section)]
+        assert texts == ["Open text about Berlin."]
+        assert "blocked source" not in json.dumps(section)
+
     def test_hooks_are_quotes_and_never_for_the_model(self, berlin_crawler):
         section = run(crawler_section(req()))
         hook = facts_of(section, "city:2950159")["fun"][0]
@@ -352,12 +473,13 @@ class TestCrawlerFacts:
     def test_share_alike_ai_blocked_and_not_llm_ok_stay_out_of_prompts(self):
         items = [
             fact(1, BERLIN, "fun", "Share alike text.", licence=CC_BY_SA, llm_ok=False),
-            fact(2, BERLIN, "fun", "Blocked source text.", blocked=True),
             fact(3, BERLIN, "fun", "Reserved source text.", llm_ok=False),
             fact(4, BERLIN, "fun", "Open text."),
         ]
         facts = [pf.crawler_fact(i) for i in items]
-        assert [f["llm_ok"] for f in facts] == [False, False, False, True]
+        assert [f["llm_ok"] for f in facts] == [False, False, True]
+        # an AI-blocked source is not shown at all, so never in a prompt
+        assert pf.crawler_fact(fact(2, BERLIN, "fun", "Blocked.", blocked=True)) is None
 
     def test_languages(self):
         de = fact(1, BERLIN, "fun", "Berlin hat viele Brücken.", lang="de")
@@ -567,7 +689,8 @@ class TestStream:
         assert [e["source"] for e in facts] == ["crawler", "ai"]
         first, last = facts[0]["data"], facts[1]["data"]
         assert first["counts"] == {"crawler": 6, "ai": 0}
-        assert first["verification"]["level"] == "verified"
+        # the Factbook fact names its source but has no link: not "verified"
+        assert first["verification"]["level"] == "partial"
         assert last["counts"]["ai"] >= 1
         assert last["verification"]["level"] == "partial"
         assert {
@@ -592,6 +715,23 @@ class TestStream:
         events = await _events(_orchestrator(agent), req())
         facts = [e for e in events if e["type"] == "facts"]
         assert len(facts) == 1 and facts[0]["source"] == "crawler"
+
+    async def test_a_facts_error_is_not_sent_and_the_run_stays_cacheable(
+        self, monkeypatch
+    ):
+        from app.api.routes.search import _is_cacheable_run
+
+        for err in (
+            {"error": "model down"},
+            {"error": "No facts found", "error_code": "no_facts"},
+            {"error": "No place to describe", "error_code": "no_place"},
+        ):
+            orch = _orchestrator(_Fake(err))
+            chunks = [c async for c in orch.stream_run(req())]
+            events = [json.loads(c[6:]) for c in chunks if c.startswith("data: ")]
+            assert not [e for e in events if e["type"] == "facts"], err
+            assert events[-1]["type"] == "done"
+            assert _is_cacheable_run(chunks), err
 
     async def test_crawler_off_one_ai_yield(self, monkeypatch):
         stub_model(monkeypatch, AI)
@@ -653,17 +793,36 @@ class TestRoute:
 
 
 class TestVerification:
-    def _section(self, origins):
+    LINKED = {"name": "Wikidata", "url": "https://www.wikidata.org/wiki/Q64"}
+
+    def _section(self, origins, citation=LINKED):
         return {
             "places": [
                 {
                     "key": "city:1",
                     "groups": {
-                        "fun": [{"origin": o, "text": "x"} for o in origins],
+                        "fun": [
+                            {
+                                "origin": o,
+                                "text": "x",
+                                "citation": citation if o == "crawler" else None,
+                            }
+                            for o in origins
+                        ],
                     },
                 }
             ]
         }
+
+    def test_unlinked_or_conflicting_facts_are_not_verified(self):
+        r = req()
+        unlinked = self._section(["crawler"], {"name": "CIA World Factbook"})
+        assert verify_section("facts", unlinked, r)["level"] == "unverified"
+        conflict = self._section(["crawler"], {**self.LINKED, "conflict": True})
+        assert verify_section("facts", conflict, r)["level"] == "unverified"
+        mixed = self._section(["crawler", "crawler"])
+        mixed["places"][0]["groups"]["fun"][1]["citation"] = {"name": "x"}
+        assert verify_section("facts", mixed, r)["level"] == "partial"
 
     def test_levels(self):
         r = req()
